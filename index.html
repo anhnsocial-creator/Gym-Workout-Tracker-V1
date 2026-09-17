@@ -90,7 +90,7 @@
                     <h3 id="day-modal-title" class="text-sm font-bold uppercase tracking-wider app-text">Workout Details</h3>
                     <button onclick="closeDayDetailsModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
                 </div>
-                <div id="day-modal-content" class="space-y-3 text-xs">
+                <div id="day-modal-content" class="space-y-3 text-xs max-h-64 overflow-y-auto">
                     <!-- Populated dynamically -->
                 </div>
                 <button onclick="closeDayDetailsModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">Close</button>
@@ -162,11 +162,11 @@
             </div>
         </div>
 
-        <!-- EDIT ROUTINE MODAL -->
+        <!-- EDIT ROUTINE MODAL (FULL LIFTOFF STYLE) -->
         <div id="edit-routine-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-sm font-bold uppercase tracking-wider app-text">Edit Routine</h3>
+                    <h3 class="text-sm font-bold uppercase tracking-wider app-text">Edit Routine Menu</h3>
                     <button onclick="closeEditRoutineModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
                 </div>
                 <input type="hidden" id="edit-routine-id">
@@ -183,6 +183,10 @@
                         <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Exercises (Comma separated)</label>
                         <input type="text" id="edit-routine-exercises" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
                     </div>
+                    <div id="edit-routine-sets-builder" class="space-y-2 pt-2 border-t app-border">
+                        <h4 class="text-[10px] font-bold uppercase app-text-muted">Detailed Exercise Config</h4>
+                        <div id="edit-routine-rows" class="space-y-2"></div>
+                    </div>
                     <button onclick="saveEditedRoutine()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Update Routine</button>
                 </div>
             </div>
@@ -193,7 +197,7 @@
             <div class="theme-gradient rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
                 <div class="absolute -right-4 -bottom-4 opacity-25 font-black text-7xl pointer-events-none">⚡</div>
                 <div class="flex justify-between items-start mb-4">
-                    <span id="streak-badge-label" class="text-xs font-bold uppercase tracking-wider bg-black/20 text-white px-2.5 py-1 rounded-full transition-opacity duration-300">Streak & Volume</span>
+                    <span id="streak-badge-label" class="text-xs font-bold uppercase tracking-wider bg-black/20 text-white px-2.5 py-1 rounded-full transition-opacity duration-300">Streak: <span id="streak-count-val">0</span> Days</span>
                     <span id="streak-fire-icon" class="text-2xl transition-opacity duration-300">🔥</span>
                 </div>
                 <div class="space-y-1">
@@ -209,38 +213,46 @@
                     <span class="text-[10px] app-text-muted uppercase tracking-wider">Sessions</span>
                 </div>
 
-                <!-- AVG DURATION WITH WEEKLY DROPDOWN -->
+                <!-- AVG DURATION WITH BAR GRAPH WEEKLY DROPDOWN -->
                 <div class="relative">
                     <div onclick="toggleDurationDropdown()" class="app-card border app-border p-3 rounded-2xl text-center shadow-sm cursor-pointer hover:opacity-80 transition">
                         <span class="block text-xl mb-1">⏱️</span>
                         <span id="stat-avg-duration" class="block text-base font-bold app-text">0m</span>
                         <span class="text-[10px] app-text-muted uppercase tracking-wider flex items-center justify-center gap-1">Duration ▾</span>
                     </div>
-                    <div id="duration-dropdown-menu" class="hidden absolute left-0 right-0 top-full mt-1 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-2 text-left">
+                    <div id="duration-dropdown-menu" class="hidden absolute left-0 right-0 top-full mt-1 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-2 text-left w-72 -ml-12">
                         <div class="flex justify-between items-center border-b app-border pb-1">
-                            <span class="text-[10px] uppercase font-bold theme-text">Weekly Duration</span>
-                            <button onclick="toggleDurationDropdown()" class="text-xs app-text-muted">✕</button>
+                            <span class="text-[10px] uppercase font-bold theme-text" id="duration-week-title">Weekly Duration Bar Graph</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="shiftDurationWeek(-1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">◀</button>
+                                <button onclick="shiftDurationWeek(1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">▶</button>
+                                <button onclick="toggleDurationDropdown()" class="text-xs app-text-muted ml-1">✕</button>
+                            </div>
                         </div>
-                        <div id="duration-weekly-list" class="space-y-1 max-h-36 overflow-y-auto text-[11px] app-text">
-                            <!-- Populated dynamically -->
+                        <div id="duration-bargraph-container" class="pt-2">
+                            <!-- Populated with rounded bar graph SVG -->
                         </div>
                     </div>
                 </div>
 
-                <!-- VOLUME WITH WEEKLY DROPDOWN -->
+                <!-- VOLUME WITH BAR GRAPH WEEKLY DROPDOWN -->
                 <div class="relative">
                     <div onclick="toggleVolumeDropdown()" class="app-card border app-border p-3 rounded-2xl text-center shadow-sm cursor-pointer hover:opacity-80 transition">
                         <span class="block text-xl mb-1">🏔️</span>
                         <span id="stat-total-volume" class="block text-base font-bold app-text">0</span>
                         <span class="text-[10px] app-text-muted uppercase tracking-wider flex items-center justify-center gap-1">Volume ▾</span>
                     </div>
-                    <div id="volume-dropdown-menu" class="hidden absolute right-0 left-0 top-full mt-1 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-2 text-left">
+                    <div id="volume-dropdown-menu" class="hidden absolute right-0 left-0 top-full mt-1 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-2 text-left w-72 -mr-12">
                         <div class="flex justify-between items-center border-b app-border pb-1">
-                            <span class="text-[10px] uppercase font-bold theme-text">Weekly Volume</span>
-                            <button onclick="toggleVolumeDropdown()" class="text-xs app-text-muted">✕</button>
+                            <span class="text-[10px] uppercase font-bold theme-text" id="volume-week-title">Weekly Volume Bar Graph</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="shiftVolumeWeek(-1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">◀</button>
+                                <button onclick="shiftVolumeWeek(1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">▶</button>
+                                <button onclick="toggleVolumeDropdown()" class="text-xs app-text-muted ml-1">✕</button>
+                            </div>
                         </div>
-                        <div id="volume-weekly-list" class="space-y-1 max-h-36 overflow-y-auto text-[11px] app-text">
-                            <!-- Populated dynamically -->
+                        <div id="volume-bargraph-container" class="pt-2">
+                            <!-- Populated with rounded bar graph SVG -->
                         </div>
                     </div>
                 </div>
@@ -590,6 +602,10 @@
         let restTimeRemaining = 0;
         let restTimerInterval = null;
 
+        // Weekly bar graph navigation offsets
+        let currentDurationWeekOffset = 0;
+        let currentVolumeWeekOffset = 0;
+
         setCustomThemeColor(currentThemeColor, false);
         setMode(currentMode, false);
         updateGreeting();
@@ -919,7 +935,9 @@
             }
         }
 
-        // --- ROUTINE EDITING & DELETION LOGIC ---
+        // --- ROUTINE EDITING & DELETION LOGIC (FULL LIFTOFF STYLE MENU) ---
+        let editRoutineExercises = [];
+
         function openEditRoutineModal(routineId) {
             const routine = customRoutines.find(r => r.id === routineId);
             if (!routine) return;
@@ -928,14 +946,49 @@
             document.getElementById('edit-routine-title').value = routine.title || '';
             document.getElementById('edit-routine-desc').value = routine.desc || '';
             
-            const exNames = (routine.exercises || []).map(ex => typeof ex === 'string' ? ex : ex.name).join(', ');
+            editRoutineExercises = JSON.parse(JSON.stringify(routine.exercises || []));
+            const exNames = editRoutineExercises.map(ex => typeof ex === 'string' ? ex : ex.name).join(', ');
             document.getElementById('edit-routine-exercises').value = exNames;
 
+            renderEditRoutineRows();
             document.getElementById('edit-routine-modal').classList.remove('hidden');
         }
 
         function closeEditRoutineModal() {
             document.getElementById('edit-routine-modal').classList.add('hidden');
+        }
+
+        function renderEditRoutineRows() {
+            const container = document.getElementById('edit-routine-rows');
+            container.innerHTML = '';
+
+            if (editRoutineExercises.length === 0) {
+                container.innerHTML = '<p class="text-xs app-text-muted">No exercises added.</p>';
+                return;
+            }
+
+            editRoutineExercises.forEach((exObj, idx) => {
+                const name = typeof exObj === 'string' ? exObj : exObj.name;
+                const sets = exObj.sets || [{ weight: 135, reps: 10 }];
+                
+                let setsHtml = '';
+                sets.forEach((set, sIdx) => {
+                    setsHtml += `
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[9px] app-text-muted w-10">Set ${sIdx + 1}</span>
+                            <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-wt" value="${set.weight || 135}" class="w-20 app-input border app-border rounded px-2 py-0.5 text-xs" placeholder="Wt">
+                            <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-rep" value="${set.reps || 10}" class="w-20 app-input border app-border rounded px-2 py-0.5 text-xs" placeholder="Reps">
+                        </div>
+                    `;
+                });
+
+                container.innerHTML += `
+                    <div class="app-card-sub border app-border p-2.5 rounded-xl text-xs space-y-1">
+                        <p class="font-bold app-text">${name}</p>
+                        ${setsHtml}
+                    </div>
+                `;
+            });
         }
 
         async function saveEditedRoutine() {
@@ -944,12 +997,19 @@
             const desc = document.getElementById('edit-routine-desc').value;
             const exInput = document.getElementById('edit-routine-exercises').value;
             const exerciseNames = exInput.split(',').map(s => s.trim()).filter(Boolean);
-            const exercises = exerciseNames.map(name => ({ name: name, sets: [{ weight: 135, reps: 10, completed: false }] }));
+
+            const updatedExercises = exerciseNames.map((name, idx) => {
+                const existing = editRoutineExercises[idx];
+                return {
+                    name: name,
+                    sets: existing?.sets || [{ weight: 135, reps: 10, completed: false }]
+                };
+            });
 
             const { error } = await _supabase.from('routines').update({
                 title: title,
                 desc: desc,
-                exercises: exercises
+                exercises: updatedExercises
             }).eq('id', routineId);
 
             if (error) {
@@ -1233,51 +1293,125 @@
             document.getElementById('day-details-modal').classList.add('hidden');
         }
 
-        // --- WEEKLY DROPDOWNS FOR DURATION & VOLUME ---
+        // --- ROUNDED BAR GRAPH WEEKLY CHARTS FOR DURATION & VOLUME ---
         function toggleDurationDropdown() {
             document.getElementById('duration-dropdown-menu').classList.toggle('hidden');
             document.getElementById('volume-dropdown-menu').classList.add('hidden');
+            renderBarGraphCharts();
         }
 
         function toggleVolumeDropdown() {
             document.getElementById('volume-dropdown-menu').classList.toggle('hidden');
             document.getElementById('duration-dropdown-menu').classList.add('hidden');
+            renderBarGraphCharts();
         }
 
-        function renderWeeklyBreakdown(workouts) {
-            const durList = document.getElementById('duration-weekly-list');
-            const volList = document.getElementById('volume-weekly-list');
-            durList.innerHTML = '';
-            volList.innerHTML = '';
+        function shiftDurationWeek(dir) {
+            currentDurationWeekOffset += dir;
+            renderBarGraphCharts();
+        }
 
-            const weeklyDurMap = {};
-            const weeklyVolMap = {};
+        function shiftVolumeWeek(dir) {
+            currentVolumeWeekOffset += dir;
+            renderBarGraphCharts();
+        }
 
-            workouts.forEach(w => {
-                const date = new Date(w.date || w.created_at);
-                if (isNaN(date)) return;
+        function renderBarGraphCharts() {
+            const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+            // Helper to get week date range based on offset
+            function getWeekDays(offset) {
+                const now = new Date();
+                const startOfWeek = new Date(now);
+                startOfWeek.setDate(now.getDate() - now.getDay() + (offset * 7));
                 
-                // Get week start (Sunday)
-                const startOfWeek = new Date(date);
-                startOfWeek.setDate(date.getDate() - date.getDay());
-                const weekKey = `${startOfWeek.getMonth() + 1}/${startOfWeek.getDate()}`;
-
-                weeklyDurMap[weekKey] = (weeklyDurMap[weekKey] || 0) + (w.duration || 45);
-                weeklyVolMap[weekKey] = (weeklyVolMap[weekKey] || 0) + (w.volume || 0);
-            });
-
-            const weeks = Object.keys(weeklyDurMap).sort((a,b) => new Date(b) - new Date(a));
-
-            if (weeks.length === 0) {
-                durList.innerHTML = `<span class="app-text-muted">No data available</span>`;
-                volList.innerHTML = `<span class="app-text-muted">No data available</span>`;
-                return;
+                const weekDates = [];
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(startOfWeek);
+                    d.setDate(startOfWeek.getDate() + i);
+                    weekDates.push(d);
+                }
+                return weekDates;
             }
 
-            weeks.forEach(wk => {
-                durList.innerHTML += `<div class="flex justify-between py-1 border-b app-border"><span>Week of ${wk}</span><span class="font-bold">${weeklyDurMap[wk]} mins</span></div>`;
-                volList.innerHTML += `<div class="flex justify-between py-1 border-b app-border"><span>Week of ${wk}</span><span class="font-bold">${weeklyVolMap[wk].toLocaleString()} lbs</span></div>`;
+            // Duration Chart
+            const durWeekDates = getWeekDays(currentDurationWeekOffset);
+            const durStartStr = `${durWeekDates[0].getMonth()+1}/${durWeekDates[0].getDate()}`;
+            const durEndStr = `${durWeekDates[6].getMonth()+1}/${durWeekDates[6].getDate()}`;
+            document.getElementById('duration-week-title').innerText = `Duration (${durStartStr} - ${durEndStr})`;
+
+            const durVals = days.map((_, i) => {
+                const targetDateStr = durWeekDates[i].toDateString();
+                let dayTotal = 0;
+                globalWorkoutsData.forEach(w => {
+                    const d = new Date(w.date || w.created_at);
+                    if (!isNaN(d) && d.toDateString() === targetDateStr) {
+                        dayTotal += (w.duration || 45);
+                    }
+                });
+                return dayTotal;
             });
+
+            const maxDur = Math.max(...durVals, 60);
+            const durContainer = document.getElementById('duration-bargraph-container');
+            durContainer.innerHTML = buildSvgBarGraph(days, durVals, maxDur, 'mins', getComputedStyle(document.documentElement).getPropertyValue('--theme-color').trim());
+
+            // Volume Chart
+            const volWeekDates = getWeekDays(currentVolumeWeekOffset);
+            const volStartStr = `${volWeekDates[0].getMonth()+1}/${volWeekDates[0].getDate()}`;
+            const volEndStr = `${volWeekDates[6].getMonth()+1}/${volWeekDates[6].getDate()}`;
+            document.getElementById('volume-week-title').innerText = `Volume (${volStartStr} - ${volEndStr})`;
+
+            const volVals = days.map((_, i) => {
+                const targetDateStr = volWeekDates[i].toDateString();
+                let dayTotal = 0;
+                globalWorkoutsData.forEach(w => {
+                    const d = new Date(w.date || w.created_at);
+                    if (!isNaN(d) && d.toDateString() === targetDateStr) {
+                        dayTotal += (w.volume || 0);
+                    }
+                });
+                return dayTotal;
+            });
+
+            const maxVol = Math.max(...volVals, 1000);
+            const volContainer = document.getElementById('volume-bargraph-container');
+            volContainer.innerHTML = buildSvgBarGraph(days, volVals, maxVol, 'lbs', getComputedStyle(document.documentElement).getPropertyValue('--theme-color').trim());
+        }
+
+        function buildSvgBarGraph(labels, values, maxVal, unit, accentColor) {
+            const svgWidth = 260;
+            const svgHeight = 130;
+            const chartTop = 15;
+            const chartBottom = 95;
+            const chartHeight = chartBottom - chartTop;
+            const barWidth = 24;
+            const gap = 11;
+            const startX = 15;
+
+            let barsHtml = '';
+            labels.forEach((lbl, idx) => {
+                const val = values[idx];
+                const barH = Math.max(6, (val / maxVal) * chartHeight);
+                const x = startX + (idx * (barWidth + gap));
+                const y = chartBottom - barH;
+
+                barsHtml += `
+                    <g>
+                        <!-- Rounded top bar using rect with rx -->
+                        <rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="6" fill="${accentColor}" opacity="${val > 0 ? '1' : '0.2'}" />
+                        <text x="${x + (barWidth/2)}" y="${chartBottom + 14}" text-anchor="middle" font-size="9" fill="currentColor" opacity="0.7">${lbl}</text>
+                        ${val > 0 ? `<text x="${x + (barWidth/2)}" y="${y - 4}" text-anchor="middle" font-size="7" fill="currentColor" font-weight="bold">${val >= 1000 ? (val/1000).toFixed(1) + 'k' : val}</text>` : ''}
+                    </g>
+                `;
+            });
+
+            return `
+                <svg width="100%" viewBox="0 0 ${svgWidth} ${svgHeight}" class="overflow-visible">
+                    <line x1="10" y1="${chartBottom}" x2="${svgWidth - 10}" y2="${chartBottom}" stroke="currentColor" stroke-opacity="0.15" stroke-width="1" />
+                    ${barsHtml}
+                </svg>
+            `;
         }
 
         // --- STREAK COUNTER WITH FADE & 4-DAY RESET ---
@@ -1300,14 +1434,12 @@
             let daysMissed = 0;
             let checkDate = new Date(today);
 
-            // Check if worked out today or yesterday to start streak
             const todayStr = checkDate.toDateString();
             const yesterdayDate = new Date(today);
             yesterdayDate.setDate(today.getDate() - 1);
             const yesterdayStr = yesterdayDate.toDateString();
 
             if (!workoutDays.has(todayStr) && !workoutDays.has(yesterdayStr)) {
-                // Count how many days missed since last workout
                 let tempDate = new Date(today);
                 while (daysMissed < 5) {
                     tempDate.setDate(tempDate.getDate() - 1);
@@ -1318,7 +1450,6 @@
                 }
             }
 
-            // Calculate active streak count backwards
             let streakDate = new Date(workoutDays.has(todayStr) ? today : yesterdayDate);
             if (workoutDays.has(streakDate.toDateString()) || workoutDays.has(todayStr)) {
                 while (true) {
@@ -1341,10 +1472,11 @@
         function applyStreakUI(streak, missedDays) {
             const badgeLabel = document.getElementById('streak-badge-label');
             const fireIcon = document.getElementById('streak-fire-icon');
+            const countVal = document.getElementById('streak-count-val');
             
-            // Opacity fade based on missed days (0 missed = 1.0 opacity, 3 missed = 0.25 opacity)
+            if (countVal) countVal.innerText = streak;
+
             const opacityFactor = Math.max(0.15, 1 - (missedDays * 0.25));
-            
             if (badgeLabel) badgeLabel.style.opacity = opacityFactor;
             if (fireIcon) fireIcon.style.opacity = opacityFactor;
         }
@@ -1588,7 +1720,6 @@
                 updateDashboardStats(data);
                 renderRecentSessions(data);
                 renderCalendar();
-                renderWeeklyBreakdown(data);
                 calculateAndUpdateStreak(data);
             }
 
@@ -1841,62 +1972,46 @@
                 const { data, error } = await _supabase.auth.signUp({ email, password });
                 if (error) alert("Sign up error: " + error.message);
                 else {
-                    alert("Check your email for confirmation or account is created!");
+                    alert("Account created! Check your email to confirm if required.");
                     closeAuthModalFn();
                 }
             } else {
                 const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
                 if (error) alert("Login error: " + error.message);
-                else {
+                else if (data.user) {
                     currentUser = data.user;
                     authModalBtn.innerText = "Sign Out";
-                    document.getElementById('user-pill').innerText = currentUser.email.split('@')[0];
+                    document.getElementById('user-pill').innerText = currentUser.email;
                     closeAuthModalFn();
                     fetchUserData();
                 }
             }
         });
 
-        _supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                currentUser = session.user;
-                authModalBtn.innerText = "Sign Out";
-                document.getElementById('user-pill').innerText = currentUser.email.split('@')[0];
-                fetchUserData();
-            }
-        });
-
-        _supabase.auth.onAuthStateChange((event, session) => {
-            if (session) {
-                currentUser = session.user;
-                authModalBtn.innerText = "Sign Out";
-                document.getElementById('user-pill').innerText = currentUser.email.split('@')[0];
-                fetchUserData();
-            }
-        });
-
-        async function setCustomThemeColor(color, save = true) {
-            currentThemeColor = color;
-            document.documentElement.style.setProperty('--theme-color', color);
-            document.documentElement.style.setProperty('--theme-gradient', `linear-gradient(to bottom right, ${color}, #d97706)`);
-            const colorWheel = document.getElementById('color-wheel');
-            if (colorWheel) colorWheel.value = color;
-
-            localStorage.setItem('liftpulse_custom_color', color);
-
-            if (save && currentUser) {
-                await _supabase.from('user_settings').upsert({
-                    user_id: currentUser.id,
-                    accent_color: color,
-                    updated_at: new Date().toISOString()
-                });
-            }
+        async function changeEmailDirectly() {
+            if (!currentUser) { alert("Please log in first."); return; }
+            const newEmail = document.getElementById('settings-new-email').value.trim();
+            if (!newEmail) { alert("Please enter a new email address."); return; }
+            const { error } = await _supabase.auth.updateUser({ email: newEmail });
+            if (error) alert("Error updating email: " + error.message);
+            else alert("Email update request sent! Check your new email inbox for confirmation.");
         }
 
-        function setMode(mode, save = true) {
+        async function changePasswordDirectly() {
+            if (!currentUser) { alert("Please log in first."); return; }
+            const newPassword = document.getElementById('settings-new-password').value;
+            if (!newPassword || newPassword.length < 6) { alert("Password must be at least 6 characters."); return; }
+            const { error } = await _supabase.auth.updateUser({ password: newPassword });
+            if (error) alert("Error updating password: " + error.message);
+            else alert("Password updated successfully!");
+        }
+
+        function setMode(mode, saveCloud = true) {
             currentMode = mode;
+            localStorage.setItem('liftpulse_mode', mode);
             const htmlRoot = document.getElementById('html-root');
             const modeIcon = document.getElementById('mode-icon');
+            
             if (mode === 'dark') {
                 htmlRoot.classList.add('dark');
                 if (modeIcon) modeIcon.innerText = '🌙';
@@ -1904,41 +2019,42 @@
                 htmlRoot.classList.remove('dark');
                 if (modeIcon) modeIcon.innerText = '☀️';
             }
-            if (save) localStorage.setItem('liftpulse_mode', mode);
         }
 
         function toggleDarkMode() {
-            const newMode = currentMode === 'dark' ? 'light' : 'dark';
-            setMode(newMode);
+            setMode(currentMode === 'dark' ? 'light' : 'dark');
         }
 
-        async function changeEmailDirectly() {
-            if (!currentUser) { alert("Please sign in first."); return; }
-            const newEmail = document.getElementById('settings-new-email').value;
-            if (!newEmail) { alert("Enter a valid new email."); return; }
-            const { error } = await _supabase.auth.updateUser({ email: newEmail });
-            if (error) alert("Error: " + error.message);
-            else alert("Email update verification sent. Check your inbox.");
-        }
-
-        async function changePasswordDirectly() {
-            if (!currentUser) { alert("Please sign in first."); return; }
-            const newPassword = document.getElementById('settings-new-password').value;
-            if (!newPassword || newPassword.length < 6) { alert("Password must be at least 6 characters."); return; }
+        async function setCustomThemeColor(hexColor, saveCloud = true) {
+            currentThemeColor = hexColor;
+            localStorage.setItem('liftpulse_custom_color', hexColor);
+            document.documentElement.style.setProperty('--theme-color', hexColor);
+            document.documentElement.style.setProperty('--theme-gradient', `linear-gradient(to bottom right, ${hexColor}, #d97706)`);
             
-            openConfirmModal(
-                "Update Password?",
-                "Are you sure you want to change your account password?",
-                async () => {
-                    closeConfirmModal();
-                    const { error } = await _supabase.auth.updateUser({ password: newPassword });
-                    if (error) alert("Error: " + error.message);
-                    else alert("Password successfully updated.");
-                }
-            );
+            const colorWheel = document.getElementById('color-wheel');
+            if (colorWheel) colorWheel.value = hexColor;
+
+            if (saveCloud && currentUser) {
+                await _supabase.from('user_settings').upsert({
+                    user_id: currentUser.id,
+                    accent_color: hexColor,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+            }
         }
 
-        renderRoutinesList();
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data } = await _supabase.auth.getUser();
+            if (data && data.user) {
+                currentUser = data.user;
+                authModalBtn.innerText = "Sign Out";
+                document.getElementById('user-pill').innerText = currentUser.email;
+                fetchUserData();
+            } else {
+                renderCalendar();
+                renderWeeklyBreakdown([]);
+            }
+        });
     </script>
 </body>
 </html>
