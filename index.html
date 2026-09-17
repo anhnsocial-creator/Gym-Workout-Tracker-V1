@@ -69,6 +69,37 @@
             </div>
         </div>
 
+        <!-- CUSTOM EXERCISE MODAL -->
+        <div id="custom-exercise-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold uppercase tracking-wider app-text">Add Custom Exercise</h3>
+                    <button onclick="closeCustomExerciseModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Exercise Name</label>
+                        <input type="text" id="custom-ex-name" placeholder="e.g. Cable Lateral Raise" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Category</label>
+                        <select id="custom-ex-category" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                            <option value="Free weight">Free weight</option>
+                            <option value="Machine">Machine</option>
+                            <option value="Cables">Cables</option>
+                            <option value="Calisthenics">Calisthenics</option>
+                            <option value="Cardio">Cardio</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Target Muscle</label>
+                        <input type="text" id="custom-ex-muscle" placeholder="e.g. Shoulders" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <button onclick="saveCustomExercise()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Add to Session</button>
+                </div>
+            </div>
+        </div>
+
         <!-- EDIT WORKOUT MODAL -->
         <div id="edit-workout-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div class="app-card border app-border rounded-2xl p-5 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -208,7 +239,10 @@
                 <div class="space-y-3 pt-2 border-t app-border">
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold uppercase tracking-wider app-text">Select Exercises</span>
-                        <span id="selected-count" class="text-[10px] theme-text font-medium">0 selected</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openCustomExerciseModal()" class="text-[10px] theme-text font-semibold hover:underline">+ Custom Exercise</button>
+                            <span id="selected-count" class="text-[10px] app-text-muted font-medium">0 selected</span>
+                        </div>
                     </div>
 
                     <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px]">
@@ -227,9 +261,14 @@
                     <div id="builder-rows" class="space-y-2"></div>
                 </div>
 
-                <button id="save-workout-btn" onclick="saveWorkout()" class="w-full theme-bg text-white font-semibold py-3 rounded-xl text-xs transition disabled:opacity-40 disabled:pointer-events-none">
-                    Finish & Save Workout to Cloud
-                </button>
+                <div class="space-y-2 pt-2 border-t app-border">
+                    <button id="save-workout-btn" onclick="saveWorkout()" class="w-full theme-bg text-white font-semibold py-3 rounded-xl text-xs transition disabled:opacity-40 disabled:pointer-events-none">
+                        Finish & Save Workout to Cloud
+                    </button>
+                    <button id="save-routine-btn" onclick="promptSaveCurrentAsRoutine()" class="hidden w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition border app-border">
+                        📋 Save Current Workout as Routine for Later
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -455,6 +494,7 @@
         function startLiveWorkout(title = "Gym session", exercises = []) {
             document.getElementById('pre-workout-container').classList.add('hidden');
             document.getElementById('active-workout-container').classList.remove('hidden');
+            document.getElementById('save-routine-btn').classList.remove('hidden');
 
             document.getElementById('session-name').value = title;
             selectedExercises = [...exercises];
@@ -478,7 +518,83 @@
                 if (workoutTimerInterval) clearInterval(workoutTimerInterval);
                 document.getElementById('active-workout-container').classList.add('hidden');
                 document.getElementById('pre-workout-container').classList.remove('hidden');
+                document.getElementById('save-routine-btn').classList.add('hidden');
                 selectedExercises = [];
+            }
+        }
+
+        // --- CUSTOM EXERCISE MODAL LOGIC ---
+        function openCustomExerciseModal() {
+            document.getElementById('custom-exercise-modal').classList.remove('hidden');
+        }
+
+        function closeCustomExerciseModal() {
+            document.getElementById('custom-exercise-modal').classList.add('hidden');
+        }
+
+        function saveCustomExercise() {
+            const name = document.getElementById('custom-ex-name').value.trim();
+            const category = document.getElementById('custom-ex-category').value;
+            const muscle = document.getElementById('custom-ex-muscle').value.trim() || 'General';
+
+            if (!name) {
+                alert("Please enter a custom exercise name.");
+                return;
+            }
+
+            // Check if it already exists in EXERCISE_LIBRARY
+            const exists = EXERCISE_LIBRARY.some(e => e.name.toLowerCase() === name.toLowerCase());
+            if (!exists) {
+                EXERCISE_LIBRARY.push({
+                    name: name,
+                    category: category,
+                    muscle: muscle,
+                    videoId: '', // custom exercises might not have demo video IDs
+                    desc: 'Custom added exercise.'
+                });
+            }
+
+            if (!selectedExercises.includes(name)) {
+                selectedExercises.push(name);
+            }
+
+            document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
+            document.getElementById('custom-ex-name').value = '';
+            document.getElementById('custom-ex-muscle').value = '';
+            closeCustomExerciseModal();
+
+            renderExerciseLibrary();
+            renderBuilderRows();
+        }
+
+        // --- SAVE CURRENT WORKOUT AS ROUTINE ---
+        async function promptSaveCurrentAsRoutine() {
+            if (!currentUser) {
+                alert("Please sign in to save routines to the cloud.");
+                openAuthModal();
+                return;
+            }
+            if (selectedExercises.length === 0) {
+                alert("Please select at least one exercise before saving as a routine.");
+                return;
+            }
+
+            const title = document.getElementById('session-name').value || "Custom Routine";
+            const desc = prompt("Enter a short description or notes for this routine:", "Saved from live session");
+            if (desc === null) return; // Canceled
+
+            const { error } = await _supabase.from('routines').insert([{
+                user_id: currentUser.id,
+                title: title,
+                desc: desc,
+                exercises: selectedExercises
+            }]);
+
+            if (error) {
+                alert("Error saving routine: " + error.message);
+            } else {
+                alert("Workout successfully saved as a routine for future sessions!");
+                fetchUserData();
             }
         }
 
@@ -592,7 +708,6 @@
                     await setCustomThemeColor(newColor, true);
                 },
                 () => {
-                    // Revert color wheel input if canceled
                     document.getElementById('color-wheel').value = currentThemeColor;
                 }
             );
@@ -721,7 +836,7 @@
                             <p class="text-[10px] app-text-muted">${ex.muscle} • ${ex.category}</p>
                         </div>
                     </div>
-                    <button onclick="openVideoModal('${ex.name}', '${ex.videoId}', '${ex.desc}')" class="p-1.5 rounded-lg app-card border app-border text-xs hover:opacity-80">📺</button>
+                    ${ex.videoId ? `<button onclick="openVideoModal('${ex.name}', '${ex.videoId}', '${ex.desc}')" class="p-1.5 rounded-lg app-card border app-border text-xs hover:opacity-80">📺</button>` : ''}
                 `;
                 listContainer.appendChild(div);
             });
@@ -811,6 +926,7 @@
                 alert("Workout successfully saved to cloud!");
                 document.getElementById('active-workout-container').classList.add('hidden');
                 document.getElementById('pre-workout-container').classList.remove('hidden');
+                document.getElementById('save-routine-btn').classList.add('hidden');
                 selectedExercises = [];
                 fetchUserData();
                 switchTab('home');
@@ -842,7 +958,6 @@
                 renderRoutinesList();
             }
 
-            // Fetch cloud user settings (like accent color)
             const { data: settingsData } = await _supabase
                 .from('user_settings')
                 .select('*')
@@ -856,7 +971,6 @@
             setupRealtimeSync();
         }
 
-        // Setup Realtime Sync for settings changes across devices
         function setupRealtimeSync() {
             if (!currentUser) return;
             if (settingsChannel) {
