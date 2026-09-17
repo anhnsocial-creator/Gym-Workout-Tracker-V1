@@ -1,0 +1,2206 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiftPulse - Gym Streak Tracker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta name="theme-color" content="#09090b">
+</head>
+<body id="app-body" class="app-body min-h-screen flex flex-col items-center justify-start pb-24 md:pb-12 select-none transition-colors duration-200">
+
+    <!-- Top Header Bar -->
+    <header class="w-full max-w-md md:max-w-6xl px-4 py-4 flex justify-between items-center border-b app-border app-header sticky top-0 z-30 backdrop-blur transition-colors duration-200">
+        <div class="flex items-center gap-2.5">
+            <div id="header-avatar" class="hidden w-8 h-8 rounded-full overflow-hidden bg-amber-300 flex items-center justify-center shrink-0 border border-amber-400">
+                <img src="https://api.iconify.design/fluent-emoji:rabbit-face.svg" alt="Usagi" class="w-6 h-6 object-contain">
+            </div>
+            <div>
+                <h1 class="text-xs font-semibold app-text-muted">YOUR TRAINING</h1>
+                <p id="header-greeting" class="text-lg font-bold tracking-tight app-text">Good morning.</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="toggleDarkMode()" class="p-2 rounded-xl app-card border app-border app-text hover:opacity-80 transition" title="Toggle Light/Dark Mode">
+                <span id="mode-icon">☀️</span>
+            </button>
+            <span id="user-pill" class="text-[10px] app-card border app-border app-text-muted px-2.5 py-1.5 rounded-full truncate max-w-[100px]">Not logged in</span>
+            <button id="auth-modal-btn" class="text-xs app-btn-secondary px-3.5 py-1.5 rounded-xl transition border app-border">Sign In</button>
+        </div>
+    </header>
+
+    <!-- Main View Container -->
+    <main class="w-full max-w-md md:max-w-6xl p-4 space-y-4 md:grid md:grid-cols-3 md:gap-6 md:space-y-0 md:items-start pt-6">
+
+        <!-- AUTH MODAL OVERLAY -->
+        <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+                <div class="flex justify-between items-center">
+                    <h3 id="auth-modal-title" class="text-sm font-bold uppercase tracking-wider app-text">Sign In to Cloud Sync</h3>
+                    <button id="close-auth-modal" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+                </div>
+                <form id="auth-form" class="space-y-3">
+                    <input type="email" id="auth-email" required placeholder="Email address" 
+                        class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-current app-text">
+                    
+                    <div class="relative">
+                        <input type="password" id="auth-password" required placeholder="Password" 
+                            class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-current app-text pr-10">
+                        <button type="button" onclick="togglePasswordVisibility('auth-password', this)" class="absolute right-3 top-2.5 text-xs text-zinc-400 hover:text-zinc-200">👁️</button>
+                    </div>
+
+                    <button type="submit" id="auth-submit-btn" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Login</button>
+                    
+                    <div class="flex justify-between items-center pt-1">
+                        <button type="button" id="auth-switch-mode" class="text-[11px] app-text-muted hover:underline">Need an account? Sign up</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- REST TIMER POPUP MODAL -->
+        <div id="rest-timer-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl text-center">
+                <span class="text-3xl">⏱️</span>
+                <h3 class="text-sm font-bold uppercase tracking-wider app-text">Rest Timer</h3>
+                <div id="rest-countdown-display" class="text-4xl font-black theme-text">01:00</div>
+                <p id="rest-timer-modal-desc" class="text-xs app-text-muted">Catch your breath. Next set is waiting!</p>
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="addRestTime(30)" class="app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">+30s Rest</button>
+                    <button id="rest-modal-action-btn" onclick="dismissRestTimer()" class="theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Skip Rest</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIRMATION MODAL OVERLAY -->
+        <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl text-center">
+                <span class="text-3xl">⚠️</span>
+                <h3 id="confirm-modal-title" class="text-sm font-bold uppercase tracking-wider app-text">Are you sure?</h3>
+                <p id="confirm-modal-desc" class="text-xs app-text-muted">Are you sure you want to proceed with this action?</p>
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="closeConfirmModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">Cancel</button>
+                    <button id="confirm-modal-accept-btn" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DAY DETAILS MODAL (FOR CALENDAR) -->
+        <div id="day-details-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+                <div class="flex justify-between items-center">
+                    <h3 id="day-modal-title" class="text-sm font-bold uppercase tracking-wider app-text">Workout Details</h3>
+                    <button onclick="closeDayDetailsModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+                </div>
+                <div id="day-modal-content" class="space-y-3 text-xs max-h-64 overflow-y-auto">
+                    <!-- Populated dynamically -->
+                </div>
+                <button onclick="closeDayDetailsModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">Close</button>
+            </div>
+        </div>
+
+        <!-- CUSTOM EXERCISE MODAL -->
+        <div id="custom-exercise-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold uppercase tracking-wider app-text">Add Custom Exercise</h3>
+                    <button onclick="closeCustomExerciseModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Exercise Name</label>
+                        <input type="text" id="custom-ex-name" placeholder="e.g. Cable Lateral Raise" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Category</label>
+                        <select id="custom-ex-category" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                            <option value="Barbell">Barbell</option>
+                            <option value="Dumbbell">Dumbbell</option>
+                            <option value="Machine">Machine</option>
+                            <option value="Cable">Cable</option>
+                            <option value="Bodyweight">Bodyweight</option>
+                            <option value="Cardio">Cardio</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Target Muscle</label>
+                        <input type="text" id="custom-ex-muscle" placeholder="e.g. Shoulders" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <div class="flex items-center gap-2 pt-1">
+                        <input type="checkbox" id="custom-ex-sync-permanent" checked class="rounded app-input border app-border cursor-pointer">
+                        <label for="custom-ex-sync-permanent" class="text-xs app-text cursor-pointer">Permanently sync to my account log</label>
+                    </div>
+                    <button onclick="saveCustomExercise()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Add to Session</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- EDIT WORKOUT MODAL -->
+        <div id="edit-workout-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold uppercase tracking-wider app-text">Edit Workout Session</h3>
+                    <button onclick="closeEditWorkoutModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+                </div>
+                <input type="hidden" id="edit-workout-id">
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Session Name</label>
+                        <input type="text" id="edit-session-name" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Duration (Mins)</label>
+                            <input type="number" id="edit-session-duration" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Total Volume (lbs)</label>
+                            <input type="number" id="edit-session-volume" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                        </div>
+                    </div>
+                    <div id="edit-exercises-container" class="space-y-2 pt-2 border-t app-border"></div>
+                    <button onclick="promptSaveEditedWorkout()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- EDIT ROUTINE MODAL (FULL LIFTOFF STYLE WORKOUT MENU) -->
+        <div id="edit-routine-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span id="edit-routine-usagi-badge" class="hidden text-base">🐰</span>
+                        <h3 class="text-sm font-bold uppercase tracking-wider app-text">Edit Routine Menu</h3>
+                    </div>
+                    <button onclick="closeEditRoutineModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+                </div>
+                <input type="hidden" id="edit-routine-id">
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Routine Title</label>
+                        <input type="text" id="edit-routine-title" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Description / Notes</label>
+                        <input type="text" id="edit-routine-desc" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[10px] uppercase font-semibold app-text-muted">Exercises & Sets Configuration</label>
+                            <button onclick="openCustomExerciseModalForRoutineEdit()" class="text-[10px] theme-text font-semibold hover:underline">+ Add Exercise</button>
+                        </div>
+                        <input type="text" id="edit-routine-exercises" placeholder="Comma separated names" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current mb-2">
+                    </div>
+                    
+                    <div id="edit-routine-sets-builder" class="space-y-2 pt-2 border-t app-border">
+                        <h4 class="text-[10px] font-bold uppercase app-text-muted">Detailed Set Editor (Liftoff Style)</h4>
+                        <div id="edit-routine-rows" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+                    </div>
+                    <button onclick="saveEditedRoutine()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Update Routine</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMN 1: DASHBOARD & FEED (Home Tab) -->
+        <section id="tab-home" class="space-y-4 md:block">
+            <div class="theme-gradient rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                <div id="hero-usagi-watermark" class="hidden absolute right-3 -bottom-2 opacity-30 text-5xl pointer-events-none">🐰</div>
+                <div class="absolute -right-4 -bottom-4 opacity-25 font-black text-7xl pointer-events-none">⚡</div>
+                <div class="flex justify-between items-start mb-4">
+                    <span id="streak-badge-label" class="text-xs font-bold uppercase tracking-wider bg-black/20 text-white px-2.5 py-1 rounded-full transition-opacity duration-300">Streak: <span id="streak-count-val">0</span> Days</span>
+                    <span id="streak-fire-icon" class="text-2xl transition-opacity duration-300">🔥</span>
+                </div>
+                <div class="space-y-1">
+                    <h2 id="streak-sessions" class="text-3xl font-black tracking-tight text-white">0 sessions</h2>
+                    <p id="stat-total-volume-hero" class="text-xs font-semibold text-white/90">Total Volume Lifted: 0 lbs</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+                <div class="app-card border app-border p-3 rounded-2xl text-center shadow-sm">
+                    <span class="block text-xl mb-1">📅</span>
+                    <span id="stat-total-sessions" class="block text-base font-bold app-text">0</span>
+                    <span class="text-[10px] app-text-muted uppercase tracking-wider">Sessions</span>
+                </div>
+
+                <!-- AVG DURATION WITH BAR GRAPH WEEKLY DROPDOWN -->
+                <div class="relative">
+                    <div onclick="toggleDurationDropdown()" class="app-card border app-border p-3 rounded-2xl text-center shadow-sm cursor-pointer hover:opacity-80 transition">
+                        <span class="block text-xl mb-1">⏱️</span>
+                        <span id="stat-avg-duration" class="block text-base font-bold app-text">0m</span>
+                        <span class="text-[10px] app-text-muted uppercase tracking-wider flex items-center justify-center gap-1">Duration ▾</span>
+                    </div>
+                    <div id="duration-dropdown-menu" class="hidden absolute left-0 right-0 top-full mt-1 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-2 text-left w-72 -ml-12">
+                        <div class="flex justify-between items-center border-b app-border pb-1">
+                            <span class="text-[10px] uppercase font-bold theme-text" id="duration-week-title">Weekly Duration Bar Graph</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="shiftDurationWeek(-1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">◀</button>
+                                <button onclick="shiftDurationWeek(1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">▶</button>
+                                <button onclick="toggleDurationDropdown()" class="text-xs app-text-muted ml-1">✕</button>
+                            </div>
+                        </div>
+                        <div id="duration-bargraph-container" class="pt-2">
+                            <!-- Populated with rounded bar graph SVG -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VOLUME WITH BAR GRAPH WEEKLY DROPDOWN -->
+                <div class="relative">
+                    <div onclick="toggleVolumeDropdown()" class="app-card border app-border p-3 rounded-2xl text-center shadow-sm cursor-pointer hover:opacity-80 transition">
+                        <span class="block text-xl mb-1">🏔️</span>
+                        <span id="stat-total-volume" class="block text-base font-bold app-text">0</span>
+                        <span class="text-[10px] app-text-muted uppercase tracking-wider flex items-center justify-center gap-1">Volume ▾</span>
+                    </div>
+                    <div id="volume-dropdown-menu" class="hidden absolute right-0 left-0 top-full mt-1 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-2 text-left w-72 -mr-12">
+                        <div class="flex justify-between items-center border-b app-border pb-1">
+                            <span class="text-[10px] uppercase font-bold theme-text" id="volume-week-title">Weekly Volume Bar Graph</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="shiftVolumeWeek(-1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">◀</button>
+                                <button onclick="shiftVolumeWeek(1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">▶</button>
+                                <button onclick="toggleVolumeDropdown()" class="text-xs app-text-muted ml-1">✕</button>
+                            </div>
+                        </div>
+                        <div id="volume-bargraph-container" class="pt-2">
+                            <!-- Populated with rounded bar graph SVG -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLLAPSIBLE CALENDAR DROPDOWN SECTION -->
+            <div class="app-card border app-border rounded-2xl shadow-sm overflow-hidden transition-all duration-200">
+                <button onclick="toggleCalendarDropdown()" class="w-full p-4 flex justify-between items-center hover:opacity-80 transition text-left">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-base">🗓️</span>
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider app-text">Workout Calendar View</h3>
+                            <p class="text-[10px] app-text-muted">Tap any day to view or edit workout history</p>
+                        </div>
+                    </div>
+                    <span id="calendar-chevron" class="text-xs font-bold app-text-muted transition-transform duration-200">▼</span>
+                </button>
+                <div id="calendar-dropdown-body" class="hidden p-4 pt-0 space-y-3 border-t app-border">
+                    <div class="flex justify-between items-center pt-3">
+                        <button onclick="changeCalendarMonth(-1)" class="p-1.5 rounded-lg app-card-sub border app-border app-text text-xs hover:opacity-80">◀ Prev</button>
+                        <span id="calendar-month-year" class="text-xs font-bold app-text">Month Year</span>
+                        <button onclick="changeCalendarMonth(1)" class="p-1.5 rounded-lg app-card-sub border app-border app-text text-xs hover:opacity-80">Next ▶</button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold app-text-muted">
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
+                    <div class="flex items-center justify-between pt-1 text-[10px] app-text-muted border-t app-border">
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full theme-bg inline-block"></span> Click a day to view/edit workout</span>
+                        <span id="calendar-active-count">0 days active</span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="switchTab('workouts')" class="md:hidden w-full app-card hover:opacity-90 border app-border app-text font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition text-xs shadow-md">
+                <span>+</span> Start Live Workout Session
+            </button>
+
+            <!-- Recent Sessions Feed -->
+            <div class="space-y-2.5 pt-2">
+                <h3 class="text-xs font-semibold app-text-muted uppercase tracking-wider">Recent sessions</h3>
+                <div id="recent-sessions-list" class="space-y-2">
+                    <div class="app-card border app-border rounded-2xl p-6 text-center space-y-2 shadow-sm">
+                        <span class="text-2xl">📋</span>
+                        <h4 class="text-xs font-bold app-text">No sessions yet</h4>
+                        <p class="text-[11px] app-text-muted">Log your first session and start building your streak.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLUMN 2: ACTIVE WORKOUT SESSION & BUILDER -->
+        <section id="tab-workouts" class="space-y-4 md:block">
+            <div id="pre-workout-container" class="app-card border app-border p-5 rounded-2xl space-y-4 shadow-sm text-center">
+                <div class="space-y-1">
+                    <span class="text-3xl">⏱️</span>
+                    <h2 class="text-base font-bold app-text">Ready to train?</h2>
+                    <p class="text-xs app-text-muted">Press start to launch your live workout timer and pick exercises or routines.</p>
+                </div>
+                <button onclick="startLiveWorkout()" class="w-full theme-bg text-white font-bold py-3.5 rounded-xl text-xs transition shadow-lg">
+                    🚀 Start Workout
+                </button>
+            </div>
+
+            <div id="active-workout-container" class="hidden app-card border app-border p-4 rounded-2xl space-y-4 shadow-sm">
+                <div class="flex justify-between items-center border-b app-border pb-3">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold theme-text">Live Session Timer</span>
+                        <div class="relative inline-block">
+                            <h2 id="live-timer-display" onclick="toggleDurationEditorDropdown()" class="text-2xl font-black app-text cursor-pointer hover:underline" title="Click to edit duration">00:00 ▾</h2>
+                            
+                            <!-- Apple-style Duration Edit Dropdown -->
+                            <div id="duration-editor-dropdown" class="hidden absolute left-0 top-full mt-2 app-card border app-border rounded-xl p-3 shadow-xl z-30 space-y-2 w-52">
+                                <div class="flex justify-between items-center text-[10px] uppercase font-bold app-text-muted">
+                                    <span>Edit Duration</span>
+                                    <button onclick="toggleDurationEditorDropdown()">✕</button>
+                                </div>
+                                <div class="grid grid-cols-3 gap-1">
+                                    <div>
+                                        <label class="block text-[8px] uppercase app-text-muted">Hrs</label>
+                                        <input type="number" id="edit-timer-hrs" min="0" value="0" class="w-full app-input border app-border rounded px-1 py-1 text-xs text-center font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[8px] uppercase app-text-muted">Mins</label>
+                                        <input type="number" id="edit-timer-mins" min="0" max="59" value="0" class="w-full app-input border app-border rounded px-1 py-1 text-xs text-center font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[8px] uppercase app-text-muted">Secs</label>
+                                        <input type="number" id="edit-timer-secs" min="0" max="59" value="0" class="w-full app-input border app-border rounded px-1 py-1 text-xs text-center font-bold">
+                                    </div>
+                                </div>
+                                <button onclick="applyCustomDuration()" class="w-full theme-bg text-white font-semibold py-1.5 rounded-lg text-xs transition">Resume Timer</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="cancelLiveWorkout()" class="text-xs text-red-500 font-semibold hover:underline px-2 py-1">Cancel</button>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Session Name</label>
+                        <input type="text" id="session-name" value="Gym session" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    
+                    <!-- REST TIMER DROPDOWN & APPLE-STYLE INPUT -->
+                    <div class="app-card-sub border app-border p-3 rounded-xl space-y-2 relative">
+                        <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleRestDropdown()">
+                            <span class="text-[10px] uppercase font-bold app-text">Rest Timer ▾</span>
+                            <span id="selected-rest-label" class="text-xs font-bold theme-text">01:00</span>
+                        </div>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="rest-dropdown-menu" class="hidden absolute left-3 right-3 top-12 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] uppercase font-bold app-text-muted">Set Rest Time (0-60 min/sec)</span>
+                                <button onclick="toggleRestDropdown()" class="text-xs app-text-muted hover:app-text">✕</button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[9px] uppercase font-semibold app-text-muted mb-1">Minutes</label>
+                                    <input type="number" id="rest-input-mins" min="0" max="60" value="1" oninput="updateRestFromInputs()" class="w-full app-input border app-border rounded-lg px-2 py-1.5 text-xs text-center app-text font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-[9px] uppercase font-semibold app-text-muted mb-1">Seconds</label>
+                                    <input type="number" id="rest-input-secs" min="0" max="60" value="0" oninput="updateRestFromInputs()" class="w-full app-input border app-border rounded-lg px-2 py-1.5 text-xs text-center app-text font-bold">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-2 border-t app-border">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold uppercase tracking-wider app-text">Select Exercises</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openCustomExerciseModal()" class="text-[10px] theme-text font-semibold hover:underline">+ Custom Exercise</button>
+                            <span id="selected-count" class="text-[10px] app-text-muted font-medium">0 selected</span>
+                        </div>
+                    </div>
+
+                    <!-- SEARCH BAR & CATEGORY FILTER DROPDOWN ADDON -->
+                    <div class="space-y-2">
+                        <div class="relative">
+                            <input type="text" id="exercise-search-input" oninput="handleExerciseFilter()" placeholder="🔍 Search exercises by name or muscle..." class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-[10px] uppercase font-semibold app-text-muted whitespace-nowrap">Filter category:</label>
+                            <select id="exercise-category-select" onchange="handleExerciseFilter()" class="w-full app-input border app-border rounded-xl px-3 py-1.5 text-xs app-text focus:outline-none focus:border-current">
+                                <option value="All">All Categories</option>
+                                <option value="Barbell">Barbell</option>
+                                <option value="Dumbbell">Dumbbell</option>
+                                <option value="Machine">Machine</option>
+                                <option value="Cable">Cable</option>
+                                <option value="Bodyweight">Bodyweight</option>
+                                <option value="Cardio">Cardio</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="exercise-library-list" class="space-y-2 max-h-52 overflow-y-auto pr-1"></div>
+                </div>
+
+                <div id="active-sets-builder" class="space-y-3 hidden pt-3 border-t app-border">
+                    <h3 class="text-xs font-bold uppercase tracking-wider theme-text">Configure Sets</h3>
+                    <div id="builder-rows" class="space-y-2"></div>
+                </div>
+
+                <div class="space-y-2 pt-2 border-t app-border">
+                    <button id="save-workout-btn" onclick="saveWorkout()" class="w-full theme-bg text-white font-semibold py-3 rounded-xl text-xs transition disabled:opacity-40 disabled:pointer-events-none">
+                        Finish & Save Workout to Cloud
+                    </button>
+                    <button id="save-routine-btn" onclick="promptSaveCurrentAsRoutine()" class="hidden w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition border app-border">
+                        📋 Save Current Workout as Routine for Later
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLUMN 3: ROUTINES & SETTINGS -->
+        <div class="space-y-4">
+            <section id="tab-routines" class="space-y-4 md:block">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-base font-bold app-text">Routines</h2>
+                        <p class="text-xs app-text-muted">Your reliable sessions, ready when you are.</p>
+                    </div>
+                    <button onclick="openCustomRoutineModal()" class="text-xs app-card border app-border app-text px-3 py-1.5 rounded-xl hover:opacity-80 transition font-semibold shadow-sm">
+                        + Custom Routine
+                    </button>
+                </div>
+                <div id="routines-list-container" class="space-y-3"></div>
+            </section>
+
+            <section id="tab-settings" class="space-y-4 md:block pt-2">
+                <div>
+                    <h2 class="text-base font-bold app-text">Settings</h2>
+                    <p class="text-xs app-text-muted">Manage account access, login credentials, and app themes.</p>
+                </div>
+
+                <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
+                    <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🌗 Display Mode</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setMode('dark')" id="mode-dark-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition">🌙 Dark</button>
+                        <button onclick="setMode('light')" id="mode-light-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition">☀️ Light</button>
+                        <button onclick="setUsagiTheme()" id="mode-usagi-btn" class="p-2.5 rounded-xl border border-amber-400 bg-amber-500/10 text-xs font-semibold text-amber-500 flex items-center justify-center gap-1.5 transition hover:opacity-90">🐰 Usagi</button>
+                    </div>
+                </div>
+
+                <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
+                    <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🎨 Custom Accent Color</h3>
+                    <div class="flex items-center gap-3">
+                        <input type="color" id="color-wheel" onchange="promptChangeThemeColor(this.value)" value="#f97316" class="w-12 h-10 rounded-xl cursor-pointer bg-transparent border app-border p-1">
+                        <div class="text-xs app-text-muted">Pick any color from the color wheel to dynamically update and sync your theme.</div>
+                    </div>
+                </div>
+
+                <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🔒 Account Security</h3>
+                    </div>
+                    <div class="space-y-2">
+                        <input type="email" id="settings-new-email" placeholder="New email address" 
+                            class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                        <button type="button" onclick="changeEmailDirectly()" class="w-full app-btn-secondary font-semibold py-2 rounded-xl text-xs transition">Update Email</button>
+
+                        <div class="relative mt-2">
+                            <input type="password" id="settings-new-password" placeholder="New password (6+ chars)" 
+                                class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current pr-10">
+                            <button type="button" onclick="togglePasswordVisibility('settings-new-password', this)" class="absolute right-3 top-2.5 text-xs text-zinc-400 hover:text-zinc-200">👁️</button>
+                        </div>
+                        <button type="button" onclick="changePasswordDirectly()" class="w-full app-btn-secondary font-semibold py-2 rounded-xl text-xs transition mt-1">Update Password</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- CUSTOM ROUTINE MODAL -->
+    <div id="custom-routine-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold uppercase tracking-wider app-text">Create Custom Routine</h3>
+                <button onclick="closeCustomRoutineModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Routine Name</label>
+                    <input type="text" id="custom-routine-title" placeholder="e.g. Heavy Leg Day" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Description / Notes</label>
+                    <input type="text" id="custom-routine-desc" placeholder="e.g. Focus on deep squats & hamstrings" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Exercises (Comma separated)</label>
+                    <input type="text" id="custom-routine-exercises" placeholder="e.g. Barbell Squat, Leg Extension" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                </div>
+                <button onclick="saveCustomRoutine()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Save Routine to Cloud</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIDEO DEMONSTRATION MODAL -->
+    <div id="video-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 id="modal-exercise-title" class="text-sm font-bold uppercase tracking-wider app-text">Exercise Demo</h3>
+                <button onclick="closeVideoModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+            </div>
+            <div class="w-full aspect-video app-card-sub rounded-xl overflow-hidden border app-border flex items-center justify-center relative">
+                <iframe id="modal-video-iframe" class="w-full h-full" src="" title="Exercise Demonstration" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            <p id="modal-exercise-desc" class="text-xs app-text-muted text-center leading-relaxed"></p>
+            <button onclick="closeVideoModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">Got it</button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar (Mobile only) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 app-header border-t app-border backdrop-blur-md z-30 max-w-md mx-auto flex justify-around py-3 px-2">
+        <button onclick="switchTab('home')" id="nav-home" class="nav-btn flex flex-col items-center theme-text transition">
+            <span class="text-lg">🏠</span>
+            <span class="text-[10px] font-medium mt-0.5">Dashboard</span>
+        </button>
+        <button onclick="switchTab('workouts')" id="nav-workouts" class="nav-btn flex flex-col items-center app-text-muted hover:app-text transition">
+            <span class="text-lg">⚡</span>
+            <span class="text-[10px] font-medium mt-0.5">Workouts</span>
+        </button>
+        <button onclick="switchTab('routines')" id="nav-routines" class="nav-btn flex flex-col items-center app-text-muted hover:app-text transition">
+            <span class="text-lg">📋</span>
+            <span class="text-[10px] font-medium mt-0.5">Routines</span>
+        </button>
+        <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn flex flex-col items-center app-text-muted hover:app-text transition">
+            <span class="text-lg">⚙️</span>
+            <span class="text-[10px] font-medium mt-0.5">Settings</span>
+        </button>
+    </nav>
+
+    <!-- Theme Styles & App Script -->
+    <style>
+        :root {
+            --theme-color: #f97316;
+            --theme-gradient: linear-gradient(to bottom right, #ea580c, #d97706);
+        }
+        html:not(.dark) {
+            --bg-main: #f4f4f5; --bg-card: #ffffff; --bg-card-sub: #f1f3f5; --bg-input: #f9fafb;
+            --text-main: #18181b; --text-muted: #71717a; --border-color: #e4e4e7;
+            --btn-sec-bg: #f4f4f5; --btn-sec-hover: #e4e4e7; --btn-sec-text: #27272a;
+        }
+        html.dark {
+            --bg-main: #09090b; --bg-card: #121214; --bg-card-sub: #18181b; --bg-input: #09090b;
+            --text-main: #f4f4f5; --text-muted: #a1a1aa; --border-color: #27272a;
+            --btn-sec-bg: #27272a; --btn-sec-hover: #3f3f46; --btn-sec-text: #f4f4f5;
+        }
+        html.usagi-theme {
+            --bg-main: #fffbeb; --bg-card: #fef3c7; --bg-card-sub: #fde68a; --bg-input: #fff7ed;
+            --text-main: #78350f; --text-muted: #92400e; --border-color: #fcd34d;
+            --btn-sec-bg: #fde68a; --btn-sec-hover: #fbcfe8; --btn-sec-text: #78350f;
+            --theme-color: #d97706;
+            --theme-gradient: linear-gradient(to bottom right, #f59e0b, #d97706);
+        }
+        body.app-body { background-color: var(--bg-main); color: var(--text-main); }
+        .app-card { background-color: var(--bg-card); color: var(--text-main); }
+        .app-card-sub { background-color: var(--bg-card-sub); }
+        .app-input { background-color: var(--bg-input); color: var(--text-main); }
+        .app-header { background-color: var(--bg-card); background-color: color-mix(in srgb, var(--bg-card) 85%, transparent); }
+        .app-border { border-color: var(--border-color); }
+        .app-text { color: var(--text-main); }
+        .app-text-muted { color: var(--text-muted); }
+        .app-btn-secondary { background-color: var(--btn-sec-bg); color: var(--btn-sec-text); }
+        .app-btn-secondary:hover { background-color: var(--btn-sec-hover); }
+        .theme-bg { background-color: var(--theme-color); }
+        .theme-text { color: var(--theme-color); }
+        .theme-gradient { background: var(--theme-gradient); }
+        input:focus { border-color: var(--theme-color) !important; }
+        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(150,150,150,0.3); border-radius: 4px; }
+    </style>
+
+    <script>
+        const SUPABASE_URL = 'https://iampcdalppcqgcuztrqb.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_jClQ2iDvEQfHVpZBHNNkSA_68g9w51G';
+
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let isSignUpMode = false;
+        let currentThemeColor = localStorage.getItem('liftpulse_custom_color') || '#f97316';
+        let currentMode = localStorage.getItem('liftpulse_mode') || 'dark';
+        let settingsChannel = null;
+
+        // Rest Timer variables
+        let defaultRestSeconds = 60;
+        let restTimeRemaining = 0;
+        let restTimerInterval = null;
+
+        // Weekly bar graph navigation offsets
+        let currentDurationWeekOffset = 0;
+        let currentVolumeWeekOffset = 0;
+
+        if (currentMode === 'usagi') {
+            setUsagiTheme(false);
+        } else {
+            setCustomThemeColor(currentThemeColor, false);
+            setMode(currentMode, false);
+        }
+        updateGreeting();
+
+        function updateGreeting() {
+            const hour = new Date().getHours();
+            const greetingEl = document.getElementById('header-greeting');
+            let greeting = 'Good morning.';
+            if (hour >= 12 && hour < 17) greeting = 'Good afternoon.';
+            else if (hour >= 17 || hour < 5) greeting = 'Good evening.';
+            if (greetingEl) greetingEl.textContent = `${greeting}`;
+        }
+
+        function setUsagiTheme(save = true) {
+            currentMode = 'usagi';
+            if (save) localStorage.setItem('liftpulse_mode', 'usagi');
+            document.documentElement.classList.add('usagi-theme');
+            document.documentElement.classList.remove('dark');
+            const modeIcon = document.getElementById('mode-icon');
+            if (modeIcon) modeIcon.innerText = '🐰';
+            
+            const avatar = document.getElementById('header-avatar');
+            if (avatar) avatar.classList.remove('hidden');
+            const watermark = document.getElementById('hero-usagi-watermark');
+            if (watermark) watermark.classList.remove('hidden');
+            const editBadge = document.getElementById('edit-routine-usagi-badge');
+            if (editBadge) editBadge.classList.remove('hidden');
+        }
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerText = '🙈';
+            } else {
+                input.type = 'password';
+                btn.innerText = '👁️';
+            }
+        }
+
+        const EXERCISE_LIBRARY = [
+            // Chest
+            { name: 'Barbell Bench Press', category: 'Barbell', muscle: 'Chest', videoId: 'gRVjAtPip0Y', desc: 'Retract shoulder blades, plant feet firmly, and press the barbell in a slight arc over your chest.' },
+            { name: 'Incline Barbell Bench Press', category: 'Barbell', muscle: 'Chest', videoId: 'SgyuMcxSBsw', desc: 'Set bench to 30-45 degrees and press the barbell up, targeting upper chest.' },
+            { name: 'Decline Barbell Bench Press', category: 'Barbell', muscle: 'Chest', videoId: 'hPPgqpGUkIA', desc: 'Secure feet and press barbell from a declined angle to target lower chest.' },
+            { name: 'Dumbbell Bench Press', category: 'Dumbbell', muscle: 'Chest', videoId: 'VmB1G1K7v94', desc: 'Press dumbbells with a neutral or slightly angled wrist, achieving a deep stretch at the bottom.' },
+            { name: 'Incline Dumbbell Press', category: 'Dumbbell', muscle: 'Chest', videoId: '8iPEnkdISio', desc: 'Set bench to 30-45 degrees, press dumbbells up while keeping elbows tucked at 45 degrees.' },
+            { name: 'Decline Dumbbell Press', category: 'Dumbbell', muscle: 'Chest', videoId: '3d5p_p8pZyk', desc: 'Press dumbbells on a decline bench for lower pectoral emphasis.' },
+            { name: 'Chest Fly Machine', category: 'Machine', muscle: 'Chest', videoId: 'Iiph0bt9-cg', desc: 'Maintain a slight bend in your elbows and squeeze your inner chest together at peak contraction.' },
+            { name: 'Cable Crossover', category: 'Cable', muscle: 'Chest', videoId: 'taI4XduLpTk', desc: 'Bring handles together in a hugging motion across your chest for maximum tension.' },
+            { name: 'Push Ups', category: 'Bodyweight', muscle: 'Chest', videoId: 'IODxDxX7oi4', desc: 'Keep body in a rigid plank position, lowering chest to the floor before pressing back up.' },
+            { name: 'Dips (Chest)', category: 'Bodyweight', muscle: 'Chest', videoId: '2z8JmcrW-As', desc: 'Lean forward slightly as you lower your body to focus tension on the lower chest.' },
+
+            // Back
+            { name: 'Deadlift', category: 'Barbell', muscle: 'Back', videoId: 'op9kVnSso6Q', desc: 'Keep a neutral spine, engage lats, and drive the floor away with your legs locked in.' },
+            { name: 'Barbell Row', category: 'Barbell', muscle: 'Back', videoId: 'G8l_8chR5BE', desc: 'Hinge forward to torso parallel, pull the bar into your lower ribcage, and squeeze your back.' },
+            { name: 'Pendlay Row', category: 'Barbell', muscle: 'Back', videoId: 'ZlDTgLBzpnI', desc: 'Explosively pull the barbell from the floor to your chest with a parallel torso.' },
+            { name: 'T-Bar Row', category: 'Barbell', muscle: 'Back', videoId: 'jHu2GinZBRM', desc: 'Pull handle toward your torso with a neutral spine and braced core.' },
+            { name: 'One-Arm Dumbbell Row', category: 'Dumbbell', muscle: 'Back', videoId: 'pShLgMglZkI', desc: 'Brace on bench, pull dumbbell to your hip pocket, keeping elbow tucked.' },
+            { name: 'Dumbbell Pullover', category: 'Dumbbell', muscle: 'Back', videoId: 'CF3b39k6lH0', desc: 'Lie across bench holding one dumbbell, lowering it overhead to stretch lats and chest.' },
+            { name: 'Lat Pulldown', category: 'Machine', muscle: 'Back', videoId: 'CAwf7n6Luuc', desc: 'Drive elbows down and back toward your hips while keeping your chest lifted high.' },
+            { name: 'Seated Cable Row', category: 'Cable', muscle: 'Back', videoId: 'GZbfZ033f74', desc: 'Keep a straight torso, pull handle to your belly button, and squeeze shoulder blades together.' },
+            { name: 'Straight-Arm Pulldown', category: 'Cable', muscle: 'Back', videoId: 'vC_mZ9E_oCA', desc: 'Keep arms straight, press cable down to thighs to isolate lats.' },
+            { name: 'Pull Ups', category: 'Bodyweight', muscle: 'Back', videoId: 'eGo4IYlbE5g', desc: 'Initiate pull by depressing shoulder blades and pulling your chin entirely over the bar.' },
+            { name: 'Chin Ups', category: 'Bodyweight', muscle: 'Back', videoId: 'brhRXlOhsAM', desc: 'Use an underhand grip to emphasize biceps and lower lats during the pull.' },
+
+            // Shoulders
+            { name: 'Barbell Overhead Press (OHP)', category: 'Barbell', muscle: 'Shoulders', videoId: '2yjwXTZQDDI', desc: 'Brace core and press barbell strictly overhead past your face.' },
+            { name: 'Push Press', category: 'Barbell', muscle: 'Shoulders', videoId: 'mxfBUsQ3Oyc', desc: 'Use a minor leg dip and drive to assist pushing heavier loads overhead.' },
+            { name: 'Dumbbell Shoulder Press', category: 'Dumbbell', muscle: 'Shoulders', videoId: 'qEswVCRioUs', desc: 'Press dumbbells overhead in a controlled path without excessive lower back arching.' },
+            { name: 'Dumbbell Lateral Raise', category: 'Dumbbell', muscle: 'Shoulders', videoId: '3VcKaXpzqRo', desc: 'Lead slightly with your elbows out to the sides to isolate side delts without swinging.' },
+            { name: 'Dumbbell Front Raise', category: 'Dumbbell', muscle: 'Shoulders', videoId: 'gzH_4X1v6bc', desc: 'Raise dumbbells forward to eye level with slight control.' },
+            { name: 'Dumbbell Rear Delt Fly', category: 'Dumbbell', muscle: 'Shoulders', videoId: 'ttvfgbwfCWY', desc: 'Hinge forward and raise arms out to sides, targeting rear deltoids.' },
+            { name: 'Cable Lateral Raise', category: 'Cable', muscle: 'Shoulders', videoId: 'PIf9GvLA6lQ', desc: 'Keep cable at wrist height and raise across or behind body for continuous tension on side delts.' },
+            { name: 'Face Pull', category: 'Cable', muscle: 'Shoulders', videoId: 'rep-qVOkqgk', desc: 'Pull rope attachment toward your forehead, separating hands and flaring elbows high for rear delts.' },
+
+            // Legs / Glutes / Hamstrings
+            { name: 'Barbell Squat', category: 'Barbell', muscle: 'Legs', videoId: 'bEv6CCg2BC8', desc: 'Keep chest up, core braced, and break parallel by sitting back into your hips.' },
+            { name: 'Front Squat', category: 'Barbell', muscle: 'Legs', videoId: 'HHno_IZgyhg', desc: 'Keep elbows high and torso upright to emphasize quadriceps.' },
+            { name: 'Barbell Bulgarian Split Squat', category: 'Barbell', muscle: 'Legs', videoId: '2C-u0IOVZJw', desc: 'Rear foot elevated, lower back knee toward the floor while keeping front shin vertical.' },
+            { name: 'Barbell Walking Lunge', category: 'Barbell', muscle: 'Legs', videoId: 'D7KaRcUTQoE', desc: 'Step forward into a lunge with barbell across traps, maintaining balance.' },
+            { name: 'Romanian Deadlift (RDL)', category: 'Barbell', muscle: 'Hamstrings', videoId: 'JCXUYuzwNrM', desc: 'Hinge at the hips with a slight knee bend, lowering the bar along your shins until a deep hamstring stretch is felt.' },
+            { name: 'Sumo Deadlift', category: 'Barbell', muscle: 'Legs', videoId: 'wYrewfIKoTM', desc: 'Wide stance with toes pointed out, keeping torso upright and driving through heels.' },
+            { name: 'Goblet Squat', category: 'Dumbbell', muscle: 'Legs', videoId: 'MeIiIdhvXT4', desc: 'Hold dumbbell vertically against chest, squatting deep with an upright posture.' },
+            { name: 'Dumbbell Lunges', category: 'Dumbbell', muscle: 'Legs', videoId: 'D7KaRcUTQoE', desc: 'Step forward or reverse with dumbbells at your sides, lowering hips straight down.' },
+            { name: 'Seated Leg Press', category: 'Machine', muscle: 'Legs', videoId: 'IZxyjW7MPJQ', desc: 'Place feet shoulder-width on the platform, lower safely to 90 degrees, and press through heels.' },
+            { name: 'Leg Extension Machine', category: 'Machine', muscle: 'Legs', videoId: 'YyvSfVjQeL0', desc: 'Secure pad against lower shins and extend legs fully, squeezing quads at the top.' },
+            { name: 'Seated Leg Curl Machine', category: 'Machine', muscle: 'Hamstrings', videoId: 'ELOCsoDSmrg', desc: 'Curl pad downward and backward toward glutes to isolate hamstrings.' },
+            { name: 'Standing Calf Raise', category: 'Machine', muscle: 'Calves', videoId: 'YMx_nzZuWqA', desc: 'Lower heels for a deep calf stretch and rise onto toes at peak contraction.' },
+            { name: 'Air Squats', category: 'Bodyweight', muscle: 'Legs', videoId: 'C_VtOYc6j5c', desc: 'Bodyweight squats focusing on depth and mobility.' },
+
+            // Arms (Biceps & Triceps)
+            { name: 'Barbell Bicep Curl', category: 'Barbell', muscle: 'Arms', videoId: 'kwG2ipFRgfo', desc: 'Keep elbows pinned to your sides and curl the barbell upward without swinging.' },
+            { name: 'EZ Bar Preacher Curl', category: 'Barbell', muscle: 'Arms', videoId: 'fIWP-FRFNU0', desc: 'Rest upper arms firmly on preacher pad and curl upward for strict bicep isolation.' },
+            { name: 'Dumbbell Bicep Curl', category: 'Dumbbell', muscle: 'Arms', videoId: 'sAq_ocpRh_I', desc: 'Supinate wrists (turn palms up) as you curl dumbbells upward.' },
+            { name: 'Hammer Curl', category: 'Dumbbell', muscle: 'Arms', videoId: 'zWbo4fEtKGY', desc: 'Hold dumbbells with a neutral grip and curl upward to target brachialis and forearms.' },
+            { name: 'Incline Dumbbell Curl', category: 'Dumbbell', muscle: 'Arms', videoId: 'soCLbjaLWxs', desc: 'Sit on an incline bench to stretch the bicep long before curling.' },
+            { name: 'Concentration Curl', category: 'Dumbbell', muscle: 'Arms', videoId: '0AUGkch3tzc', desc: 'Elbow braced against inner thigh, curling dumbbell with peak bicep contraction.' },
+            { name: 'Close-Grip Bench Press', category: 'Barbell', muscle: 'Arms', videoId: 'nEF0bjDUJaM', desc: 'Keep hands shoulder-width apart to emphasize triceps during bench press.' },
+            { name: 'Skull Crushers', category: 'Barbell', muscle: 'Arms', videoId: 'd_KZxkJfBq0', desc: 'Lower EZ bar toward forehead by bending elbows, then press back up.' },
+            { name: 'Dumbbell Overhead Tricep Extension', category: 'Dumbbell', muscle: 'Arms', videoId: 'nRiJVZDpdL0', desc: 'Hold dumbbell overhead with both hands and lower behind head before extending arms.' },
+            { name: 'Tricep Pushdown (Cable)', category: 'Cable', muscle: 'Arms', videoId: '2-LAMcpzODU', desc: 'Keep upper arms locked by your sides and push cable attachment downward.' },
+            { name: 'One-Arm Tricep Extension', category: 'Cable', muscle: 'Arms', videoId: 'nRiJVZDpdL0', desc: 'Keep upper arm locked in place by your side and fully extend forearm downward with cable or band.' },
+            { name: 'Dips (Tricep)', category: 'Bodyweight', muscle: 'Arms', videoId: '2z8JmcrW-As', desc: 'Keep torso upright to target triceps.' },
+
+            // Abs & Core
+            { name: 'Plank', category: 'Bodyweight', muscle: 'Abs', videoId: 'pSHjTRCQxIw', desc: 'Maintain a straight body line, bracing core and glutes.' },
+            { name: 'Hanging Leg Raise', category: 'Bodyweight', muscle: 'Abs', videoId: 'hdng3Nm1x_E', desc: 'Hang from pull-up bar and raise legs or knees upward with minimal swinging.' },
+            { name: 'Cable Crunch', category: 'Cable', muscle: 'Abs', videoId: '2f5JW3Tq2n4', desc: 'Kneel in front of cable pulley, crunching ribs down toward pelvis.' },
+            { name: 'Russian Twist', category: 'Bodyweight', muscle: 'Abs', videoId: 'wkD8rjkodUI', desc: 'Sit with feet elevated and twist torso side to side.' },
+            { name: 'Ab Wheel Rollout', category: 'Bodyweight', muscle: 'Abs', videoId: 'rqi_XzWwP2k', desc: 'Roll ab wheel forward while keeping core braced and lower back safe.' },
+
+            // Cardio
+            { name: 'Stationary Cycling', category: 'Cardio', muscle: 'Legs', videoId: '7Y8j952f4kg', desc: 'Maintain steady cadence and resistance to boost conditioning and leg endurance.' },
+            { name: 'Treadmill Running', category: 'Cardio', muscle: 'Legs', videoId: 'c1V3E2B8v4Q', desc: 'Maintain steady running or jogging pace for cardiovascular endurance.' },
+            { name: 'Rowing Machine (Erg)', category: 'Cardio', muscle: 'Back', videoId: 'Hojvjd421V0', desc: 'Drive with legs, hinge back with hips, and pull handle to sternum.' }
+        ];
+
+        let selectedExercises = [];
+        let customRoutines = [];
+        let globalWorkoutsData = [];
+        let calendarCurrentDate = new Date();
+
+        let workoutTimerInterval = null;
+        let workoutSecondsElapsed = 0;
+
+        function startLiveWorkout(title = "Gym session", exercises = []) {
+            document.getElementById('pre-workout-container').classList.add('hidden');
+            document.getElementById('active-workout-container').classList.remove('hidden');
+            document.getElementById('save-routine-btn').classList.remove('hidden');
+
+            document.getElementById('session-name').value = title;
+            
+            selectedExercises = exercises.map(ex => {
+                if (typeof ex === 'string') {
+                    return { name: ex, sets: [{ weight: 135, reps: 10, completed: false }] };
+                } else {
+                    return {
+                        name: ex.name,
+                        sets: ex.sets && ex.sets.length > 0 ? ex.sets.map(s => ({ ...s, completed: s.completed || false })) : [{ weight: ex.weight || 135, reps: ex.reps || 10, completed: false }]
+                    };
+                }
+            });
+
+            document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
+
+            renderExerciseLibrary();
+            renderBuilderRows();
+
+            workoutSecondsElapsed = 0;
+            if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+            workoutTimerInterval = setInterval(() => {
+                workoutSecondsElapsed++;
+                updateLiveTimerDisplay();
+            }, 1000);
+        }
+
+        function updateLiveTimerDisplay() {
+            const mins = String(Math.floor(workoutSecondsElapsed / 60)).padStart(2, '0');
+            const secs = String(workoutSecondsElapsed % 60).padStart(2, '0');
+            document.getElementById('live-timer-display').innerText = `${mins}:${secs} ▾`;
+        }
+
+        function toggleDurationEditorDropdown() {
+            const dropdown = document.getElementById('duration-editor-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function applyCustomDuration() {
+            const hrs = parseInt(document.getElementById('edit-timer-hrs').value) || 0;
+            const mins = parseInt(document.getElementById('edit-timer-mins').value) || 0;
+            const secs = parseInt(document.getElementById('edit-timer-secs').value) || 0;
+
+            workoutSecondsElapsed = (hrs * 3600) + (mins * 60) + secs;
+            updateLiveTimerDisplay();
+            toggleDurationEditorDropdown();
+        }
+
+        function cancelLiveWorkout() {
+            if (confirm("Are you sure you want to cancel this workout? Progress will be lost.")) {
+                if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+                if (restTimerInterval) clearInterval(restTimerInterval);
+                document.getElementById('active-workout-container').classList.add('hidden');
+                document.getElementById('pre-workout-container').classList.remove('hidden');
+                document.getElementById('save-routine-btn').classList.add('hidden');
+                selectedExercises = [];
+            }
+        }
+
+        // --- REST TIMER CONTROLS & APPLE-STYLE DROPDOWN ---
+        function toggleRestDropdown() {
+            const dropdown = document.getElementById('rest-dropdown-menu');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function updateRestFromInputs() {
+            let mins = parseInt(document.getElementById('rest-input-mins').value) || 0;
+            let secs = parseInt(document.getElementById('rest-input-secs').value) || 0;
+
+            if (mins > 60) { mins = 60; document.getElementById('rest-input-mins').value = 60; }
+            if (mins < 0) { mins = 0; document.getElementById('rest-input-mins').value = 0; }
+            if (secs > 60) { secs = 60; document.getElementById('rest-input-secs').value = 60; }
+            if (secs < 0) { secs = 0; document.getElementById('rest-input-secs').value = 0; }
+
+            defaultRestSeconds = (mins * 60) + secs;
+
+            const formattedMins = String(mins).padStart(2, '0');
+            const formattedSecs = String(secs).padStart(2, '0');
+            const labelEl = document.getElementById('selected-rest-label');
+            if (labelEl) labelEl.innerText = `${formattedMins}:${formattedSecs}`;
+        }
+
+        function startRestTimer(seconds) {
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            restTimeRemaining = seconds;
+            updateRestDisplay();
+            
+            const actionBtn = document.getElementById('rest-modal-action-btn');
+            actionBtn.innerText = "Skip Rest";
+            document.getElementById('rest-timer-modal-desc').innerText = "Catch your breath and get ready for the next set!";
+            document.getElementById('rest-timer-modal').classList.remove('hidden');
+
+            restTimerInterval = setInterval(() => {
+                restTimeRemaining--;
+                updateRestDisplay();
+                if (restTimeRemaining <= 0) {
+                    clearInterval(restTimerInterval);
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                    document.getElementById('rest-countdown-display').innerText = "REST OVER!";
+                    document.getElementById('rest-timer-modal-desc').innerText = "Time's up! Continue to your next set or exercise.";
+                    actionBtn.innerText = "Continue";
+                }
+            }, 1000);
+        }
+
+        function updateRestDisplay() {
+            const mins = String(Math.floor(restTimeRemaining / 60)).padStart(2, '0');
+            const secs = String(restTimeRemaining % 60).padStart(2, '0');
+            const displayEl = document.getElementById('rest-countdown-display');
+            if (displayEl && restTimeRemaining > 0) {
+                displayEl.innerText = `${mins}:${secs}`;
+            }
+        }
+
+        function addRestTime(seconds) {
+            restTimeRemaining += seconds;
+            if (restTimeRemaining > 0) {
+                document.getElementById('rest-modal-action-btn').innerText = "Skip Rest";
+                document.getElementById('rest-timer-modal-desc').innerText = "Catch your breath and get ready for the next set!";
+            }
+            updateRestDisplay();
+        }
+
+        function dismissRestTimer() {
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            document.getElementById('rest-timer-modal').classList.add('hidden');
+        }
+
+        // --- CUSTOM EXERCISE MODAL LOGIC WITH PERMANENT SYNC ---
+        function openCustomExerciseModal() {
+            document.getElementById('custom-exercise-modal').classList.remove('hidden');
+        }
+
+        function closeCustomExerciseModal() {
+            document.getElementById('custom-exercise-modal').classList.add('hidden');
+        }
+
+        async function saveCustomExercise() {
+            const name = document.getElementById('custom-ex-name').value.trim();
+            const category = document.getElementById('custom-ex-category').value;
+            const muscle = document.getElementById('custom-ex-muscle').value.trim() || 'General';
+            const shouldSyncPermanent = document.getElementById('custom-ex-sync-permanent').checked;
+
+            if (!name) {
+                alert("Please enter a custom exercise name.");
+                return;
+            }
+
+            const exists = EXERCISE_LIBRARY.some(e => e.name.toLowerCase() === name.toLowerCase());
+            if (!exists) {
+                EXERCISE_LIBRARY.push({
+                    name: name,
+                    category: category,
+                    muscle: muscle,
+                    videoId: '',
+                    desc: 'Custom added exercise.'
+                });
+            }
+
+            if (shouldSyncPermanent && currentUser) {
+                const { error } = await _supabase.from('user_exercises').insert([{
+                    user_id: currentUser.id,
+                    name: name,
+                    category: category,
+                    muscle: muscle
+                }]);
+                if (error && !error.message.includes('duplicate key')) {
+                    console.error("Error syncing permanent exercise:", error.message);
+                }
+            }
+
+            // Check if routine modal is open, add there; otherwise add to session
+            if (!document.getElementById('edit-routine-modal').classList.contains('hidden')) {
+                editRoutineExercises.push({ name: name, sets: [{ weight: 135, reps: 10 }] });
+                renderEditRoutineRows();
+                updateRoutineExercisesInputString();
+            } else {
+                if (!selectedExercises.some(e => e.name === name)) {
+                    selectedExercises.push({ name: name, sets: [{ weight: 135, reps: 10, completed: false }] });
+                }
+                document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
+                renderExerciseLibrary();
+                renderBuilderRows();
+            }
+
+            document.getElementById('custom-ex-name').value = '';
+            document.getElementById('custom-ex-muscle').value = '';
+            closeCustomExerciseModal();
+        }
+
+        function openCustomExerciseModalForRoutineEdit() {
+            openCustomExerciseModal();
+        }
+
+        // --- SAVE CURRENT WORKOUT AS ROUTINE ---
+        async function promptSaveCurrentAsRoutine() {
+            if (!currentUser) {
+                alert("Please sign in to save routines to the cloud.");
+                openAuthModal();
+                return;
+            }
+            if (selectedExercises.length === 0) {
+                alert("Please select at least one exercise before saving as a routine.");
+                return;
+            }
+
+            const title = document.getElementById('session-name').value || "Custom Routine";
+            const desc = prompt("Enter a short description or notes for this routine:", "Saved from live session");
+            if (desc === null) return;
+
+            const { error } = await _supabase.from('routines').insert([{
+                user_id: currentUser.id,
+                title: title,
+                desc: desc,
+                exercises: selectedExercises
+            }]);
+
+            if (error) {
+                alert("Error saving routine: " + error.message);
+            } else {
+                alert("Workout successfully saved as a routine for future sessions!");
+                fetchUserData();
+            }
+        }
+
+        // --- ROUTINE EDITING & DELETION LOGIC (FULL WORKOUT/LIFTOFF MENU STYLE) ---
+        let editRoutineExercises = [];
+
+        function openEditRoutineModal(routineId) {
+            const routine = customRoutines.find(r => r.id === routineId);
+            if (!routine) return;
+
+            document.getElementById('edit-routine-id').value = routine.id;
+            document.getElementById('edit-routine-title').value = routine.title || '';
+            document.getElementById('edit-routine-desc').value = routine.desc || '';
+            
+            editRoutineExercises = JSON.parse(JSON.stringify(routine.exercises || []));
+            updateRoutineExercisesInputString();
+
+            renderEditRoutineRows();
+            document.getElementById('edit-routine-modal').classList.remove('hidden');
+        }
+
+        function updateRoutineExercisesInputString() {
+            const exNames = editRoutineExercises.map(ex => typeof ex === 'string' ? ex : ex.name).join(', ');
+            document.getElementById('edit-routine-exercises').value = exNames;
+        }
+
+        function closeEditRoutineModal() {
+            document.getElementById('edit-routine-modal').classList.add('hidden');
+        }
+
+        function addSetToEditRoutineExercise(idx) {
+            captureEditRoutineInputValues();
+            if (!editRoutineExercises[idx].sets) editRoutineExercises[idx].sets = [];
+            editRoutineExercises[idx].sets.push({ weight: 135, reps: 10 });
+            renderEditRoutineRows();
+        }
+
+        function removeSetFromEditRoutineExercise(exIdx, setIdx) {
+            captureEditRoutineInputValues();
+            if (editRoutineExercises[exIdx].sets.length <= 1) {
+                editRoutineExercises.splice(exIdx, 1);
+            } else {
+                editRoutineExercises[exIdx].sets.splice(setIdx, 1);
+            }
+            renderEditRoutineRows();
+            updateRoutineExercisesInputString();
+        }
+
+        function captureEditRoutineInputValues() {
+            editRoutineExercises.forEach((exObj, idx) => {
+                const name = typeof exObj === 'string' ? exObj : exObj.name;
+                const sets = exObj.sets || [{ weight: 135, reps: 10 }];
+                
+                const updatedSets = sets.map((set, sIdx) => {
+                    const wtInput = document.getElementById(`edit-routine-ex-${idx}-set-${sIdx}-wt`);
+                    const repInput = document.getElementById(`edit-routine-ex-${idx}-set-${sIdx}-rep`);
+                    return {
+                        weight: wtInput ? parseFloat(wtInput.value) || 0 : (set.weight || 135),
+                        reps: repInput ? parseFloat(repInput.value) || 0 : (set.reps || 10),
+                        completed: false
+                    };
+                });
+                editRoutineExercises[idx] = { name, sets: updatedSets };
+            });
+        }
+
+        function renderEditRoutineRows() {
+            const container = document.getElementById('edit-routine-rows');
+            container.innerHTML = '';
+
+            if (editRoutineExercises.length === 0) {
+                container.innerHTML = '<p class="text-xs app-text-muted text-center py-2">No exercises added yet.</p>';
+                return;
+            }
+
+            editRoutineExercises.forEach((exObj, idx) => {
+                const name = typeof exObj === 'string' ? exObj : exObj.name;
+                const sets = exObj.sets || [{ weight: 135, reps: 10 }];
+                
+                let setsHtml = '';
+                sets.forEach((set, sIdx) => {
+                    setsHtml += `
+                        <div class="flex items-center gap-2 mt-1.5 bg-black/5 dark:bg-white/5 p-2 rounded-lg">
+                            <span class="text-[9px] font-bold app-text-muted w-10">Set ${sIdx + 1}</span>
+                            <div class="flex-1 grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[8px] uppercase app-text-muted">Weight (lbs)</label>
+                                    <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-wt" value="${set.weight || 135}" class="w-full app-input border app-border rounded px-2 py-1 text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-[8px] uppercase app-text-muted">Reps</label>
+                                    <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-rep" value="${set.reps || 10}" class="w-full app-input border app-border rounded px-2 py-1 text-xs">
+                                </div>
+                            </div>
+                            <button onclick="removeSetFromEditRoutineExercise(${idx}, ${sIdx})" class="text-xs text-red-500 hover:underline px-1 self-end pb-1" title="Remove Set">✕</button>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML += `
+                    <div class="app-card-sub border app-border p-3 rounded-xl text-xs space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold app-text">${idx + 1}. ${name}</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="addSetToEditRoutineExercise(${idx})" class="text-[10px] theme-text font-semibold hover:underline">+ Add Set</button>
+                                <button onclick="editRoutineExercises.splice(${idx}, 1); renderEditRoutineRows(); updateRoutineExercisesInputString();" class="text-[10px] text-red-500 hover:underline">Remove</button>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            ${setsHtml}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function saveEditedRoutine() {
+            captureEditRoutineInputValues();
+            const routineId = document.getElementById('edit-routine-id').value;
+            const title = document.getElementById('edit-routine-title').value;
+            const desc = document.getElementById('edit-routine-desc').value;
+
+            const { error } = await _supabase.from('routines').update({
+                title: title,
+                desc: desc,
+                exercises: editRoutineExercises
+            }).eq('id', routineId);
+
+            if (error) {
+                alert("Error updating routine: " + error.message);
+            } else {
+                alert("Routine updated successfully!");
+                closeEditRoutineModal();
+                fetchUserData();
+            }
+        }
+
+        function promptDeleteRoutine(routineId, routineTitle) {
+            openConfirmModal(
+                "Delete Routine?",
+                `Are you sure you want to delete "${routineTitle}"? This cannot be undone.`,
+                async () => {
+                    closeConfirmModal();
+                    await executeDeleteRoutine(routineId);
+                }
+            );
+        }
+
+        async function executeDeleteRoutine(routineId) {
+            const { error } = await _supabase.from('routines').delete().eq('id', routineId);
+            if (error) {
+                alert("Error deleting routine: " + error.message);
+            } else {
+                alert("Routine deleted successfully.");
+                fetchUserData();
+            }
+        }
+
+        // --- EDIT & DELETE WORKOUT LOGIC ---
+        function openEditWorkoutModal(workoutId) {
+            const workout = globalWorkoutsData.find(w => w.id === workoutId);
+            if (!workout) return;
+
+            document.getElementById('edit-workout-id').value = workout.id;
+            document.getElementById('edit-session-name').value = workout.title || 'Gym session';
+            document.getElementById('edit-session-duration').value = workout.duration || 45;
+            document.getElementById('edit-session-volume').value = workout.volume || 0;
+
+            const container = document.getElementById('edit-exercises-container');
+            container.innerHTML = '<h4 class="text-xs font-bold uppercase tracking-wider app-text mb-1">Exercises & Sets</h4>';
+
+            const exs = workout.exercises || [];
+            if (exs.length === 0) {
+                container.innerHTML += '<p class="text-xs app-text-muted">No exercises recorded for this session.</p>';
+            } else {
+                exs.forEach((ex, exIdx) => {
+                    const setsList = ex.sets && ex.sets.length > 0 ? ex.sets : [{ weight: ex.weight || 0, reps: ex.reps || 0 }];
+                    
+                    let setsHtml = '';
+                    setsList.forEach((set, setIdx) => {
+                        setsHtml += `
+                            <div class="grid grid-cols-2 gap-2 mt-1">
+                                <div><span class="text-[9px] app-text-muted">Set ${setIdx + 1} Wt:</span> <input type="number" id="edit-ex-${exIdx}-set-${setIdx}-wt" value="${set.weight || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
+                                <div><span class="text-[9px] app-text-muted">Reps:</span> <input type="number" id="edit-ex-${exIdx}-set-${setIdx}-rep" value="${set.reps || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
+                            </div>
+                        `;
+                    });
+
+                    container.innerHTML += `
+                        <div class="app-card-sub border app-border p-2.5 rounded-xl text-xs space-y-1" data-edit-ex-idx="${exIdx}" data-set-count="${setsList.length}">
+                            <p class="font-bold app-text">${ex.name || 'Exercise'}</p>
+                            <div id="edit-ex-sets-wrapper-${exIdx}" class="space-y-1">
+                                ${setsHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('edit-workout-modal').classList.remove('hidden');
+        }
+
+        function closeEditWorkoutModal() {
+            document.getElementById('edit-workout-modal').classList.add('hidden');
+        }
+
+        function promptSaveEditedWorkout() {
+            openConfirmModal(
+                "Save Changes?",
+                "Are you sure you want to update this workout with your new changes?",
+                async () => {
+                    closeConfirmModal();
+                    await executeSaveEditedWorkout();
+                }
+            );
+        }
+
+        async function executeSaveEditedWorkout() {
+            const workoutId = document.getElementById('edit-workout-id').value;
+            const newTitle = document.getElementById('edit-session-name').value;
+            const newDuration = parseInt(document.getElementById('edit-session-duration').value) || 0;
+
+            const workout = globalWorkoutsData.find(w => w.id == workoutId);
+            if (!workout) return;
+
+            let calculatedTotalVolume = 0;
+            const updatedExercises = (workout.exercises || []).map((ex, exIdx) => {
+                const cardEl = document.querySelector(`[data-edit-ex-idx="${exIdx}"]`);
+                const setCount = parseInt(cardEl?.getAttribute('data-set-count') || 1);
+                
+                const updatedSets = [];
+                for (let setIdx = 0; setIdx < setCount; setIdx++) {
+                    const wt = parseFloat(document.getElementById(`edit-ex-${exIdx}-set-${setIdx}-wt`).value) || 0;
+                    const reps = parseFloat(document.getElementById(`edit-ex-${exIdx}-set-${setIdx}-rep`).value) || 0;
+                    calculatedTotalVolume += wt * reps;
+                    updatedSets.push({ weight: wt, reps: reps, completed: true });
+                }
+
+                return { 
+                    name: ex.name, 
+                    sets: updatedSets,
+                    weight: updatedSets[0]?.weight || 0,
+                    reps: updatedSets[0]?.reps || 0
+                };
+            });
+
+            const finalVolume = parseFloat(document.getElementById('edit-session-volume').value) || calculatedTotalVolume;
+
+            const { error } = await _supabase.from('workouts').update({
+                title: newTitle,
+                duration: newDuration,
+                volume: finalVolume,
+                exercises: updatedExercises
+            }).eq('id', workoutId);
+
+            if (error) {
+                alert("Error updating workout: " + error.message);
+            } else {
+                alert("Workout successfully updated!");
+                closeEditWorkoutModal();
+                fetchUserData();
+            }
+        }
+
+        function promptDeleteWorkout(workoutId) {
+            openConfirmModal(
+                "Delete Workout?",
+                "Are you sure you want to delete this workout session? This action cannot be undone.",
+                async () => {
+                    closeConfirmModal();
+                    await executeDeleteWorkout(workoutId);
+                }
+            );
+        }
+
+        async function executeDeleteWorkout(workoutId) {
+            const { error } = await _supabase.from('workouts').delete().eq('id', workoutId);
+            if (error) {
+                alert("Error deleting workout: " + error.message);
+            } else {
+                alert("Workout deleted successfully.");
+                fetchUserData();
+            }
+        }
+
+        function promptChangeThemeColor(newColor) {
+            openConfirmModal(
+                "Change Accent Color?",
+                `Are you sure you want to update your theme accent color to ${newColor}?`,
+                async () => {
+                    closeConfirmModal();
+                    await setCustomThemeColor(newColor, true);
+                },
+                () => {
+                    document.getElementById('color-wheel').value = currentThemeColor;
+                }
+            );
+        }
+
+        function openConfirmModal(title, desc, onConfirmCallback, onCancelCallback = null) {
+            document.getElementById('confirm-modal-title').innerText = title;
+            document.getElementById('confirm-modal-desc').innerText = desc;
+            
+            const acceptBtn = document.getElementById('confirm-modal-accept-btn');
+            const newAcceptBtn = acceptBtn.cloneNode(true);
+            acceptBtn.parentNode.replaceChild(newAcceptBtn, acceptBtn);
+            newAcceptBtn.addEventListener('click', onConfirmCallback);
+
+            window.activeCancelCallback = onCancelCallback;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            if (window.activeCancelCallback) {
+                window.activeCancelCallback();
+                window.activeCancelCallback = null;
+            }
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
+        function toggleCalendarDropdown() {
+            const body = document.getElementById('calendar-dropdown-body');
+            const chevron = document.getElementById('calendar-chevron');
+            body.classList.toggle('hidden');
+            if (!body.classList.contains('hidden')) {
+                chevron.style.transform = 'rotate(180deg)';
+                renderCalendar();
+            } else {
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function changeCalendarMonth(direction) {
+            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + direction);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const year = calendarCurrentDate.getFullYear();
+            const month = calendarCurrentDate.getMonth();
+
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const daysGrid = document.getElementById('calendar-days-grid');
+            daysGrid.innerHTML = '';
+
+            const workoutsByDate = {};
+            globalWorkoutsData.forEach(w => {
+                const parsed = new Date(w.date || w.created_at);
+                if (!isNaN(parsed)) {
+                    const yyyyMmDd = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+                    if (!workoutsByDate[yyyyMmDd]) workoutsByDate[yyyyMmDd] = [];
+                    workoutsByDate[yyyyMmDd].push(w);
+                }
+            });
+
+            let activeDaysInMonth = 0;
+            for (let i = 0; i < firstDayIndex; i++) {
+                daysGrid.appendChild(document.createElement('div'));
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dayCell = document.createElement('div');
+                const formattedMonth = String(month + 1).padStart(2, '0');
+                const formattedDay = String(day).padStart(2, '0');
+                const dateKey = `${year}-${formattedMonth}-${formattedDay}`;
+
+                const dayWorkouts = workoutsByDate[dateKey] || [];
+                const hasWorkedOut = dayWorkouts.length > 0;
+                if (hasWorkedOut) activeDaysInMonth++;
+
+                dayCell.className = `h-7 w-7 mx-auto flex items-center justify-center rounded-full text-xs font-medium cursor-pointer transition ${hasWorkedOut ? 'theme-bg text-white font-bold shadow-sm hover:opacity-90' : 'app-text hover:bg-black/5 dark:hover:bg-white/5'}`;
+                dayCell.innerText = day;
+                dayCell.onclick = () => openDayDetailsModal(dateKey, dayWorkouts);
+                daysGrid.appendChild(dayCell);
+            }
+
+            document.getElementById('calendar-active-count').innerText = `${activeDaysInMonth} days active`;
+        }
+
+        function openDayDetailsModal(dateStr, workouts) {
+            document.getElementById('day-modal-title').innerText = `Workouts on ${dateStr}`;
+            const content = document.getElementById('day-modal-content');
+            
+            if (!workouts || workouts.length === 0) {
+                content.innerHTML = `<p class="app-text-muted text-center py-4">No workout recorded for this date.</p>`;
+            } else {
+                content.innerHTML = '';
+                workouts.forEach(w => {
+                    const exs = (w.exercises || []).map(e => `• ${e.name} (${e.sets?.length || 1} sets)`).join('<br>');
+                    content.innerHTML += `
+                        <div class="app-card-sub border app-border p-3 rounded-xl space-y-2">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold app-text">${w.title}</h4>
+                                <button onclick="closeDayDetailsModal(); openEditWorkoutModal('${w.id}');" class="px-2 py-1 rounded bg-amber-500/10 text-amber-500 text-[10px] font-bold hover:underline">Edit Workout</button>
+                            </div>
+                            <p class="app-text-muted">Duration: ${w.duration || 45} mins | Volume: ${w.volume || 0} lbs</p>
+                            <div class="text-[10px] app-text pt-1 border-t app-border">${exs || 'No specific exercises'}</div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('day-details-modal').classList.remove('hidden');
+        }
+
+        function closeDayDetailsModal() {
+            document.getElementById('day-details-modal').classList.add('hidden');
+        }
+
+        // --- ROUNDED BAR GRAPH WEEKLY CHARTS FOR DURATION & VOLUME ---
+        function toggleDurationDropdown() {
+            document.getElementById('duration-dropdown-menu').classList.toggle('hidden');
+            document.getElementById('volume-dropdown-menu').classList.add('hidden');
+            renderBarGraphCharts();
+        }
+
+        function toggleVolumeDropdown() {
+            document.getElementById('volume-dropdown-menu').classList.toggle('hidden');
+            document.getElementById('duration-dropdown-menu').classList.add('hidden');
+            renderBarGraphCharts();
+        }
+
+        function shiftDurationWeek(dir) {
+            currentDurationWeekOffset += dir;
+            renderBarGraphCharts();
+        }
+
+        function shiftVolumeWeek(dir) {
+            currentVolumeWeekOffset += dir;
+            renderBarGraphCharts();
+        }
+
+        function renderBarGraphCharts() {
+            const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+            function getWeekDays(offset) {
+                const now = new Date();
+                const startOfWeek = new Date(now);
+                startOfWeek.setDate(now.getDate() - now.getDay() + (offset * 7));
+                
+                const weekDates = [];
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(startOfWeek);
+                    d.setDate(startOfWeek.getDate() + i);
+                    weekDates.push(d);
+                }
+                return weekDates;
+            }
+
+            // Duration Chart
+            const durWeekDates = getWeekDays(currentDurationWeekOffset);
+            const durStartStr = `${durWeekDates[0].getMonth()+1}/${durWeekDates[0].getDate()}`;
+            const durEndStr = `${durWeekDates[6].getMonth()+1}/${durWeekDates[6].getDate()}`;
+            document.getElementById('duration-week-title').innerText = `Duration (${durStartStr} - ${durEndStr})`;
+
+            const durVals = days.map((_, i) => {
+                const targetDateStr = durWeekDates[i].toDateString();
+                let dayTotal = 0;
+                globalWorkoutsData.forEach(w => {
+                    const d = new Date(w.date || w.created_at);
+                    if (!isNaN(d) && d.toDateString() === targetDateStr) {
+                        dayTotal += (w.duration || 45);
+                    }
+                });
+                return dayTotal;
+            });
+
+            const maxDur = Math.max(...durVals, 60);
+            const durContainer = document.getElementById('duration-bargraph-container');
+            durContainer.innerHTML = buildSvgBarGraph(days, durVals, maxDur, 'mins', getComputedStyle(document.documentElement).getPropertyValue('--theme-color').trim());
+
+            // Volume Chart
+            const volWeekDates = getWeekDays(currentVolumeWeekOffset);
+            const volStartStr = `${volWeekDates[0].getMonth()+1}/${volWeekDates[0].getDate()}`;
+            const volEndStr = `${volWeekDates[6].getMonth()+1}/${volWeekDates[6].getDate()}`;
+            document.getElementById('volume-week-title').innerText = `Volume (${volStartStr} - ${volEndStr})`;
+
+            const volVals = days.map((_, i) => {
+                const targetDateStr = volWeekDates[i].toDateString();
+                let dayTotal = 0;
+                globalWorkoutsData.forEach(w => {
+                    const d = new Date(w.date || w.created_at);
+                    if (!isNaN(d) && d.toDateString() === targetDateStr) {
+                        dayTotal += (w.volume || 0);
+                    }
+                });
+                return dayTotal;
+            });
+
+            const maxVol = Math.max(...volVals, 1000);
+            const volContainer = document.getElementById('volume-bargraph-container');
+            volContainer.innerHTML = buildSvgBarGraph(days, volVals, maxVol, 'lbs', getComputedStyle(document.documentElement).getPropertyValue('--theme-color').trim());
+        }
+
+        function buildSvgBarGraph(labels, values, maxVal, unit, accentColor) {
+            const svgWidth = 260;
+            const svgHeight = 130;
+            const chartTop = 15;
+            const chartBottom = 95;
+            const chartHeight = chartBottom - chartTop;
+            const barWidth = 24;
+            const gap = 11;
+            const startX = 15;
+
+            let barsHtml = '';
+            labels.forEach((lbl, idx) => {
+                const val = values[idx];
+                const barH = Math.max(6, (val / maxVal) * chartHeight);
+                const x = startX + (idx * (barWidth + gap));
+                const y = chartBottom - barH;
+
+                barsHtml += `
+                    <g>
+                        <rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="6" fill="${accentColor}" opacity="${val > 0 ? '1' : '0.2'}" />
+                        <text x="${x + (barWidth/2)}" y="${chartBottom + 14}" text-anchor="middle" font-size="9" fill="currentColor" opacity="0.7">${lbl}</text>
+                        ${val > 0 ? `<text x="${x + (barWidth/2)}" y="${y - 4}" text-anchor="middle" font-size="7" fill="currentColor" font-weight="bold">${val >= 1000 ? (val/1000).toFixed(1) + 'k' : val}</text>` : ''}
+                    </g>
+                `;
+            });
+
+            return `
+                <svg width="100%" viewBox="0 0 ${svgWidth} ${svgHeight}" class="overflow-visible">
+                    <line x1="10" y1="${chartBottom}" x2="${svgWidth - 10}" y2="${chartBottom}" stroke="currentColor" stroke-opacity="0.15" stroke-width="1" />
+                    ${barsHtml}
+                </svg>
+            `;
+        }
+
+        // --- STREAK COUNTER WITH FADE & 4-DAY RESET ---
+        function calculateAndUpdateStreak(workouts) {
+            if (!workouts || workouts.length === 0) {
+                applyStreakUI(0, 4);
+                return;
+            }
+
+            const workoutDays = new Set();
+            workouts.forEach(w => {
+                const d = new Date(w.date || w.created_at);
+                if (!isNaN(d)) {
+                    workoutDays.add(d.toDateString());
+                }
+            });
+
+            const today = new Date();
+            let currentStreak = 0;
+            let daysMissed = 0;
+            let checkDate = new Date(today);
+
+            const todayStr = checkDate.toDateString();
+            const yesterdayDate = new Date(today);
+            yesterdayDate.setDate(today.getDate() - 1);
+            const yesterdayStr = yesterdayDate.toDateString();
+
+            if (!workoutDays.has(todayStr) && !workoutDays.has(yesterdayStr)) {
+                let tempDate = new Date(today);
+                while (daysMissed < 5) {
+                    tempDate.setDate(tempDate.getDate() - 1);
+                    if (workoutDays.has(tempDate.toDateString())) {
+                        break;
+                    }
+                    daysMissed++;
+                }
+            }
+
+            let streakDate = new Date(workoutDays.has(todayStr) ? today : yesterdayDate);
+            if (workoutDays.has(streakDate.toDateString()) || workoutDays.has(todayStr)) {
+                while (true) {
+                    if (workoutDays.has(streakDate.toDateString())) {
+                        currentStreak++;
+                        streakDate.setDate(streakDate.getDate() - 1);
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            if (daysMissed >= 4) {
+                currentStreak = 0;
+            }
+
+            applyStreakUI(currentStreak, daysMissed);
+        }
+
+        function applyStreakUI(streak, missedDays) {
+            const badgeLabel = document.getElementById('streak-badge-label');
+            const fireIcon = document.getElementById('streak-fire-icon');
+            const countVal = document.getElementById('streak-count-val');
+            
+            if (countVal) countVal.innerText = streak;
+
+            const opacityFactor = Math.max(0.15, 1 - (missedDays * 0.25));
+            if (badgeLabel) badgeLabel.style.opacity = opacityFactor;
+            if (fireIcon) fireIcon.style.opacity = opacityFactor;
+        }
+
+        function switchTab(tabId) {
+            ['home', 'workouts', 'routines', 'settings'].forEach(t => {
+                const sec = document.getElementById(`tab-${t}`);
+                if (sec) sec.classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (navBtn) navBtn.className = "nav-btn flex flex-col items-center app-text-muted hover:app-text transition";
+            });
+
+            const activeSec = document.getElementById(`tab-${tabId}`);
+            if (activeSec) activeSec.classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) activeNav.className = "nav-btn flex flex-col items-center theme-text transition";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- SEARCH & FILTER LOGIC FOR EXERCISE LIBRARY ---
+        function handleExerciseFilter() {
+            const query = document.getElementById('exercise-search-input').value.toLowerCase().trim();
+            const selectedCategory = document.getElementById('exercise-category-select').value;
+            renderExerciseLibrary(selectedCategory, query);
+        }
+
+        function renderExerciseLibrary(filter = 'All', searchQuery = '') {
+            const listContainer = document.getElementById('exercise-library-list');
+            listContainer.innerHTML = '';
+
+            let filtered = EXERCISE_LIBRARY;
+            
+            if (filter !== 'All') {
+                filtered = filtered.filter(e => e.category === filter);
+            }
+
+            if (searchQuery) {
+                filtered = filtered.filter(e => 
+                    e.name.toLowerCase().includes(searchQuery) || 
+                    e.muscle.toLowerCase().includes(searchQuery) ||
+                    e.category.toLowerCase().includes(searchQuery)
+                );
+            }
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `<p class="text-xs app-text-muted text-center py-4">No exercises found.</p>`;
+                return;
+            }
+
+            filtered.forEach(ex => {
+                const isSelected = selectedExercises.some(e => e.name === ex.name);
+                const div = document.createElement('div');
+                div.className = `app-card-sub border app-border p-2.5 rounded-xl flex justify-between items-center transition ${isSelected ? 'border-current' : ''}`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-2 cursor-pointer flex-1" onclick="toggleExerciseSelection('${ex.name}')">
+                        <div class="w-4 h-4 rounded border app-border flex items-center justify-center text-[10px] ${isSelected ? 'theme-bg text-white' : ''}">${isSelected ? '✓' : ''}</div>
+                        <div>
+                            <p class="text-xs font-bold app-text">${ex.name}</p>
+                            <p class="text-[10px] app-text-muted">${ex.muscle} • ${ex.category}</p>
+                        </div>
+                    </div>
+                    ${ex.videoId ? `<button onclick="openVideoModal('${ex.name}', '${ex.videoId}', '${ex.desc}')" class="p-1.5 rounded-lg app-card border app-border text-xs hover:opacity-80">📺</button>` : ''}
+                `;
+                listContainer.appendChild(div);
+            });
+        }
+
+        function toggleExerciseSelection(name) {
+            const existingIdx = selectedExercises.findIndex(e => e.name === name);
+            if (existingIdx !== -1) {
+                selectedExercises.splice(existingIdx, 1);
+            } else {
+                selectedExercises.push({
+                    name: name,
+                    sets: [{ weight: 135, reps: 10, completed: false }]
+                });
+            }
+            document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
+            handleExerciseFilter();
+            renderBuilderRows();
+        }
+
+        // --- SET LEVEL ADD / REMOVE / CHECK LOGIC ---
+        function addSetToExercise(exIdx) {
+            captureBuilderInputValues();
+            selectedExercises[exIdx].sets.push({ weight: 135, reps: 10, completed: false });
+            renderBuilderRows();
+        }
+
+        function removeSetFromExercise(exIdx, setIdx) {
+            captureBuilderInputValues();
+            if (selectedExercises[exIdx].sets.length <= 1) {
+                toggleExerciseSelection(selectedExercises[exIdx].name);
+                return;
+            }
+            selectedExercises[exIdx].sets.splice(setIdx, 1);
+            renderBuilderRows();
+        }
+
+        function toggleSetCompletion(exIdx, setIdx) {
+            captureBuilderInputValues();
+            const setObj = selectedExercises[exIdx].sets[setIdx];
+            setObj.completed = !setObj.completed;
+            renderBuilderRows();
+
+            if (setObj.completed) {
+                startRestTimer(defaultRestSeconds);
+            }
+        }
+
+        function captureBuilderInputValues() {
+            selectedExercises.forEach((ex, exIdx) => {
+                ex.sets.forEach((set, setIdx) => {
+                    const wtInput = document.getElementById(`weight-${exIdx}-${setIdx}`);
+                    const repInput = document.getElementById(`reps-${exIdx}-${setIdx}`);
+                    if (wtInput) set.weight = parseFloat(wtInput.value) || 0;
+                    if (repInput) set.reps = parseFloat(repInput.value) || 0;
+                });
+            });
+        }
+
+        function renderBuilderRows() {
+            const builderContainer = document.getElementById('active-sets-builder');
+            const rowsContainer = document.getElementById('builder-rows');
+            rowsContainer.innerHTML = '';
+
+            if (selectedExercises.length === 0) {
+                builderContainer.classList.add('hidden');
+                document.getElementById('save-workout-btn').setAttribute('disabled', 'true');
+                return;
+            }
+
+            builderContainer.classList.remove('hidden');
+            document.getElementById('save-workout-btn').removeAttribute('disabled');
+
+            selectedExercises.forEach((exObj, exIdx) => {
+                let setsHtml = '';
+                exObj.sets.forEach((set, setIdx) => {
+                    const isCompleted = set.completed;
+                    setsHtml += `
+                        <div class="flex items-center gap-2 p-2 rounded-lg transition ${isCompleted ? 'border border-current bg-black/10 dark:bg-white/10' : 'bg-black/5 dark:bg-white/5'}">
+                            <button onclick="toggleSetCompletion(${exIdx}, ${setIdx})" class="w-6 h-6 rounded-lg border app-border flex items-center justify-center text-xs font-bold transition ${isCompleted ? 'theme-bg text-white' : 'app-card-sub app-text-muted'}" title="Check off set">${isCompleted ? '✓' : ''}</button>
+                            <span class="text-[10px] font-bold app-text-muted w-10">Set ${setIdx + 1}</span>
+                            <div class="flex-1 grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[8px] uppercase app-text-muted">Weight (lbs)</label>
+                                    <input type="number" id="weight-${exIdx}-${setIdx}" value="${set.weight}" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                                </div>
+                                <div>
+                                    <label class="block text-[8px] uppercase app-text-muted">Reps</label>
+                                    <input type="number" id="reps-${exIdx}-${setIdx}" value="${set.reps}" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                                </div>
+                            </div>
+                            <button onclick="removeSetFromExercise(${exIdx}, ${setIdx})" class="text-[10px] text-red-500 hover:underline px-1 self-end pb-1" title="Remove Set">✕</button>
+                        </div>
+                    `;
+                });
+
+                const row = document.createElement('div');
+                row.className = 'app-card-sub border app-border p-3 rounded-xl space-y-2';
+                row.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold app-text">${exIdx + 1}. ${exObj.name}</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="addSetToExercise(${exIdx})" class="text-[10px] theme-text font-semibold hover:underline">+ Add Set</button>
+                            <button onclick="toggleExerciseSelection('${exObj.name}')" class="text-[10px] app-text-muted hover:app-text">Remove Exercise</button>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5">
+                        ${setsHtml}
+                    </div>
+                `;
+                rowsContainer.appendChild(row);
+            });
+        }
+
+        async function saveWorkout() {
+            if (!currentUser) {
+                alert("Please sign in to save workouts to the cloud.");
+                openAuthModal();
+                return;
+            }
+
+            if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            captureBuilderInputValues();
+
+            const sessionName = document.getElementById('session-name').value || "Gym session";
+            let totalVolume = 0;
+            
+            const exercisesData = selectedExercises.map((exObj) => {
+                let exVolume = 0;
+                exObj.sets.forEach(set => {
+                    exVolume += (set.weight * set.reps);
+                });
+                totalVolume += exVolume;
+
+                return {
+                    name: exObj.name,
+                    sets: exObj.sets,
+                    weight: exObj.sets[0]?.weight || 0,
+                    reps: exObj.sets[0]?.reps || 0
+                };
+            });
+
+            const durationMinutes = Math.max(1, Math.round(workoutSecondsElapsed / 60));
+
+            const workoutPayload = {
+                user_id: currentUser.id,
+                title: sessionName,
+                exercises: exercisesData,
+                volume: totalVolume,
+                duration: durationMinutes,
+                date: new Date().toISOString()
+            };
+
+            const { error } = await _supabase.from('workouts').insert([workoutPayload]);
+            if (error) {
+                alert("Error saving workout: " + error.message);
+            } else {
+                alert("Workout successfully saved to cloud!");
+                document.getElementById('active-workout-container').classList.add('hidden');
+                document.getElementById('pre-workout-container').classList.remove('hidden');
+                document.getElementById('save-routine-btn').classList.add('hidden');
+                selectedExercises = [];
+                fetchUserData();
+                switchTab('home');
+            }
+        }
+
+        async function fetchUserData() {
+            if (!currentUser) return;
+            const { data, error } = await _supabase
+                .from('workouts')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('date', { ascending: false });
+
+            if (!error && data) {
+                globalWorkoutsData = data;
+                updateDashboardStats(data);
+                renderRecentSessions(data);
+                renderCalendar();
+                calculateAndUpdateStreak(data);
+            }
+
+            const { data: routinesData } = await _supabase
+                .from('routines')
+                .select('*')
+                .eq('user_id', currentUser.id);
+
+            if (routinesData) {
+                customRoutines = routinesData;
+                renderRoutinesList();
+            }
+
+            const { data: customExData } = await _supabase
+                .from('user_exercises')
+                .select('*')
+                .eq('user_id', currentUser.id);
+
+            if (customExData) {
+                customExData.forEach(ce => {
+                    const exists = EXERCISE_LIBRARY.some(e => e.name.toLowerCase() === ce.name.toLowerCase());
+                    if (!exists) {
+                        EXERCISE_LIBRARY.push({
+                            name: ce.name,
+                            category: ce.category || 'Barbell',
+                            muscle: ce.muscle || 'General',
+                            videoId: '',
+                            desc: 'User custom synced exercise.'
+                        });
+                    }
+                });
+                renderExerciseLibrary();
+            }
+
+            const { data: settingsData } = await _supabase
+                .from('user_settings')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .single();
+
+            if (settingsData && settingsData.accent_color) {
+                setCustomThemeColor(settingsData.accent_color, false);
+            }
+
+            setupRealtimeSync();
+        }
+
+        function setupRealtimeSync() {
+            if (!currentUser) return;
+            if (settingsChannel) {
+                _supabase.removeChannel(settingsChannel);
+            }
+
+            settingsChannel = _supabase
+                .channel('public:user_settings')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'user_settings',
+                    filter: `user_id=eq.${currentUser.id}`
+                }, payload => {
+                    if (payload.new && payload.new.accent_color) {
+                        setCustomThemeColor(payload.new.accent_color, false);
+                    }
+                })
+                .subscribe();
+        }
+
+        function updateDashboardStats(workouts) {
+            const totalSessions = workouts.length;
+            let totalVol = 0;
+            let totalDur = 0;
+            workouts.forEach(w => { 
+                totalVol += (w.volume || 0); 
+                totalDur += (w.duration || 45);
+            });
+            const avgDur = totalSessions > 0 ? Math.round(totalDur / totalSessions) : 0;
+
+            document.getElementById('streak-sessions').innerText = `${totalSessions} session${totalSessions === 1 ? '' : 's'}`;
+            document.getElementById('stat-total-sessions').innerText = totalSessions;
+            document.getElementById('stat-total-volume').innerText = totalVol.toLocaleString();
+            document.getElementById('stat-total-volume-hero').innerText = `Total Volume Lifted: ${totalVol.toLocaleString()} lbs`;
+            document.getElementById('stat-avg-duration').innerText = `${avgDur}m`;
+        }
+
+        function renderRecentSessions(workouts) {
+            const container = document.getElementById('recent-sessions-list');
+            if (!workouts || workouts.length === 0) {
+                container.innerHTML = `
+                    <div class="app-card border app-border rounded-2xl p-6 text-center space-y-2 shadow-sm">
+                        <span class="text-2xl">📋</span>
+                        <h4 class="text-xs font-bold app-text">No sessions yet</h4>
+                        <p class="text-[11px] app-text-muted">Log your first session and start building your streak.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            workouts.forEach(w => {
+                const dateStr = new Date(w.date || w.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                const div = document.createElement('div');
+                div.className = 'app-card border app-border rounded-2xl p-3.5 flex justify-between items-center shadow-sm';
+                div.innerHTML = `
+                    <div>
+                        <h4 class="text-xs font-bold app-text">${w.title}</h4>
+                        <p class="text-[10px] app-text-muted">${dateStr} • ${w.duration || 45}m • ${w.volume || 0} lbs</p>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="openEditWorkoutModal('${w.id}')" class="px-2.5 py-1 rounded-lg app-card-sub border app-border text-[10px] font-semibold app-text hover:opacity-80">Edit</button>
+                        <button onclick="promptDeleteWorkout('${w.id}')" class="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[10px] font-semibold text-red-500 hover:opacity-80">Delete</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderRoutinesList() {
+            const container = document.getElementById('routines-list-container');
+            container.innerHTML = '';
+
+            const defaultRoutines = [
+                { id: 'default-push', title: 'Push Day (Chest, Shoulders, Triceps)', desc: 'Focus on heavy presses and accessory isolation.', exercises: ['Barbell Bench Press', 'Incline Dumbbell Press', 'Dumbbell Shoulder Press'], isDefault: true },
+                { id: 'default-pull', title: 'Pull Day (Back, Biceps)', desc: 'Heavy deadlifts and vertical/horizontal pulls.', exercises: ['Deadlift', 'Barbell Row', 'Lat Pulldown'], isDefault: true },
+                { id: 'default-legs', title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Deep squats and hamstring isolation.', exercises: ['Barbell Squat', 'Romanian Deadlift (RDL)', 'Seated Leg Press'], isDefault: true }
+            ];
+
+            const allRoutines = [...defaultRoutines, ...customRoutines];
+
+            allRoutines.forEach(r => {
+                const exs = (r.exercises || []).map(e => typeof e === 'string' ? e : e.name).join(', ');
+                const div = document.createElement('div');
+                div.className = 'app-card border app-border p-4 rounded-2xl space-y-2.5 shadow-sm';
+                div.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            ${currentMode === 'usagi' ? '<span class="text-xs">🐰</span>' : ''}
+                            <h3 class="text-xs font-bold app-text">${r.title}</h3>
+                        </div>
+                        <p class="text-[11px] app-text-muted">${r.desc || 'No description'}</p>
+                    </div>
+                    <p class="text-[10px] app-text-muted italic">${exs || 'No exercises listed'}</p>
+                    <div class="flex items-center gap-2 pt-1 border-t app-border">
+                        <button onclick="startLiveWorkout('${r.title}', ${JSON.stringify(r.exercises).replace(/"/g, '&quot;')})" class="flex-1 theme-bg text-white font-semibold py-2 rounded-xl text-xs transition">
+                            🚀 Start Routine
+                        </button>
+                        ${!r.isDefault ? `
+                            <button onclick="openEditRoutineModal('${r.id}')" class="px-3 py-2 rounded-xl app-card-sub border app-border text-xs font-semibold app-text hover:opacity-80">Edit</button>
+                            <button onclick="promptDeleteRoutine('${r.id}', '${r.title}')" class="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-xs font-semibold text-red-500 hover:opacity-80">Delete</button>
+                        ` : ''}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- AUTH & THEME MANAGEMENT ---
+        function setMode(mode, save = true) {
+            currentMode = mode;
+            if (save) localStorage.setItem('liftpulse_mode', mode);
+
+            const avatar = document.getElementById('header-avatar');
+            const watermark = document.getElementById('hero-usagi-watermark');
+            const editBadge = document.getElementById('edit-routine-usagi-badge');
+
+            if (mode === 'usagi') {
+                setUsagiTheme(save);
+                return;
+            }
+
+            document.documentElement.classList.remove('usagi-theme');
+            if (avatar) avatar.classList.add('hidden');
+            if (watermark) watermark.classList.add('hidden');
+            if (editBadge) editBadge.classList.add('hidden');
+
+            const root = document.getElementById('html-root');
+            const icon = document.getElementById('mode-icon');
+            if (mode === 'dark') {
+                root.classList.add('dark');
+                if (icon) icon.innerText = '🌙';
+            } else {
+                root.classList.remove('dark');
+                if (icon) icon.innerText = '☀️';
+            }
+        }
+
+        async function setCustomThemeColor(color, saveToDb = true) {
+            currentThemeColor = color;
+            localStorage.setItem('liftpulse_custom_color', color);
+            document.documentElement.style.setProperty('--theme-color', color);
+            document.documentElement.style.setProperty('--theme-gradient', `linear-gradient(to bottom right, ${color}, #d97706)`);
+            const wheel = document.getElementById('color-wheel');
+            if (wheel) wheel.value = color;
+
+            if (saveToDb && currentUser) {
+                await _supabase.from('user_settings').upsert({
+                    user_id: currentUser.id,
+                    accent_color: color,
+                    updated_at: new Date()
+                }, { onConflict: 'user_id' });
+            }
+        }
+
+        function toggleDarkMode() {
+            if (currentMode === 'dark') setMode('light');
+            else if (currentMode === 'light') setUsagiTheme();
+            else setMode('dark');
+        }
+
+        function openCustomRoutineModal() {
+            document.getElementById('custom-routine-modal').classList.remove('hidden');
+        }
+
+        function closeCustomRoutineModal() {
+            document.getElementById('custom-routine-modal').classList.add('hidden');
+        }
+
+        async function saveCustomRoutine() {
+            if (!currentUser) {
+                alert("Please sign in to save custom routines.");
+                openAuthModal();
+                return;
+            }
+
+            const title = document.getElementById('custom-routine-title').value.trim();
+            const desc = document.getElementById('custom-routine-desc').value.trim();
+            const exercisesStr = document.getElementById('custom-routine-exercises').value.trim();
+
+            if (!title) {
+                alert("Please enter a routine title.");
+                return;
+            }
+
+            const exerciseNames = exercisesStr ? exercisesStr.split(',').map(s => s.trim()).filter(Boolean) : ['Barbell Bench Press'];
+            const exercisesPayload = exerciseNames.map(name => ({
+                name: name,
+                sets: [{ weight: 135, reps: 10, completed: false }]
+            }));
+
+            const { error } = await _supabase.from('routines').insert([{
+                user_id: currentUser.id,
+                title: title,
+                desc: desc,
+                exercises: exercisesPayload
+            }]);
+
+            if (error) {
+                alert("Error saving routine: " + error.message);
+            } else {
+                alert("Custom routine created successfully!");
+                closeCustomRoutineModal();
+                fetchUserData();
+            }
+        }
+
+        function openVideoModal(title, videoId, desc) {
+            document.getElementById('modal-exercise-title').innerText = title;
+            document.getElementById('modal-video-iframe').src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            document.getElementById('modal-exercise-desc').innerText = desc;
+            document.getElementById('video-modal').classList.remove('hidden');
+        }
+
+        function closeVideoModal() {
+            document.getElementById('modal-video-iframe').src = '';
+            document.getElementById('video-modal').classList.add('hidden');
+        }
+
+        // Auth handlers
+        const authModal = document.getElementById('auth-modal');
+        const authModalBtn = document.getElementById('auth-modal-btn');
+        const closeAuthModal = document.getElementById('close-auth-modal');
+        const authForm = document.getElementById('auth-form');
+        const authSwitchMode = document.getElementById('auth-switch-mode');
+        const authModalTitle = document.getElementById('auth-modal-title');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+
+        authModalBtn.onclick = () => {
+            if (currentUser) {
+                promptSignOut();
+            } else {
+                authModal.classList.remove('hidden');
+            }
+        };
+
+        if (closeAuthModal) closeAuthModal.onclick = () => authModal.classList.add('hidden');
+
+        if (authSwitchMode) {
+            authSwitchMode.onclick = () => {
+                isSignUpMode = !isSignUpMode;
+                authModalTitle.innerText = isSignUpMode ? 'Create Cloud Account' : 'Sign In to Cloud Sync';
+                authSubmitBtn.innerText = isSignUpMode ? 'Register' : 'Login';
+                authSwitchMode.innerText = isSignUpMode ? 'Already have an account? Sign in' : "Need an account? Sign up";
+            };
+        }
+
+        if (authForm) {
+            authForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('auth-email').value;
+                const password = document.getElementById('auth-password').value;
+
+                if (isSignUpMode) {
+                    const { data, error } = await _supabase.auth.signUp({ email, password });
+                    if (error) alert("Sign up error: " + error.message);
+                    else {
+                        alert("Account created! Please check your email or log in.");
+                        authModal.classList.add('hidden');
+                    }
+                } else {
+                    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+                    if (error) alert("Login error: " + error.message);
+                    else {
+                        currentUser = data.user;
+                        updateAuthUI();
+                        authModal.classList.add('hidden');
+                        fetchUserData();
+                    }
+                }
+            };
+        }
+
+        function promptSignOut() {
+            openConfirmModal("Sign Out?", "Are you sure you want to sign out of your account?", async () => {
+                closeConfirmModal();
+                await _supabase.auth.signOut();
+                currentUser = null;
+                updateAuthUI();
+                globalWorkoutsData = [];
+                customRoutines = [];
+                renderRecentSessions([]);
+                renderRoutinesList();
+                renderCalendar();
+            });
+        }
+
+        function updateAuthUI() {
+            const pill = document.getElementById('user-pill');
+            if (currentUser) {
+                pill.innerText = currentUser.email;
+                authModalBtn.innerText = 'Sign Out';
+            } else {
+                pill.innerText = 'Not logged in';
+                authModalBtn.innerText = 'Sign In';
+            }
+        }
+
+        async function changeEmailDirectly() {
+            if (!currentUser) { alert("Please sign in first."); return; }
+            const newEmail = document.getElementById('settings-new-email').value;
+            if (!newEmail) { alert("Please enter a new email."); return; }
+            const { error } = await _supabase.auth.updateUser({ email: newEmail });
+            if (error) alert("Error updating email: " + error.message);
+            else alert("Email update confirmation sent. Please check your inbox.");
+        }
+
+        async function changePasswordDirectly() {
+            if (!currentUser) { alert("Please sign in first."); return; }
+            const newPassword = document.getElementById('settings-new-password').value;
+            if (!newPassword || newPassword.length < 6) { alert("Password must be at least 6 characters."); return; }
+            const { error } = await _supabase.auth.updateUser({ password: newPassword });
+            if (error) alert("Error updating password: " + error.message);
+            else alert("Password successfully updated!");
+        }
+
+        // Initialize session
+        _supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                currentUser = session.user;
+                updateAuthUI();
+                fetchUserData();
+            }
+        });
+
+        _supabase.auth.onAuthStateChange((_event, session) => {
+            currentUser = session?.user || null;
+            updateAuthUI();
+            if (currentUser) fetchUserData();
+        });
+
+        renderExerciseLibrary();
+        renderRoutinesList();
+    </script>
+</body>
+</html>
