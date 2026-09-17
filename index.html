@@ -83,6 +83,20 @@
             </div>
         </div>
 
+        <!-- DAY DETAILS MODAL (FOR CALENDAR) -->
+        <div id="day-details-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+                <div class="flex justify-between items-center">
+                    <h3 id="day-modal-title" class="text-sm font-bold uppercase tracking-wider app-text">Workout Details</h3>
+                    <button onclick="closeDayDetailsModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+                </div>
+                <div id="day-modal-content" class="space-y-3 text-xs">
+                    <!-- Populated dynamically -->
+                </div>
+                <button onclick="closeDayDetailsModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">Close</button>
+            </div>
+        </div>
+
         <!-- CUSTOM EXERCISE MODAL -->
         <div id="custom-exercise-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
@@ -148,13 +162,39 @@
             </div>
         </div>
 
+        <!-- EDIT ROUTINE MODAL -->
+        <div id="edit-routine-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold uppercase tracking-wider app-text">Edit Routine</h3>
+                    <button onclick="closeEditRoutineModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+                </div>
+                <input type="hidden" id="edit-routine-id">
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Routine Title</label>
+                        <input type="text" id="edit-routine-title" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Description / Notes</label>
+                        <input type="text" id="edit-routine-desc" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Exercises (Comma separated)</label>
+                        <input type="text" id="edit-routine-exercises" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <button onclick="saveEditedRoutine()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Update Routine</button>
+                </div>
+            </div>
+        </div>
+
         <!-- COLUMN 1: DASHBOARD & FEED (Home Tab) -->
         <section id="tab-home" class="space-y-4 md:block">
             <div class="theme-gradient rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
                 <div class="absolute -right-4 -bottom-4 opacity-25 font-black text-7xl pointer-events-none">⚡</div>
                 <div class="flex justify-between items-start mb-4">
-                    <span class="text-xs font-bold uppercase tracking-wider bg-black/20 text-white px-2.5 py-1 rounded-full">Streak & Volume</span>
-                    <span class="text-2xl">🔥</span>
+                    <span id="streak-badge-label" class="text-xs font-bold uppercase tracking-wider bg-black/20 text-white px-2.5 py-1 rounded-full transition-opacity duration-300">Streak & Volume</span>
+                    <span id="streak-fire-icon" class="text-2xl transition-opacity duration-300">🔥</span>
                 </div>
                 <div class="space-y-1">
                     <h2 id="streak-sessions" class="text-3xl font-black tracking-tight text-white">0 sessions</h2>
@@ -168,15 +208,41 @@
                     <span id="stat-total-sessions" class="block text-base font-bold app-text">0</span>
                     <span class="text-[10px] app-text-muted uppercase tracking-wider">Sessions</span>
                 </div>
-                <div class="app-card border app-border p-3 rounded-2xl text-center shadow-sm">
-                    <span class="block text-xl mb-1">⏱️</span>
-                    <span id="stat-avg-duration" class="block text-base font-bold app-text">0m</span>
-                    <span class="text-[10px] app-text-muted uppercase tracking-wider">Avg Duration</span>
+
+                <!-- AVG DURATION WITH WEEKLY DROPDOWN -->
+                <div class="relative">
+                    <div onclick="toggleDurationDropdown()" class="app-card border app-border p-3 rounded-2xl text-center shadow-sm cursor-pointer hover:opacity-80 transition">
+                        <span class="block text-xl mb-1">⏱️</span>
+                        <span id="stat-avg-duration" class="block text-base font-bold app-text">0m</span>
+                        <span class="text-[10px] app-text-muted uppercase tracking-wider flex items-center justify-center gap-1">Duration ▾</span>
+                    </div>
+                    <div id="duration-dropdown-menu" class="hidden absolute left-0 right-0 top-full mt-1 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-2 text-left">
+                        <div class="flex justify-between items-center border-b app-border pb-1">
+                            <span class="text-[10px] uppercase font-bold theme-text">Weekly Duration</span>
+                            <button onclick="toggleDurationDropdown()" class="text-xs app-text-muted">✕</button>
+                        </div>
+                        <div id="duration-weekly-list" class="space-y-1 max-h-36 overflow-y-auto text-[11px] app-text">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
                 </div>
-                <div class="app-card border app-border p-3 rounded-2xl text-center shadow-sm">
-                    <span class="block text-xl mb-1">🏔️</span>
-                    <span id="stat-total-volume" class="block text-base font-bold app-text">0</span>
-                    <span class="text-[10px] app-text-muted uppercase tracking-wider">Volume (lbs)</span>
+
+                <!-- VOLUME WITH WEEKLY DROPDOWN -->
+                <div class="relative">
+                    <div onclick="toggleVolumeDropdown()" class="app-card border app-border p-3 rounded-2xl text-center shadow-sm cursor-pointer hover:opacity-80 transition">
+                        <span class="block text-xl mb-1">🏔️</span>
+                        <span id="stat-total-volume" class="block text-base font-bold app-text">0</span>
+                        <span class="text-[10px] app-text-muted uppercase tracking-wider flex items-center justify-center gap-1">Volume ▾</span>
+                    </div>
+                    <div id="volume-dropdown-menu" class="hidden absolute right-0 left-0 top-full mt-1 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-2 text-left">
+                        <div class="flex justify-between items-center border-b app-border pb-1">
+                            <span class="text-[10px] uppercase font-bold theme-text">Weekly Volume</span>
+                            <button onclick="toggleVolumeDropdown()" class="text-xs app-text-muted">✕</button>
+                        </div>
+                        <div id="volume-weekly-list" class="space-y-1 max-h-36 overflow-y-auto text-[11px] app-text">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -203,7 +269,7 @@
                     </div>
                     <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
                     <div class="flex items-center justify-between pt-1 text-[10px] app-text-muted border-t app-border">
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full theme-bg inline-block"></span> Workout Completed</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full theme-bg inline-block"></span> Click a day to view workout</span>
                         <span id="calendar-active-count">0 days active</span>
                     </div>
                 </div>
@@ -243,7 +309,32 @@
                 <div class="flex justify-between items-center border-b app-border pb-3">
                     <div>
                         <span class="text-[10px] uppercase font-bold theme-text">Live Session Timer</span>
-                        <h2 id="live-timer-display" class="text-2xl font-black app-text">00:00</h2>
+                        <div class="relative inline-block">
+                            <h2 id="live-timer-display" onclick="toggleDurationEditorDropdown()" class="text-2xl font-black app-text cursor-pointer hover:underline" title="Click to edit duration">00:00 ▾</h2>
+                            
+                            <!-- Apple-style Duration Edit Dropdown -->
+                            <div id="duration-editor-dropdown" class="hidden absolute left-0 top-full mt-2 app-card border app-border rounded-xl p-3 shadow-xl z-30 space-y-2 w-52">
+                                <div class="flex justify-between items-center text-[10px] uppercase font-bold app-text-muted">
+                                    <span>Edit Duration</span>
+                                    <button onclick="toggleDurationEditorDropdown()">✕</button>
+                                </div>
+                                <div class="grid grid-cols-3 gap-1">
+                                    <div>
+                                        <label class="block text-[8px] uppercase app-text-muted">Hrs</label>
+                                        <input type="number" id="edit-timer-hrs" min="0" value="0" class="w-full app-input border app-border rounded px-1 py-1 text-xs text-center font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[8px] uppercase app-text-muted">Mins</label>
+                                        <input type="number" id="edit-timer-mins" min="0" max="59" value="0" class="w-full app-input border app-border rounded px-1 py-1 text-xs text-center font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[8px] uppercase app-text-muted">Secs</label>
+                                        <input type="number" id="edit-timer-secs" min="0" max="59" value="0" class="w-full app-input border app-border rounded px-1 py-1 text-xs text-center font-bold">
+                                    </div>
+                                </div>
+                                <button onclick="applyCustomDuration()" class="w-full theme-bg text-white font-semibold py-1.5 rounded-lg text-xs transition">Resume Timer</button>
+                            </div>
+                        </div>
                     </div>
                     <button onclick="cancelLiveWorkout()" class="text-xs text-red-500 font-semibold hover:underline px-2 py-1">Cancel</button>
                 </div>
@@ -636,10 +727,29 @@
             if (workoutTimerInterval) clearInterval(workoutTimerInterval);
             workoutTimerInterval = setInterval(() => {
                 workoutSecondsElapsed++;
-                const mins = String(Math.floor(workoutSecondsElapsed / 60)).padStart(2, '0');
-                const secs = String(workoutSecondsElapsed % 60).padStart(2, '0');
-                document.getElementById('live-timer-display').innerText = `${mins}:${secs}`;
+                updateLiveTimerDisplay();
             }, 1000);
+        }
+
+        function updateLiveTimerDisplay() {
+            const mins = String(Math.floor(workoutSecondsElapsed / 60)).padStart(2, '0');
+            const secs = String(workoutSecondsElapsed % 60).padStart(2, '0');
+            document.getElementById('live-timer-display').innerText = `${mins}:${secs} ▾`;
+        }
+
+        function toggleDurationEditorDropdown() {
+            const dropdown = document.getElementById('duration-editor-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function applyCustomDuration() {
+            const hrs = parseInt(document.getElementById('edit-timer-hrs').value) || 0;
+            const mins = parseInt(document.getElementById('edit-timer-mins').value) || 0;
+            const secs = parseInt(document.getElementById('edit-timer-secs').value) || 0;
+
+            workoutSecondsElapsed = (hrs * 3600) + (mins * 60) + secs;
+            updateLiveTimerDisplay();
+            toggleDurationEditorDropdown();
         }
 
         function cancelLiveWorkout() {
@@ -809,7 +919,48 @@
             }
         }
 
-        // --- ROUTINE DELETION LOGIC ---
+        // --- ROUTINE EDITING & DELETION LOGIC ---
+        function openEditRoutineModal(routineId) {
+            const routine = customRoutines.find(r => r.id === routineId);
+            if (!routine) return;
+
+            document.getElementById('edit-routine-id').value = routine.id;
+            document.getElementById('edit-routine-title').value = routine.title || '';
+            document.getElementById('edit-routine-desc').value = routine.desc || '';
+            
+            const exNames = (routine.exercises || []).map(ex => typeof ex === 'string' ? ex : ex.name).join(', ');
+            document.getElementById('edit-routine-exercises').value = exNames;
+
+            document.getElementById('edit-routine-modal').classList.remove('hidden');
+        }
+
+        function closeEditRoutineModal() {
+            document.getElementById('edit-routine-modal').classList.add('hidden');
+        }
+
+        async function saveEditedRoutine() {
+            const routineId = document.getElementById('edit-routine-id').value;
+            const title = document.getElementById('edit-routine-title').value;
+            const desc = document.getElementById('edit-routine-desc').value;
+            const exInput = document.getElementById('edit-routine-exercises').value;
+            const exerciseNames = exInput.split(',').map(s => s.trim()).filter(Boolean);
+            const exercises = exerciseNames.map(name => ({ name: name, sets: [{ weight: 135, reps: 10, completed: false }] }));
+
+            const { error } = await _supabase.from('routines').update({
+                title: title,
+                desc: desc,
+                exercises: exercises
+            }).eq('id', routineId);
+
+            if (error) {
+                alert("Error updating routine: " + error.message);
+            } else {
+                alert("Routine updated successfully!");
+                closeEditRoutineModal();
+                fetchUserData();
+            }
+        }
+
         function promptDeleteRoutine(routineId, routineTitle) {
             openConfirmModal(
                 "Delete Routine?",
@@ -1022,12 +1173,13 @@
             const daysGrid = document.getElementById('calendar-days-grid');
             daysGrid.innerHTML = '';
 
-            const workoutDatesSet = new Set();
+            const workoutsByDate = {};
             globalWorkoutsData.forEach(w => {
                 const parsed = new Date(w.date || w.created_at);
                 if (!isNaN(parsed)) {
                     const yyyyMmDd = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
-                    workoutDatesSet.add(yyyyMmDd);
+                    if (!workoutsByDate[yyyyMmDd]) workoutsByDate[yyyyMmDd] = [];
+                    workoutsByDate[yyyyMmDd].push(w);
                 }
             });
 
@@ -1042,15 +1194,159 @@
                 const formattedDay = String(day).padStart(2, '0');
                 const dateKey = `${year}-${formattedMonth}-${formattedDay}`;
 
-                const hasWorkedOut = workoutDatesSet.has(dateKey);
+                const dayWorkouts = workoutsByDate[dateKey] || [];
+                const hasWorkedOut = dayWorkouts.length > 0;
                 if (hasWorkedOut) activeDaysInMonth++;
 
-                dayCell.className = `h-7 w-7 mx-auto flex items-center justify-center rounded-full text-xs font-medium ${hasWorkedOut ? 'theme-bg text-white font-bold' : 'app-text'}`;
+                dayCell.className = `h-7 w-7 mx-auto flex items-center justify-center rounded-full text-xs font-medium cursor-pointer transition ${hasWorkedOut ? 'theme-bg text-white font-bold shadow-sm hover:opacity-90' : 'app-text hover:bg-black/5 dark:hover:bg-white/5'}`;
                 dayCell.innerText = day;
+                dayCell.onclick = () => openDayDetailsModal(dateKey, dayWorkouts);
                 daysGrid.appendChild(dayCell);
             }
 
             document.getElementById('calendar-active-count').innerText = `${activeDaysInMonth} days active`;
+        }
+
+        function openDayDetailsModal(dateStr, workouts) {
+            document.getElementById('day-modal-title').innerText = `Workout on ${dateStr}`;
+            const content = document.getElementById('day-modal-content');
+            
+            if (!workouts || workouts.length === 0) {
+                content.innerHTML = `<p class="app-text-muted text-center py-4">No workout recorded for this date.</p>`;
+            } else {
+                content.innerHTML = '';
+                workouts.forEach(w => {
+                    const exs = (w.exercises || []).map(e => `• ${e.name} (${e.sets?.length || 1} sets)`).join('<br>');
+                    content.innerHTML += `
+                        <div class="app-card-sub border app-border p-3 rounded-xl space-y-1">
+                            <h4 class="font-bold app-text">${w.title}</h4>
+                            <p class="app-text-muted">Duration: ${w.duration || 45} mins | Volume: ${w.volume || 0} lbs</p>
+                            <div class="text-[10px] app-text pt-1 border-t app-border">${exs || 'No specific exercises'}</div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('day-details-modal').classList.remove('hidden');
+        }
+
+        function closeDayDetailsModal() {
+            document.getElementById('day-details-modal').classList.add('hidden');
+        }
+
+        // --- WEEKLY DROPDOWNS FOR DURATION & VOLUME ---
+        function toggleDurationDropdown() {
+            document.getElementById('duration-dropdown-menu').classList.toggle('hidden');
+            document.getElementById('volume-dropdown-menu').classList.add('hidden');
+        }
+
+        function toggleVolumeDropdown() {
+            document.getElementById('volume-dropdown-menu').classList.toggle('hidden');
+            document.getElementById('duration-dropdown-menu').classList.add('hidden');
+        }
+
+        function renderWeeklyBreakdown(workouts) {
+            const durList = document.getElementById('duration-weekly-list');
+            const volList = document.getElementById('volume-weekly-list');
+            durList.innerHTML = '';
+            volList.innerHTML = '';
+
+            const weeklyDurMap = {};
+            const weeklyVolMap = {};
+
+            workouts.forEach(w => {
+                const date = new Date(w.date || w.created_at);
+                if (isNaN(date)) return;
+                
+                // Get week start (Sunday)
+                const startOfWeek = new Date(date);
+                startOfWeek.setDate(date.getDate() - date.getDay());
+                const weekKey = `${startOfWeek.getMonth() + 1}/${startOfWeek.getDate()}`;
+
+                weeklyDurMap[weekKey] = (weeklyDurMap[weekKey] || 0) + (w.duration || 45);
+                weeklyVolMap[weekKey] = (weeklyVolMap[weekKey] || 0) + (w.volume || 0);
+            });
+
+            const weeks = Object.keys(weeklyDurMap).sort((a,b) => new Date(b) - new Date(a));
+
+            if (weeks.length === 0) {
+                durList.innerHTML = `<span class="app-text-muted">No data available</span>`;
+                volList.innerHTML = `<span class="app-text-muted">No data available</span>`;
+                return;
+            }
+
+            weeks.forEach(wk => {
+                durList.innerHTML += `<div class="flex justify-between py-1 border-b app-border"><span>Week of ${wk}</span><span class="font-bold">${weeklyDurMap[wk]} mins</span></div>`;
+                volList.innerHTML += `<div class="flex justify-between py-1 border-b app-border"><span>Week of ${wk}</span><span class="font-bold">${weeklyVolMap[wk].toLocaleString()} lbs</span></div>`;
+            });
+        }
+
+        // --- STREAK COUNTER WITH FADE & 4-DAY RESET ---
+        function calculateAndUpdateStreak(workouts) {
+            if (!workouts || workouts.length === 0) {
+                applyStreakUI(0, 4);
+                return;
+            }
+
+            const workoutDays = new Set();
+            workouts.forEach(w => {
+                const d = new Date(w.date || w.created_at);
+                if (!isNaN(d)) {
+                    workoutDays.add(d.toDateString());
+                }
+            });
+
+            const today = new Date();
+            let currentStreak = 0;
+            let daysMissed = 0;
+            let checkDate = new Date(today);
+
+            // Check if worked out today or yesterday to start streak
+            const todayStr = checkDate.toDateString();
+            const yesterdayDate = new Date(today);
+            yesterdayDate.setDate(today.getDate() - 1);
+            const yesterdayStr = yesterdayDate.toDateString();
+
+            if (!workoutDays.has(todayStr) && !workoutDays.has(yesterdayStr)) {
+                // Count how many days missed since last workout
+                let tempDate = new Date(today);
+                while (daysMissed < 5) {
+                    tempDate.setDate(tempDate.getDate() - 1);
+                    if (workoutDays.has(tempDate.toDateString())) {
+                        break;
+                    }
+                    daysMissed++;
+                }
+            }
+
+            // Calculate active streak count backwards
+            let streakDate = new Date(workoutDays.has(todayStr) ? today : yesterdayDate);
+            if (workoutDays.has(streakDate.toDateString()) || workoutDays.has(todayStr)) {
+                while (true) {
+                    if (workoutDays.has(streakDate.toDateString())) {
+                        currentStreak++;
+                        streakDate.setDate(streakDate.getDate() - 1);
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            if (daysMissed >= 4) {
+                currentStreak = 0;
+            }
+
+            applyStreakUI(currentStreak, daysMissed);
+        }
+
+        function applyStreakUI(streak, missedDays) {
+            const badgeLabel = document.getElementById('streak-badge-label');
+            const fireIcon = document.getElementById('streak-fire-icon');
+            
+            // Opacity fade based on missed days (0 missed = 1.0 opacity, 3 missed = 0.25 opacity)
+            const opacityFactor = Math.max(0.15, 1 - (missedDays * 0.25));
+            
+            if (badgeLabel) badgeLabel.style.opacity = opacityFactor;
+            if (fireIcon) fireIcon.style.opacity = opacityFactor;
         }
 
         function switchTab(tabId) {
@@ -1292,6 +1588,8 @@
                 updateDashboardStats(data);
                 renderRecentSessions(data);
                 renderCalendar();
+                renderWeeklyBreakdown(data);
+                calculateAndUpdateStreak(data);
             }
 
             const { data: routinesData } = await _supabase
@@ -1433,7 +1731,10 @@
                         </div>
                         <div class="flex items-center gap-1.5">
                             <button onclick='startLiveWorkout("${r.title}", ${JSON.stringify(r.exercises || [])}); switchTab("workouts");' class="theme-bg text-white text-[10px] font-semibold px-3 py-1.5 rounded-xl transition">Start Routine</button>
-                            ${!r.isDefault ? `<button onclick="promptDeleteRoutine('${r.id}', '${r.title}')" class="px-2 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-[10px] font-semibold text-red-500 hover:opacity-80" title="Delete Routine">🗑️</button>` : ''}
+                            ${!r.isDefault ? `
+                                <button onclick="openEditRoutineModal('${r.id}')" class="px-2 py-1.5 rounded-xl app-card-sub border app-border text-[10px] font-semibold app-text hover:opacity-80" title="Edit Routine">✏️</button>
+                                <button onclick="promptDeleteRoutine('${r.id}', '${r.title}')" class="px-2 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-[10px] font-semibold text-red-500 hover:opacity-80" title="Delete Routine">🗑️</button>
+                            ` : ''}
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-1 pt-1">
