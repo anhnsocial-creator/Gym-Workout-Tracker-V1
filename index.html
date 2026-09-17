@@ -414,6 +414,31 @@
         setMode(currentMode, false);
         updateGreeting();
 
+        // Initialization & Supabase Auth State
+        _supabase.auth.getSession().then(({ data: { session } }) => {
+            currentUser = session?.user || null;
+            updateAuthUI();
+            if (currentUser) {
+                loadWorkoutsFromCloud();
+                loadRoutinesFromCloud();
+            } else {
+                renderWorkouts([]);
+                renderRoutines([]);
+            }
+        });
+
+        _supabase.auth.onAuthStateChange((event, session) => {
+            currentUser = session?.user || null;
+            updateAuthUI();
+            if (currentUser) {
+                loadWorkoutsFromCloud();
+                loadRoutinesFromCloud();
+            } else {
+                renderWorkouts([]);
+                renderRoutines([]);
+            }
+        });
+
         function updateGreeting() {
             const hour = new Date().getHours();
             const greetingEl = document.getElementById('header-greeting');
@@ -525,19 +550,6 @@
         let customRoutines = [];
         let calendarCurrentDate = new Date();
         let currentEditingWorkoutId = null;
-
-        // Initialization & Supabase Auth State
-        _supabase.auth.onAuthStateChange((event, session) => {
-            currentUser = session?.user || null;
-            updateAuthUI();
-            if (currentUser) {
-                loadWorkoutsFromCloud();
-                loadRoutinesFromCloud();
-            } else {
-                renderWorkouts([]);
-                renderRoutines([]);
-            }
-        });
 
         function updateAuthUI() {
             const userPill = document.getElementById('user-pill');
@@ -750,8 +762,8 @@
                         ${ex.sets.map((set, setIndex) => `
                             <div class="flex items-center gap-2">
                                 <span class="text-[10px] app-text-muted w-10">Set ${setIndex + 1}</span>
-                                <input type="number" placeholder="Lbs" value="${set.weight}" onchange="updateSetData(${exIndex}, ${setIndex}, 'weight', this.value)" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
-                                <input type="number" placeholder="Reps" value="${set.reps}" onchange="updateSetData(${exIndex}, ${setIndex}, 'reps', this.value)" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                                <input type="number" placeholder="Lbs" value="${set.weight}" oninput="updateSetData(${exIndex}, ${setIndex}, 'weight', this.value)" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                                <input type="number" placeholder="Reps" value="${set.reps}" oninput="updateSetData(${exIndex}, ${setIndex}, 'reps', this.value)" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
                                 <button onclick="removeSetFromExercise(${exIndex}, ${setIndex})" class="text-zinc-400 hover:text-red-500 text-xs px-1">✕</button>
                             </div>
                         `).join('')}
