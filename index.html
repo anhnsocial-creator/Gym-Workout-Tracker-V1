@@ -65,7 +65,7 @@
                 <p id="rest-timer-modal-desc" class="text-xs app-text-muted">Catch your breath. Next set is waiting!</p>
                 <div class="grid grid-cols-2 gap-2 pt-2">
                     <button onclick="addRestTime(30)" class="app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">+30s Rest</button>
-                    <button onclick="dismissRestTimer()" class="theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Skip Rest</button>
+                    <button id="rest-modal-action-btn" onclick="dismissRestTimer()" class="theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Skip Rest</button>
                 </div>
             </div>
         </div>
@@ -253,17 +253,25 @@
                         <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Session Name</label>
                         <input type="text" id="session-name" value="Gym session" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
                     </div>
-                    <!-- CUSTOM REST TIMER DURATION SELECTOR -->
-                    <div class="flex items-center justify-between app-card-sub border app-border p-2.5 rounded-xl">
-                        <span class="text-[10px] uppercase font-bold app-text-muted">Default Rest Timer:</span>
-                        <select id="rest-duration-select" onchange="defaultRestSeconds = parseInt(this.value)" class="app-input border app-border rounded-lg px-2 py-1 text-xs app-text focus:outline-none">
-                            <option value="30">30 seconds</option>
-                            <option value="45">45 seconds</option>
-                            <option value="60" selected>60 seconds</option>
-                            <option value="90">90 seconds</option>
-                            <option value="120">120 seconds</option>
-                            <option value="180">180 seconds</option>
-                        </select>
+                    
+                    <!-- SCROLLABLE REST TIMER SELECTOR (Minutes & Seconds up to 60) -->
+                    <div class="app-card-sub border app-border p-3 rounded-xl space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] uppercase font-bold app-text-muted">Default Rest Timer:</span>
+                            <span id="selected-rest-label" class="text-xs font-bold theme-text">01:00</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <!-- Minutes Picker -->
+                            <div>
+                                <span class="block text-[9px] uppercase font-semibold app-text-muted text-center mb-1">Minutes (0-60)</span>
+                                <div id="scroll-minutes" class="h-28 overflow-y-auto snap-y snap-mandatory rounded-xl app-input border app-border p-1 space-y-1 text-center scrollbar-thin"></div>
+                            </div>
+                            <!-- Seconds Picker -->
+                            <div>
+                                <span class="block text-[9px] uppercase font-semibold app-text-muted text-center mb-1">Seconds (0-60)</span>
+                                <div id="scroll-seconds" class="h-28 overflow-y-auto snap-y snap-mandatory rounded-xl app-input border app-border p-1 space-y-1 text-center scrollbar-thin"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -463,6 +471,10 @@
         .theme-text { color: var(--theme-color); }
         .theme-gradient { background: var(--theme-gradient); }
         input:focus { border-color: var(--theme-color) !important; }
+        .snap-y { scroll-snap-type: y mandatory; }
+        .snap-center { scroll-snap-align: center; }
+        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(150,150,150,0.3); border-radius: 4px; }
     </style>
 
     <script>
@@ -486,6 +498,7 @@
         setCustomThemeColor(currentThemeColor, false);
         setMode(currentMode, false);
         updateGreeting();
+        initRestTimerPickers();
 
         function updateGreeting() {
             const hour = new Date().getHours();
@@ -585,7 +598,7 @@
             { name: 'Rowing Machine (Erg)', category: 'Cardio', muscle: 'Back', videoId: 'Hojvjd421V0', desc: 'Drive with legs, hinge back with hips, and pull handle to sternum.' }
         ];
 
-        let selectedExercises = []; // Array of { name: string, sets: [{ weight: number, reps: number, completed: boolean }] }
+        let selectedExercises = [];
         let customRoutines = [];
         let globalWorkoutsData = [];
         let calendarCurrentDate = new Date();
@@ -637,12 +650,96 @@
             }
         }
 
-        // --- REST TIMER CONTROLS ---
+        // --- REST TIMER CONTROLS & SCROLLABLE PICKERS ---
+        function initRestTimerPickers() {
+            const minContainer = document.getElementById('scroll-minutes');
+            const secContainer = document.getElementById('scroll-seconds');
+            if (!minContainer || !secContainer) return;
+
+            minContainer.innerHTML = '';
+            secContainer.innerHTML = '';
+
+            for (let i = 0; i <= 60; i++) {
+                const minDiv = document.createElement('div');
+                minDiv.className = `snap-center py-1 text-xs cursor-pointer rounded transition ${i === 1 ? 'font-bold theme-text' : 'app-text-muted'}`;
+                minDiv.innerText = `${i}m`;
+                minDiv.dataset.value = i;
+                minDiv.onclick = () => {
+                    minContainer.scrollTo({ top: minDiv.offsetTop - minContainer.clientHeight / 2 + minDiv.clientHeight / 2, behavior: 'smooth' });
+                    updateRestDurationFromScroll();
+                };
+                minContainer.appendChild(minDiv);
+
+                const secDiv = document.createElement('div');
+                secDiv.className = `snap-center py-1 text-xs cursor-pointer rounded transition ${i === 0 ? 'font-bold theme-text' : 'app-text-muted'}`;
+                secDiv.innerText = `${i}s`;
+                secDiv.dataset.value = i;
+                secDiv.onclick = () => {
+                    secContainer.scrollTo({ top: secDiv.offsetTop - secContainer.clientHeight / 2 + secDiv.clientHeight / 2, behavior: 'smooth' });
+                    updateRestDurationFromScroll();
+                };
+                secContainer.appendChild(secDiv);
+            }
+
+            minContainer.onscroll = debounce(updateRestDurationFromScroll, 100);
+            secContainer.onscroll = debounce(updateRestDurationFromScroll, 100);
+
+            // Set initial position to 1m 0s
+            setTimeout(() => {
+                const defaultMinDiv = minContainer.querySelector('[data-value="1"]');
+                const defaultSecDiv = secContainer.querySelector('[data-value="0"]');
+                if (defaultMinDiv) minContainer.scrollTop = defaultMinDiv.offsetTop - minContainer.clientHeight / 2;
+                if (defaultSecDiv) secContainer.scrollTop = defaultSecDiv.offsetTop - secContainer.clientHeight / 2;
+            }, 50);
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        function updateRestDurationFromScroll() {
+            const minContainer = document.getElementById('scroll-minutes');
+            const secContainer = document.getElementById('scroll-seconds');
+            if (!minContainer || !secContainer) return;
+
+            const minChildren = Array.from(minContainer.children);
+            const secChildren = Array.from(secContainer.children);
+
+            const selectedMin = minChildren.reduce((prev, curr) => {
+                return Math.abs(curr.offsetTop - minContainer.scrollTop - minContainer.clientHeight/2) < Math.abs(prev.offsetTop - minContainer.scrollTop - minContainer.clientHeight/2) ? curr : prev;
+            }, minChildren[0]);
+
+            const selectedSec = secChildren.reduce((prev, curr) => {
+                return Math.abs(curr.offsetTop - secContainer.scrollTop - secContainer.clientHeight/2) < Math.abs(prev.offsetTop - secContainer.scrollTop - secContainer.clientHeight/2) ? curr : prev;
+            }, secChildren[0]);
+
+            const mins = parseInt(selectedMin.dataset.value) || 0;
+            const secs = parseInt(selectedSec.dataset.value) || 0;
+
+            defaultRestSeconds = (mins * 60) + secs;
+
+            minChildren.forEach(el => el.classList.remove('font-bold', 'theme-text'));
+            secChildren.forEach(el => el.classList.remove('font-bold', 'theme-text'));
+            selectedMin.classList.add('font-bold', 'theme-text');
+            selectedSec.classList.add('font-bold', 'theme-text');
+
+            const formattedMins = String(mins).padStart(2, '0');
+            const formattedSecs = String(secs).padStart(2, '0');
+            const labelEl = document.getElementById('selected-rest-label');
+            if (labelEl) labelEl.innerText = `${formattedMins}:${formattedSecs}`;
+        }
+
         function startRestTimer(seconds) {
             if (restTimerInterval) clearInterval(restTimerInterval);
             restTimeRemaining = seconds;
             updateRestDisplay();
             
+            const actionBtn = document.getElementById('rest-modal-action-btn');
+            actionBtn.innerText = "Skip Rest";
             document.getElementById('rest-timer-modal-desc').innerText = "Catch your breath and get ready for the next set!";
             document.getElementById('rest-timer-modal').classList.remove('hidden');
 
@@ -654,6 +751,7 @@
                     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                     document.getElementById('rest-countdown-display').innerText = "REST OVER!";
                     document.getElementById('rest-timer-modal-desc').innerText = "Time's up! Continue to your next set or exercise.";
+                    actionBtn.innerText = "Continue";
                 }
             }, 1000);
         }
@@ -669,6 +767,10 @@
 
         function addRestTime(seconds) {
             restTimeRemaining += seconds;
+            if (restTimeRemaining > 0) {
+                document.getElementById('rest-modal-action-btn').innerText = "Skip Rest";
+                document.getElementById('rest-timer-modal-desc').innerText = "Catch your breath and get ready for the next set!";
+            }
             updateRestDisplay();
         }
 
@@ -1109,7 +1211,6 @@
             setObj.completed = !setObj.completed;
             renderBuilderRows();
 
-            // When checked off, trigger the custom rest timer
             if (setObj.completed) {
                 startRestTimer(defaultRestSeconds);
             }
