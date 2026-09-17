@@ -14,9 +14,14 @@
 
     <!-- Top Header Bar -->
     <header class="w-full max-w-md md:max-w-6xl px-4 py-4 flex justify-between items-center border-b app-border app-header sticky top-0 z-30 backdrop-blur transition-colors duration-200">
-        <div>
-            <h1 class="text-xs font-semibold app-text-muted">YOUR TRAINING</h1>
-            <p id="header-greeting" class="text-lg font-bold tracking-tight app-text">Good morning.</p>
+        <div class="flex items-center gap-2.5">
+            <div id="header-avatar" class="hidden w-8 h-8 rounded-full overflow-hidden bg-amber-300 flex items-center justify-center shrink-0 border border-amber-400">
+                <img src="https://api.iconify.design/fluent-emoji:rabbit-face.svg" alt="Usagi" class="w-6 h-6 object-contain">
+            </div>
+            <div>
+                <h1 class="text-xs font-semibold app-text-muted">YOUR TRAINING</h1>
+                <p id="header-greeting" class="text-lg font-bold tracking-tight app-text">Good morning.</p>
+            </div>
         </div>
         <div class="flex items-center gap-2">
             <button onclick="toggleDarkMode()" class="p-2 rounded-xl app-card border app-border app-text hover:opacity-80 transition" title="Toggle Light/Dark Mode">
@@ -162,11 +167,14 @@
             </div>
         </div>
 
-        <!-- EDIT ROUTINE MODAL (FULL LIFTOFF STYLE) -->
+        <!-- EDIT ROUTINE MODAL (FULL LIFTOFF STYLE WORKOUT MENU) -->
         <div id="edit-routine-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div class="app-card border app-border rounded-2xl p-5 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-sm font-bold uppercase tracking-wider app-text">Edit Routine Menu</h3>
+                    <div class="flex items-center gap-2">
+                        <span id="edit-routine-usagi-badge" class="hidden text-base">🐰</span>
+                        <h3 class="text-sm font-bold uppercase tracking-wider app-text">Edit Routine Menu</h3>
+                    </div>
                     <button onclick="closeEditRoutineModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
                 </div>
                 <input type="hidden" id="edit-routine-id">
@@ -180,12 +188,16 @@
                         <input type="text" id="edit-routine-desc" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
                     </div>
                     <div>
-                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Exercises (Comma separated)</label>
-                        <input type="text" id="edit-routine-exercises" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[10px] uppercase font-semibold app-text-muted">Exercises & Sets Configuration</label>
+                            <button onclick="openCustomExerciseModalForRoutineEdit()" class="text-[10px] theme-text font-semibold hover:underline">+ Add Exercise</button>
+                        </div>
+                        <input type="text" id="edit-routine-exercises" placeholder="Comma separated names" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current mb-2">
                     </div>
+                    
                     <div id="edit-routine-sets-builder" class="space-y-2 pt-2 border-t app-border">
-                        <h4 class="text-[10px] font-bold uppercase app-text-muted">Detailed Exercise Config</h4>
-                        <div id="edit-routine-rows" class="space-y-2"></div>
+                        <h4 class="text-[10px] font-bold uppercase app-text-muted">Detailed Set Editor (Liftoff Style)</h4>
+                        <div id="edit-routine-rows" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
                     </div>
                     <button onclick="saveEditedRoutine()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Update Routine</button>
                 </div>
@@ -195,6 +207,7 @@
         <!-- COLUMN 1: DASHBOARD & FEED (Home Tab) -->
         <section id="tab-home" class="space-y-4 md:block">
             <div class="theme-gradient rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                <div id="hero-usagi-watermark" class="hidden absolute right-3 -bottom-2 opacity-30 text-5xl pointer-events-none">🐰</div>
                 <div class="absolute -right-4 -bottom-4 opacity-25 font-black text-7xl pointer-events-none">⚡</div>
                 <div class="flex justify-between items-start mb-4">
                     <span id="streak-badge-label" class="text-xs font-bold uppercase tracking-wider bg-black/20 text-white px-2.5 py-1 rounded-full transition-opacity duration-300">Streak: <span id="streak-count-val">0</span> Days</span>
@@ -265,7 +278,7 @@
                         <span class="text-base">🗓️</span>
                         <div>
                             <h3 class="text-xs font-bold uppercase tracking-wider app-text">Workout Calendar View</h3>
-                            <p class="text-[10px] app-text-muted">Tap to expand or hide your workout history</p>
+                            <p class="text-[10px] app-text-muted">Tap any day to view or edit workout history</p>
                         </div>
                     </div>
                     <span id="calendar-chevron" class="text-xs font-bold app-text-muted transition-transform duration-200">▼</span>
@@ -281,7 +294,7 @@
                     </div>
                     <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
                     <div class="flex items-center justify-between pt-1 text-[10px] app-text-muted border-t app-border">
-                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full theme-bg inline-block"></span> Click a day to view workout</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full theme-bg inline-block"></span> Click a day to view/edit workout</span>
                         <span id="calendar-active-count">0 days active</span>
                     </div>
                 </div>
@@ -454,9 +467,10 @@
 
                 <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
                     <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🌗 Display Mode</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="setMode('dark')" id="mode-dark-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition">🌙 Dark Mode</button>
-                        <button onclick="setMode('light')" id="mode-light-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition">☀️ Light Mode</button>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setMode('dark')" id="mode-dark-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition">🌙 Dark</button>
+                        <button onclick="setMode('light')" id="mode-light-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition">☀️ Light</button>
+                        <button onclick="setUsagiTheme()" id="mode-usagi-btn" class="p-2.5 rounded-xl border border-amber-400 bg-amber-500/10 text-xs font-semibold text-amber-500 flex items-center justify-center gap-1.5 transition hover:opacity-90">🐰 Usagi</button>
                     </div>
                 </div>
 
@@ -566,6 +580,13 @@
             --text-main: #f4f4f5; --text-muted: #a1a1aa; --border-color: #27272a;
             --btn-sec-bg: #27272a; --btn-sec-hover: #3f3f46; --btn-sec-text: #f4f4f5;
         }
+        html.usagi-theme {
+            --bg-main: #fffbeb; --bg-card: #fef3c7; --bg-card-sub: #fde68a; --bg-input: #fff7ed;
+            --text-main: #78350f; --text-muted: #92400e; --border-color: #fcd34d;
+            --btn-sec-bg: #fde68a; --btn-sec-hover: #fbcfe8; --btn-sec-text: #78350f;
+            --theme-color: #d97706;
+            --theme-gradient: linear-gradient(to bottom right, #f59e0b, #d97706);
+        }
         body.app-body { background-color: var(--bg-main); color: var(--text-main); }
         .app-card { background-color: var(--bg-card); color: var(--text-main); }
         .app-card-sub { background-color: var(--bg-card-sub); }
@@ -606,8 +627,12 @@
         let currentDurationWeekOffset = 0;
         let currentVolumeWeekOffset = 0;
 
-        setCustomThemeColor(currentThemeColor, false);
-        setMode(currentMode, false);
+        if (currentMode === 'usagi') {
+            setUsagiTheme(false);
+        } else {
+            setCustomThemeColor(currentThemeColor, false);
+            setMode(currentMode, false);
+        }
         updateGreeting();
 
         function updateGreeting() {
@@ -616,7 +641,23 @@
             let greeting = 'Good morning.';
             if (hour >= 12 && hour < 17) greeting = 'Good afternoon.';
             else if (hour >= 17 || hour < 5) greeting = 'Good evening.';
-            if (greetingEl) greetingEl.textContent = greeting;
+            if (greetingEl) greetingEl.textContent = `${greeting}`;
+        }
+
+        function setUsagiTheme(save = true) {
+            currentMode = 'usagi';
+            if (save) localStorage.setItem('liftpulse_mode', 'usagi');
+            document.documentElement.classList.add('usagi-theme');
+            document.documentElement.classList.remove('dark');
+            const modeIcon = document.getElementById('mode-icon');
+            if (modeIcon) modeIcon.innerText = '🐰';
+            
+            const avatar = document.getElementById('header-avatar');
+            if (avatar) avatar.classList.remove('hidden');
+            const watermark = document.getElementById('hero-usagi-watermark');
+            if (watermark) watermark.classList.remove('hidden');
+            const editBadge = document.getElementById('edit-routine-usagi-badge');
+            if (editBadge) editBadge.classList.remove('hidden');
         }
 
         function togglePasswordVisibility(inputId, btn) {
@@ -891,17 +932,27 @@
                 }
             }
 
-            if (!selectedExercises.some(e => e.name === name)) {
-                selectedExercises.push({ name: name, sets: [{ weight: 135, reps: 10, completed: false }] });
+            // Check if routine modal is open, add there; otherwise add to session
+            if (!document.getElementById('edit-routine-modal').classList.contains('hidden')) {
+                editRoutineExercises.push({ name: name, sets: [{ weight: 135, reps: 10 }] });
+                renderEditRoutineRows();
+                updateRoutineExercisesInputString();
+            } else {
+                if (!selectedExercises.some(e => e.name === name)) {
+                    selectedExercises.push({ name: name, sets: [{ weight: 135, reps: 10, completed: false }] });
+                }
+                document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
+                renderExerciseLibrary();
+                renderBuilderRows();
             }
 
-            document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
             document.getElementById('custom-ex-name').value = '';
             document.getElementById('custom-ex-muscle').value = '';
             closeCustomExerciseModal();
+        }
 
-            renderExerciseLibrary();
-            renderBuilderRows();
+        function openCustomExerciseModalForRoutineEdit() {
+            openCustomExerciseModal();
         }
 
         // --- SAVE CURRENT WORKOUT AS ROUTINE ---
@@ -935,7 +986,7 @@
             }
         }
 
-        // --- ROUTINE EDITING & DELETION LOGIC (FULL LIFTOFF STYLE MENU) ---
+        // --- ROUTINE EDITING & DELETION LOGIC (FULL WORKOUT/LIFTOFF MENU STYLE) ---
         let editRoutineExercises = [];
 
         function openEditRoutineModal(routineId) {
@@ -947,15 +998,55 @@
             document.getElementById('edit-routine-desc').value = routine.desc || '';
             
             editRoutineExercises = JSON.parse(JSON.stringify(routine.exercises || []));
-            const exNames = editRoutineExercises.map(ex => typeof ex === 'string' ? ex : ex.name).join(', ');
-            document.getElementById('edit-routine-exercises').value = exNames;
+            updateRoutineExercisesInputString();
 
             renderEditRoutineRows();
             document.getElementById('edit-routine-modal').classList.remove('hidden');
         }
 
+        function updateRoutineExercisesInputString() {
+            const exNames = editRoutineExercises.map(ex => typeof ex === 'string' ? ex : ex.name).join(', ');
+            document.getElementById('edit-routine-exercises').value = exNames;
+        }
+
         function closeEditRoutineModal() {
             document.getElementById('edit-routine-modal').classList.add('hidden');
+        }
+
+        function addSetToEditRoutineExercise(idx) {
+            captureEditRoutineInputValues();
+            if (!editRoutineExercises[idx].sets) editRoutineExercises[idx].sets = [];
+            editRoutineExercises[idx].sets.push({ weight: 135, reps: 10 });
+            renderEditRoutineRows();
+        }
+
+        function removeSetFromEditRoutineExercise(exIdx, setIdx) {
+            captureEditRoutineInputValues();
+            if (editRoutineExercises[exIdx].sets.length <= 1) {
+                editRoutineExercises.splice(exIdx, 1);
+            } else {
+                editRoutineExercises[exIdx].sets.splice(setIdx, 1);
+            }
+            renderEditRoutineRows();
+            updateRoutineExercisesInputString();
+        }
+
+        function captureEditRoutineInputValues() {
+            editRoutineExercises.forEach((exObj, idx) => {
+                const name = typeof exObj === 'string' ? exObj : exObj.name;
+                const sets = exObj.sets || [{ weight: 135, reps: 10 }];
+                
+                const updatedSets = sets.map((set, sIdx) => {
+                    const wtInput = document.getElementById(`edit-routine-ex-${idx}-set-${sIdx}-wt`);
+                    const repInput = document.getElementById(`edit-routine-ex-${idx}-set-${sIdx}-rep`);
+                    return {
+                        weight: wtInput ? parseFloat(wtInput.value) || 0 : (set.weight || 135),
+                        reps: repInput ? parseFloat(repInput.value) || 0 : (set.reps || 10),
+                        completed: false
+                    };
+                });
+                editRoutineExercises[idx] = { name, sets: updatedSets };
+            });
         }
 
         function renderEditRoutineRows() {
@@ -963,7 +1054,7 @@
             container.innerHTML = '';
 
             if (editRoutineExercises.length === 0) {
-                container.innerHTML = '<p class="text-xs app-text-muted">No exercises added.</p>';
+                container.innerHTML = '<p class="text-xs app-text-muted text-center py-2">No exercises added yet.</p>';
                 return;
             }
 
@@ -974,42 +1065,50 @@
                 let setsHtml = '';
                 sets.forEach((set, sIdx) => {
                     setsHtml += `
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[9px] app-text-muted w-10">Set ${sIdx + 1}</span>
-                            <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-wt" value="${set.weight || 135}" class="w-20 app-input border app-border rounded px-2 py-0.5 text-xs" placeholder="Wt">
-                            <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-rep" value="${set.reps || 10}" class="w-20 app-input border app-border rounded px-2 py-0.5 text-xs" placeholder="Reps">
+                        <div class="flex items-center gap-2 mt-1.5 bg-black/5 dark:bg-white/5 p-2 rounded-lg">
+                            <span class="text-[9px] font-bold app-text-muted w-10">Set ${sIdx + 1}</span>
+                            <div class="flex-1 grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[8px] uppercase app-text-muted">Weight (lbs)</label>
+                                    <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-wt" value="${set.weight || 135}" class="w-full app-input border app-border rounded px-2 py-1 text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-[8px] uppercase app-text-muted">Reps</label>
+                                    <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-rep" value="${set.reps || 10}" class="w-full app-input border app-border rounded px-2 py-1 text-xs">
+                                </div>
+                            </div>
+                            <button onclick="removeSetFromEditRoutineExercise(${idx}, ${sIdx})" class="text-xs text-red-500 hover:underline px-1 self-end pb-1" title="Remove Set">✕</button>
                         </div>
                     `;
                 });
 
                 container.innerHTML += `
-                    <div class="app-card-sub border app-border p-2.5 rounded-xl text-xs space-y-1">
-                        <p class="font-bold app-text">${name}</p>
-                        ${setsHtml}
+                    <div class="app-card-sub border app-border p-3 rounded-xl text-xs space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold app-text">${idx + 1}. ${name}</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="addSetToEditRoutineExercise(${idx})" class="text-[10px] theme-text font-semibold hover:underline">+ Add Set</button>
+                                <button onclick="editRoutineExercises.splice(${idx}, 1); renderEditRoutineRows(); updateRoutineExercisesInputString();" class="text-[10px] text-red-500 hover:underline">Remove</button>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            ${setsHtml}
+                        </div>
                     </div>
                 `;
             });
         }
 
         async function saveEditedRoutine() {
+            captureEditRoutineInputValues();
             const routineId = document.getElementById('edit-routine-id').value;
             const title = document.getElementById('edit-routine-title').value;
             const desc = document.getElementById('edit-routine-desc').value;
-            const exInput = document.getElementById('edit-routine-exercises').value;
-            const exerciseNames = exInput.split(',').map(s => s.trim()).filter(Boolean);
-
-            const updatedExercises = exerciseNames.map((name, idx) => {
-                const existing = editRoutineExercises[idx];
-                return {
-                    name: name,
-                    sets: existing?.sets || [{ weight: 135, reps: 10, completed: false }]
-                };
-            });
 
             const { error } = await _supabase.from('routines').update({
                 title: title,
                 desc: desc,
-                exercises: updatedExercises
+                exercises: editRoutineExercises
             }).eq('id', routineId);
 
             if (error) {
@@ -1268,7 +1367,7 @@
         }
 
         function openDayDetailsModal(dateStr, workouts) {
-            document.getElementById('day-modal-title').innerText = `Workout on ${dateStr}`;
+            document.getElementById('day-modal-title').innerText = `Workouts on ${dateStr}`;
             const content = document.getElementById('day-modal-content');
             
             if (!workouts || workouts.length === 0) {
@@ -1278,8 +1377,11 @@
                 workouts.forEach(w => {
                     const exs = (w.exercises || []).map(e => `• ${e.name} (${e.sets?.length || 1} sets)`).join('<br>');
                     content.innerHTML += `
-                        <div class="app-card-sub border app-border p-3 rounded-xl space-y-1">
-                            <h4 class="font-bold app-text">${w.title}</h4>
+                        <div class="app-card-sub border app-border p-3 rounded-xl space-y-2">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold app-text">${w.title}</h4>
+                                <button onclick="closeDayDetailsModal(); openEditWorkoutModal('${w.id}');" class="px-2 py-1 rounded bg-amber-500/10 text-amber-500 text-[10px] font-bold hover:underline">Edit Workout</button>
+                            </div>
                             <p class="app-text-muted">Duration: ${w.duration || 45} mins | Volume: ${w.volume || 0} lbs</p>
                             <div class="text-[10px] app-text pt-1 border-t app-border">${exs || 'No specific exercises'}</div>
                         </div>
@@ -1319,7 +1421,6 @@
         function renderBarGraphCharts() {
             const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-            // Helper to get week date range based on offset
             function getWeekDays(offset) {
                 const now = new Date();
                 const startOfWeek = new Date(now);
@@ -1398,7 +1499,6 @@
 
                 barsHtml += `
                     <g>
-                        <!-- Rounded top bar using rect with rx -->
                         <rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="6" fill="${accentColor}" opacity="${val > 0 ? '1' : '0.2'}" />
                         <text x="${x + (barWidth/2)}" y="${chartBottom + 14}" text-anchor="middle" font-size="9" fill="currentColor" opacity="0.7">${lbl}</text>
                         ${val > 0 ? `<text x="${x + (barWidth/2)}" y="${y - 4}" text-anchor="middle" font-size="7" fill="currentColor" font-weight="bold">${val >= 1000 ? (val/1000).toFixed(1) + 'k' : val}</text>` : ''}
@@ -1843,65 +1943,133 @@
 
             const defaultRoutines = [
                 { id: 'default-push', title: 'Push Day (Chest, Shoulders, Triceps)', desc: 'Focus on heavy presses and accessory isolation.', exercises: ['Barbell Bench Press', 'Incline Dumbbell Press', 'Dumbbell Shoulder Press'], isDefault: true },
-                { id: 'default-pull', title: 'Pull Day (Back, Biceps)', desc: 'Build width and thickness in your upper body.', exercises: ['Deadlift', 'Barbell Row', 'Lat Pulldown'], isDefault: true },
-                { id: 'default-legs', title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Comprehensive lower body strength routine.', exercises: ['Barbell Squat', 'Romanian Deadlift (RDL)', 'Seated Leg Press'], isDefault: true }
+                { id: 'default-pull', title: 'Pull Day (Back, Biceps)', desc: 'Heavy deadlifts and vertical/horizontal pulls.', exercises: ['Deadlift', 'Barbell Row', 'Lat Pulldown'], isDefault: true },
+                { id: 'default-legs', title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Deep squats and hamstring isolation.', exercises: ['Barbell Squat', 'Romanian Deadlift (RDL)', 'Seated Leg Press'], isDefault: true }
             ];
 
             const allRoutines = [...defaultRoutines, ...customRoutines];
 
             allRoutines.forEach(r => {
-                const exerciseNames = (r.exercises || []).map(ex => typeof ex === 'string' ? ex : ex.name);
-
+                const exs = (r.exercises || []).map(e => typeof e === 'string' ? e : e.name).join(', ');
                 const div = document.createElement('div');
-                div.className = 'app-card border app-border p-4 rounded-2xl space-y-2 shadow-sm';
+                div.className = 'app-card border app-border p-4 rounded-2xl space-y-2.5 shadow-sm';
                 div.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="text-xs font-bold app-text">${r.title}</h3>
-                            <p class="text-[10px] app-text-muted">${r.desc || ''}</p>
-                        </div>
+                    <div>
                         <div class="flex items-center gap-1.5">
-                            <button onclick='startLiveWorkout("${r.title}", ${JSON.stringify(r.exercises || [])}); switchTab("workouts");' class="theme-bg text-white text-[10px] font-semibold px-3 py-1.5 rounded-xl transition">Start Routine</button>
-                            ${!r.isDefault ? `
-                                <button onclick="openEditRoutineModal('${r.id}')" class="px-2 py-1.5 rounded-xl app-card-sub border app-border text-[10px] font-semibold app-text hover:opacity-80" title="Edit Routine">✏️</button>
-                                <button onclick="promptDeleteRoutine('${r.id}', '${r.title}')" class="px-2 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-[10px] font-semibold text-red-500 hover:opacity-80" title="Delete Routine">🗑️</button>
-                            ` : ''}
+                            ${currentMode === 'usagi' ? '<span class="text-xs">🐰</span>' : ''}
+                            <h3 class="text-xs font-bold app-text">${r.title}</h3>
                         </div>
+                        <p class="text-[11px] app-text-muted">${r.desc || 'No description'}</p>
                     </div>
-                    <div class="flex flex-wrap gap-1 pt-1">
-                        ${exerciseNames.map(exName => `<span class="text-[9px] app-card-sub border app-border px-2 py-0.5 rounded-md app-text-muted">${exName}</span>`).join('')}
+                    <p class="text-[10px] app-text-muted italic">${exs || 'No exercises listed'}</p>
+                    <div class="flex items-center gap-2 pt-1 border-t app-border">
+                        <button onclick="startLiveWorkout('${r.title}', ${JSON.stringify(r.exercises).replace(/"/g, '&quot;')})" class="flex-1 theme-bg text-white font-semibold py-2 rounded-xl text-xs transition">
+                            🚀 Start Routine
+                        </button>
+                        ${!r.isDefault ? `
+                            <button onclick="openEditRoutineModal('${r.id}')" class="px-3 py-2 rounded-xl app-card-sub border app-border text-xs font-semibold app-text hover:opacity-80">Edit</button>
+                            <button onclick="promptDeleteRoutine('${r.id}', '${r.title}')" class="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-xs font-semibold text-red-500 hover:opacity-80">Delete</button>
+                        ` : ''}
                     </div>
                 `;
                 container.appendChild(div);
             });
         }
 
-        function openCustomRoutineModal() { document.getElementById('custom-routine-modal').classList.remove('hidden'); }
-        function closeCustomRoutineModal() { document.getElementById('custom-routine-modal').classList.add('hidden'); }
+        // --- AUTH & THEME MANAGEMENT ---
+        function setMode(mode, save = true) {
+            currentMode = mode;
+            if (save) localStorage.setItem('liftpulse_mode', mode);
+
+            const avatar = document.getElementById('header-avatar');
+            const watermark = document.getElementById('hero-usagi-watermark');
+            const editBadge = document.getElementById('edit-routine-usagi-badge');
+
+            if (mode === 'usagi') {
+                setUsagiTheme(save);
+                return;
+            }
+
+            document.documentElement.classList.remove('usagi-theme');
+            if (avatar) avatar.classList.add('hidden');
+            if (watermark) watermark.classList.add('hidden');
+            if (editBadge) editBadge.classList.add('hidden');
+
+            const root = document.getElementById('html-root');
+            const icon = document.getElementById('mode-icon');
+            if (mode === 'dark') {
+                root.classList.add('dark');
+                if (icon) icon.innerText = '🌙';
+            } else {
+                root.classList.remove('dark');
+                if (icon) icon.innerText = '☀️';
+            }
+        }
+
+        async function setCustomThemeColor(color, saveToDb = true) {
+            currentThemeColor = color;
+            localStorage.setItem('liftpulse_custom_color', color);
+            document.documentElement.style.setProperty('--theme-color', color);
+            document.documentElement.style.setProperty('--theme-gradient', `linear-gradient(to bottom right, ${color}, #d97706)`);
+            const wheel = document.getElementById('color-wheel');
+            if (wheel) wheel.value = color;
+
+            if (saveToDb && currentUser) {
+                await _supabase.from('user_settings').upsert({
+                    user_id: currentUser.id,
+                    accent_color: color,
+                    updated_at: new Date()
+                }, { onConflict: 'user_id' });
+            }
+        }
+
+        function toggleDarkMode() {
+            if (currentMode === 'dark') setMode('light');
+            else if (currentMode === 'light') setUsagiTheme();
+            else setMode('dark');
+        }
+
+        function openCustomRoutineModal() {
+            document.getElementById('custom-routine-modal').classList.remove('hidden');
+        }
+
+        function closeCustomRoutineModal() {
+            document.getElementById('custom-routine-modal').classList.add('hidden');
+        }
 
         async function saveCustomRoutine() {
             if (!currentUser) {
-                alert("Please sign in to save routines.");
+                alert("Please sign in to save custom routines.");
                 openAuthModal();
                 return;
             }
-            const title = document.getElementById('custom-routine-title').value;
-            const desc = document.getElementById('custom-routine-desc').value;
-            const exInput = document.getElementById('custom-routine-exercises').value;
-            const exerciseNames = exInput.split(',').map(s => s.trim()).filter(Boolean);
-            
-            const exercises = exerciseNames.map(name => ({ name: name, sets: [{ weight: 135, reps: 10, completed: false }] }));
 
-            if (!title) { alert("Please provide a routine name."); return; }
+            const title = document.getElementById('custom-routine-title').value.trim();
+            const desc = document.getElementById('custom-routine-desc').value.trim();
+            const exercisesStr = document.getElementById('custom-routine-exercises').value.trim();
+
+            if (!title) {
+                alert("Please enter a routine title.");
+                return;
+            }
+
+            const exerciseNames = exercisesStr ? exercisesStr.split(',').map(s => s.trim()).filter(Boolean) : ['Barbell Bench Press'];
+            const exercisesPayload = exerciseNames.map(name => ({
+                name: name,
+                sets: [{ weight: 135, reps: 10, completed: false }]
+            }));
 
             const { error } = await _supabase.from('routines').insert([{
-                user_id: currentUser.id, title: title, desc: desc, exercises: exercises
+                user_id: currentUser.id,
+                title: title,
+                desc: desc,
+                exercises: exercisesPayload
             }]);
 
             if (error) {
                 alert("Error saving routine: " + error.message);
             } else {
-                alert("Custom routine saved!");
+                alert("Custom routine created successfully!");
                 closeCustomRoutineModal();
                 fetchUserData();
             }
@@ -1909,7 +2077,7 @@
 
         function openVideoModal(title, videoId, desc) {
             document.getElementById('modal-exercise-title').innerText = title;
-            document.getElementById('modal-video-iframe').src = `https://www.youtube.com/embed/${videoId}`;
+            document.getElementById('modal-video-iframe').src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
             document.getElementById('modal-exercise-desc').innerText = desc;
             document.getElementById('video-modal').classList.remove('hidden');
         }
@@ -1919,6 +2087,7 @@
             document.getElementById('video-modal').classList.add('hidden');
         }
 
+        // Auth handlers
         const authModal = document.getElementById('auth-modal');
         const authModalBtn = document.getElementById('auth-modal-btn');
         const closeAuthModal = document.getElementById('close-auth-modal');
@@ -1927,134 +2096,111 @@
         const authModalTitle = document.getElementById('auth-modal-title');
         const authSubmitBtn = document.getElementById('auth-submit-btn');
 
-        function openAuthModal() { authModal.classList.remove('hidden'); }
-        function closeAuthModalFn() { authModal.classList.add('hidden'); }
-
-        authModalBtn.addEventListener('click', () => {
+        authModalBtn.onclick = () => {
             if (currentUser) {
-                if (settingsChannel) _supabase.removeChannel(settingsChannel);
-                _supabase.auth.signOut().then(() => {
-                    currentUser = null;
-                    authModalBtn.innerText = "Sign In";
-                    document.getElementById('user-pill').innerText = "Not logged in";
-                    globalWorkoutsData = [];
-                    updateDashboardStats([]);
-                    renderRecentSessions([]);
-                    renderCalendar();
-                    alert("Signed out successfully.");
-                });
+                promptSignOut();
             } else {
-                openAuthModal();
+                authModal.classList.remove('hidden');
             }
-        });
+        };
 
-        closeAuthModal.addEventListener('click', closeAuthModalFn);
+        if (closeAuthModal) closeAuthModal.onclick = () => authModal.classList.add('hidden');
 
-        authSwitchMode.addEventListener('click', () => {
-            isSignUpMode = !isSignUpMode;
-            if (isSignUpMode) {
-                authModalTitle.innerText = "Create Cloud Account";
-                authSubmitBtn.innerText = "Sign Up";
-                authSwitchMode.innerText = "Already have an account? Login";
-            } else {
-                authModalTitle.innerText = "Sign In to Cloud Sync";
-                authSubmitBtn.innerText = "Login";
-                authSwitchMode.innerText = "Need an account? Sign up";
-            }
-        });
+        if (authSwitchMode) {
+            authSwitchMode.onclick = () => {
+                isSignUpMode = !isSignUpMode;
+                authModalTitle.innerText = isSignUpMode ? 'Create Cloud Account' : 'Sign In to Cloud Sync';
+                authSubmitBtn.innerText = isSignUpMode ? 'Register' : 'Login';
+                authSwitchMode.innerText = isSignUpMode ? 'Already have an account? Sign in' : "Need an account? Sign up";
+            };
+        }
 
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
+        if (authForm) {
+            authForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('auth-email').value;
+                const password = document.getElementById('auth-password').value;
 
-            if (isSignUpMode) {
-                const { data, error } = await _supabase.auth.signUp({ email, password });
-                if (error) alert("Sign up error: " + error.message);
-                else {
-                    alert("Account created! Check your email to confirm if required.");
-                    closeAuthModalFn();
+                if (isSignUpMode) {
+                    const { data, error } = await _supabase.auth.signUp({ email, password });
+                    if (error) alert("Sign up error: " + error.message);
+                    else {
+                        alert("Account created! Please check your email or log in.");
+                        authModal.classList.add('hidden');
+                    }
+                } else {
+                    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+                    if (error) alert("Login error: " + error.message);
+                    else {
+                        currentUser = data.user;
+                        updateAuthUI();
+                        authModal.classList.add('hidden');
+                        fetchUserData();
+                    }
                 }
+            };
+        }
+
+        function promptSignOut() {
+            openConfirmModal("Sign Out?", "Are you sure you want to sign out of your account?", async () => {
+                closeConfirmModal();
+                await _supabase.auth.signOut();
+                currentUser = null;
+                updateAuthUI();
+                globalWorkoutsData = [];
+                customRoutines = [];
+                renderRecentSessions([]);
+                renderRoutinesList();
+                renderCalendar();
+            });
+        }
+
+        function updateAuthUI() {
+            const pill = document.getElementById('user-pill');
+            if (currentUser) {
+                pill.innerText = currentUser.email;
+                authModalBtn.innerText = 'Sign Out';
             } else {
-                const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-                if (error) alert("Login error: " + error.message);
-                else if (data.user) {
-                    currentUser = data.user;
-                    authModalBtn.innerText = "Sign Out";
-                    document.getElementById('user-pill').innerText = currentUser.email;
-                    closeAuthModalFn();
-                    fetchUserData();
-                }
+                pill.innerText = 'Not logged in';
+                authModalBtn.innerText = 'Sign In';
             }
-        });
+        }
 
         async function changeEmailDirectly() {
-            if (!currentUser) { alert("Please log in first."); return; }
-            const newEmail = document.getElementById('settings-new-email').value.trim();
-            if (!newEmail) { alert("Please enter a new email address."); return; }
+            if (!currentUser) { alert("Please sign in first."); return; }
+            const newEmail = document.getElementById('settings-new-email').value;
+            if (!newEmail) { alert("Please enter a new email."); return; }
             const { error } = await _supabase.auth.updateUser({ email: newEmail });
             if (error) alert("Error updating email: " + error.message);
-            else alert("Email update request sent! Check your new email inbox for confirmation.");
+            else alert("Email update confirmation sent. Please check your inbox.");
         }
 
         async function changePasswordDirectly() {
-            if (!currentUser) { alert("Please log in first."); return; }
+            if (!currentUser) { alert("Please sign in first."); return; }
             const newPassword = document.getElementById('settings-new-password').value;
             if (!newPassword || newPassword.length < 6) { alert("Password must be at least 6 characters."); return; }
             const { error } = await _supabase.auth.updateUser({ password: newPassword });
             if (error) alert("Error updating password: " + error.message);
-            else alert("Password updated successfully!");
+            else alert("Password successfully updated!");
         }
 
-        function setMode(mode, saveCloud = true) {
-            currentMode = mode;
-            localStorage.setItem('liftpulse_mode', mode);
-            const htmlRoot = document.getElementById('html-root');
-            const modeIcon = document.getElementById('mode-icon');
-            
-            if (mode === 'dark') {
-                htmlRoot.classList.add('dark');
-                if (modeIcon) modeIcon.innerText = '🌙';
-            } else {
-                htmlRoot.classList.remove('dark');
-                if (modeIcon) modeIcon.innerText = '☀️';
-            }
-        }
-
-        function toggleDarkMode() {
-            setMode(currentMode === 'dark' ? 'light' : 'dark');
-        }
-
-        async function setCustomThemeColor(hexColor, saveCloud = true) {
-            currentThemeColor = hexColor;
-            localStorage.setItem('liftpulse_custom_color', hexColor);
-            document.documentElement.style.setProperty('--theme-color', hexColor);
-            document.documentElement.style.setProperty('--theme-gradient', `linear-gradient(to bottom right, ${hexColor}, #d97706)`);
-            
-            const colorWheel = document.getElementById('color-wheel');
-            if (colorWheel) colorWheel.value = hexColor;
-
-            if (saveCloud && currentUser) {
-                await _supabase.from('user_settings').upsert({
-                    user_id: currentUser.id,
-                    accent_color: hexColor,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'user_id' });
-            }
-        }
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            const { data } = await _supabase.auth.getUser();
-            if (data && data.user) {
-                currentUser = data.user;
-                authModalBtn.innerText = "Sign Out";
-                document.getElementById('user-pill').innerText = currentUser.email;
+        // Initialize session
+        _supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                currentUser = session.user;
+                updateAuthUI();
                 fetchUserData();
-            } else {
-                renderCalendar();
-                renderWeeklyBreakdown([]);
             }
         });
+
+        _supabase.auth.onAuthStateChange((_event, session) => {
+            currentUser = session?.user || null;
+            updateAuthUI();
+            if (currentUser) fetchUserData();
+        });
+
+        renderExerciseLibrary();
+        renderRoutinesList();
     </script>
 </body>
 </html>
