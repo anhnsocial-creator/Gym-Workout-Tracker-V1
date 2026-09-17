@@ -56,6 +56,20 @@
             </div>
         </div>
 
+        <!-- REST TIMER POPUP MODAL -->
+        <div id="rest-timer-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl text-center">
+                <span class="text-3xl">⏱️</span>
+                <h3 class="text-sm font-bold uppercase tracking-wider app-text">Rest Timer</h3>
+                <div id="rest-countdown-display" class="text-4xl font-black theme-text">01:00</div>
+                <p id="rest-timer-modal-desc" class="text-xs app-text-muted">Catch your breath. Next set is waiting!</p>
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="addRestTime(30)" class="app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">+30s Rest</button>
+                    <button onclick="dismissRestTimer()" class="theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Skip Rest</button>
+                </div>
+            </div>
+        </div>
+
         <!-- CONFIRMATION MODAL OVERLAY -->
         <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl text-center">
@@ -238,6 +252,18 @@
                     <div>
                         <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Session Name</label>
                         <input type="text" id="session-name" value="Gym session" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <!-- CUSTOM REST TIMER DURATION SELECTOR -->
+                    <div class="flex items-center justify-between app-card-sub border app-border p-2.5 rounded-xl">
+                        <span class="text-[10px] uppercase font-bold app-text-muted">Default Rest Timer:</span>
+                        <select id="rest-duration-select" onchange="defaultRestSeconds = parseInt(this.value)" class="app-input border app-border rounded-lg px-2 py-1 text-xs app-text focus:outline-none">
+                            <option value="30">30 seconds</option>
+                            <option value="45">45 seconds</option>
+                            <option value="60" selected>60 seconds</option>
+                            <option value="90">90 seconds</option>
+                            <option value="120">120 seconds</option>
+                            <option value="180">180 seconds</option>
+                        </select>
                     </div>
                 </div>
 
@@ -452,6 +478,11 @@
         let currentMode = localStorage.getItem('liftpulse_mode') || 'dark';
         let settingsChannel = null;
 
+        // Rest Timer variables
+        let defaultRestSeconds = 60;
+        let restTimeRemaining = 0;
+        let restTimerInterval = null;
+
         setCustomThemeColor(currentThemeColor, false);
         setMode(currentMode, false);
         updateGreeting();
@@ -554,7 +585,7 @@
             { name: 'Rowing Machine (Erg)', category: 'Cardio', muscle: 'Back', videoId: 'Hojvjd421V0', desc: 'Drive with legs, hinge back with hips, and pull handle to sternum.' }
         ];
 
-        let selectedExercises = []; // Array of { name: string, sets: [{ weight: number, reps: number }] }
+        let selectedExercises = []; // Array of { name: string, sets: [{ weight: number, reps: number, completed: boolean }] }
         let customRoutines = [];
         let globalWorkoutsData = [];
         let calendarCurrentDate = new Date();
@@ -569,14 +600,13 @@
 
             document.getElementById('session-name').value = title;
             
-            // Normalize incoming routine exercises to have default sets if they are strings or old objects
             selectedExercises = exercises.map(ex => {
                 if (typeof ex === 'string') {
-                    return { name: ex, sets: [{ weight: 135, reps: 10 }] };
+                    return { name: ex, sets: [{ weight: 135, reps: 10, completed: false }] };
                 } else {
                     return {
                         name: ex.name,
-                        sets: ex.sets && ex.sets.length > 0 ? [...ex.sets] : [{ weight: ex.weight || 135, reps: ex.reps || 10 }]
+                        sets: ex.sets && ex.sets.length > 0 ? ex.sets.map(s => ({ ...s, completed: s.completed || false })) : [{ weight: ex.weight || 135, reps: ex.reps || 10, completed: false }]
                     };
                 }
             });
@@ -599,11 +629,52 @@
         function cancelLiveWorkout() {
             if (confirm("Are you sure you want to cancel this workout? Progress will be lost.")) {
                 if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+                if (restTimerInterval) clearInterval(restTimerInterval);
                 document.getElementById('active-workout-container').classList.add('hidden');
                 document.getElementById('pre-workout-container').classList.remove('hidden');
                 document.getElementById('save-routine-btn').classList.add('hidden');
                 selectedExercises = [];
             }
+        }
+
+        // --- REST TIMER CONTROLS ---
+        function startRestTimer(seconds) {
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            restTimeRemaining = seconds;
+            updateRestDisplay();
+            
+            document.getElementById('rest-timer-modal-desc').innerText = "Catch your breath and get ready for the next set!";
+            document.getElementById('rest-timer-modal').classList.remove('hidden');
+
+            restTimerInterval = setInterval(() => {
+                restTimeRemaining--;
+                updateRestDisplay();
+                if (restTimeRemaining <= 0) {
+                    clearInterval(restTimerInterval);
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                    document.getElementById('rest-countdown-display').innerText = "REST OVER!";
+                    document.getElementById('rest-timer-modal-desc').innerText = "Time's up! Continue to your next set or exercise.";
+                }
+            }, 1000);
+        }
+
+        function updateRestDisplay() {
+            const mins = String(Math.floor(restTimeRemaining / 60)).padStart(2, '0');
+            const secs = String(restTimeRemaining % 60).padStart(2, '0');
+            const displayEl = document.getElementById('rest-countdown-display');
+            if (displayEl && restTimeRemaining > 0) {
+                displayEl.innerText = `${mins}:${secs}`;
+            }
+        }
+
+        function addRestTime(seconds) {
+            restTimeRemaining += seconds;
+            updateRestDisplay();
+        }
+
+        function dismissRestTimer() {
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            document.getElementById('rest-timer-modal').classList.add('hidden');
         }
 
         // --- CUSTOM EXERCISE MODAL LOGIC WITH PERMANENT SYNC ---
@@ -650,7 +721,7 @@
             }
 
             if (!selectedExercises.some(e => e.name === name)) {
-                selectedExercises.push({ name: name, sets: [{ weight: 135, reps: 10 }] });
+                selectedExercises.push({ name: name, sets: [{ weight: 135, reps: 10, completed: false }] });
             }
 
             document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
@@ -733,7 +804,6 @@
                 container.innerHTML += '<p class="text-xs app-text-muted">No exercises recorded for this session.</p>';
             } else {
                 exs.forEach((ex, exIdx) => {
-                    // Normalize to support both legacy flat records and new multi-set records
                     const setsList = ex.sets && ex.sets.length > 0 ? ex.sets : [{ weight: ex.weight || 0, reps: ex.reps || 0 }];
                     
                     let setsHtml = '';
@@ -793,14 +863,14 @@
                     const wt = parseFloat(document.getElementById(`edit-ex-${exIdx}-set-${setIdx}-wt`).value) || 0;
                     const reps = parseFloat(document.getElementById(`edit-ex-${exIdx}-set-${setIdx}-rep`).value) || 0;
                     calculatedTotalVolume += wt * reps;
-                    updatedSets.push({ weight: wt, reps: reps });
+                    updatedSets.push({ weight: wt, reps: reps, completed: true });
                 }
 
                 return { 
                     name: ex.name, 
                     sets: updatedSets,
-                    weight: updatedSets[0]?.weight || 0, // Fallback compatibility
-                    reps: updatedSets[0]?.reps || 0       // Fallback compatibility
+                    weight: updatedSets[0]?.weight || 0,
+                    reps: updatedSets[0]?.reps || 0
                 };
             });
 
@@ -1008,7 +1078,7 @@
             } else {
                 selectedExercises.push({
                     name: name,
-                    sets: [{ weight: 135, reps: 10 }]
+                    sets: [{ weight: 135, reps: 10, completed: false }]
                 });
             }
             document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
@@ -1016,22 +1086,33 @@
             renderBuilderRows();
         }
 
-        // --- SET LEVEL ADD / REMOVE LOGIC ---
+        // --- SET LEVEL ADD / REMOVE / CHECK LOGIC ---
         function addSetToExercise(exIdx) {
             captureBuilderInputValues();
-            selectedExercises[exIdx].sets.push({ weight: 135, reps: 10 });
+            selectedExercises[exIdx].sets.push({ weight: 135, reps: 10, completed: false });
             renderBuilderRows();
         }
 
         function removeSetFromExercise(exIdx, setIdx) {
             captureBuilderInputValues();
             if (selectedExercises[exIdx].sets.length <= 1) {
-                // If it's the last set, toggle off the entire exercise instead
                 toggleExerciseSelection(selectedExercises[exIdx].name);
                 return;
             }
             selectedExercises[exIdx].sets.splice(setIdx, 1);
             renderBuilderRows();
+        }
+
+        function toggleSetCompletion(exIdx, setIdx) {
+            captureBuilderInputValues();
+            const setObj = selectedExercises[exIdx].sets[setIdx];
+            setObj.completed = !setObj.completed;
+            renderBuilderRows();
+
+            // When checked off, trigger the custom rest timer
+            if (setObj.completed) {
+                startRestTimer(defaultRestSeconds);
+            }
         }
 
         function captureBuilderInputValues() {
@@ -1062,8 +1143,10 @@
             selectedExercises.forEach((exObj, exIdx) => {
                 let setsHtml = '';
                 exObj.sets.forEach((set, setIdx) => {
+                    const isCompleted = set.completed;
                     setsHtml += `
-                        <div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-lg">
+                        <div class="flex items-center gap-2 p-2 rounded-lg transition ${isCompleted ? 'border border-current bg-black/10 dark:bg-white/10' : 'bg-black/5 dark:bg-white/5'}">
+                            <button onclick="toggleSetCompletion(${exIdx}, ${setIdx})" class="w-6 h-6 rounded-lg border app-border flex items-center justify-center text-xs font-bold transition ${isCompleted ? 'theme-bg text-white' : 'app-card-sub app-text-muted'}" title="Check off set">${isCompleted ? '✓' : ''}</button>
                             <span class="text-[10px] font-bold app-text-muted w-10">Set ${setIdx + 1}</span>
                             <div class="flex-1 grid grid-cols-2 gap-2">
                                 <div>
@@ -1106,6 +1189,7 @@
             }
 
             if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+            if (restTimerInterval) clearInterval(restTimerInterval);
             captureBuilderInputValues();
 
             const sessionName = document.getElementById('session-name').value || "Gym session";
@@ -1121,8 +1205,8 @@
                 return {
                     name: exObj.name,
                     sets: exObj.sets,
-                    weight: exObj.sets[0]?.weight || 0, // Legacy fallback
-                    reps: exObj.sets[0]?.reps || 0       // Legacy fallback
+                    weight: exObj.sets[0]?.weight || 0,
+                    reps: exObj.sets[0]?.reps || 0
                 };
             });
 
@@ -1293,7 +1377,6 @@
             const allRoutines = [...defaultRoutines, ...customRoutines];
 
             allRoutines.forEach(r => {
-                // Normalize routine exercises display names
                 const exerciseNames = (r.exercises || []).map(ex => typeof ex === 'string' ? ex : ex.name);
 
                 const div = document.createElement('div');
@@ -1331,7 +1414,7 @@
             const exInput = document.getElementById('custom-routine-exercises').value;
             const exerciseNames = exInput.split(',').map(s => s.trim()).filter(Boolean);
             
-            const exercises = exerciseNames.map(name => ({ name: name, sets: [{ weight: 135, reps: 10 }] }));
+            const exercises = exerciseNames.map(name => ({ name: name, sets: [{ weight: 135, reps: 10, completed: false }] }));
 
             if (!title) { alert("Please provide a routine name."); return; }
 
