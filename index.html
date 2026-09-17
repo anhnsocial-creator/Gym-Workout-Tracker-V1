@@ -96,6 +96,10 @@
                         <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Target Muscle</label>
                         <input type="text" id="custom-ex-muscle" placeholder="e.g. Shoulders" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
                     </div>
+                    <div class="flex items-center gap-2 pt-1">
+                        <input type="checkbox" id="custom-ex-sync-permanent" checked class="rounded app-input border app-border cursor-pointer">
+                        <label for="custom-ex-sync-permanent" class="text-xs app-text cursor-pointer">Permanently sync to my account log</label>
+                    </div>
                     <button onclick="saveCustomExercise()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Add to Session</button>
                 </div>
             </div>
@@ -590,7 +594,7 @@
             }
         }
 
-        // --- CUSTOM EXERCISE MODAL LOGIC ---
+        // --- CUSTOM EXERCISE MODAL LOGIC WITH PERMANENT SYNC ---
         function openCustomExerciseModal() {
             document.getElementById('custom-exercise-modal').classList.remove('hidden');
         }
@@ -599,10 +603,11 @@
             document.getElementById('custom-exercise-modal').classList.add('hidden');
         }
 
-        function saveCustomExercise() {
+        async function saveCustomExercise() {
             const name = document.getElementById('custom-ex-name').value.trim();
             const category = document.getElementById('custom-ex-category').value;
             const muscle = document.getElementById('custom-ex-muscle').value.trim() || 'General';
+            const shouldSyncPermanent = document.getElementById('custom-ex-sync-permanent').checked;
 
             if (!name) {
                 alert("Please enter a custom exercise name.");
@@ -618,6 +623,18 @@
                     videoId: '',
                     desc: 'Custom added exercise.'
                 });
+            }
+
+            if (shouldSyncPermanent && currentUser) {
+                const { error } = await _supabase.from('user_exercises').insert([{
+                    user_id: currentUser.id,
+                    name: name,
+                    category: category,
+                    muscle: muscle
+                }]);
+                if (error && !error.message.includes('duplicate key')) {
+                    console.error("Error syncing permanent exercise:", error.message);
+                }
             }
 
             if (!selectedExercises.includes(name)) {
@@ -660,6 +677,28 @@
                 alert("Error saving routine: " + error.message);
             } else {
                 alert("Workout successfully saved as a routine for future sessions!");
+                fetchUserData();
+            }
+        }
+
+        // --- ROUTINE DELETION LOGIC ---
+        function promptDeleteRoutine(routineId, routineTitle) {
+            openConfirmModal(
+                "Delete Routine?",
+                `Are you sure you want to delete "${routineTitle}"? This cannot be undone.`,
+                async () => {
+                    closeConfirmModal();
+                    await executeDeleteRoutine(routineId);
+                }
+            );
+        }
+
+        async function executeDeleteRoutine(routineId) {
+            const { error } = await _supabase.from('routines').delete().eq('id', routineId);
+            if (error) {
+                alert("Error deleting routine: " + error.message);
+            } else {
+                alert("Routine deleted successfully.");
                 fetchUserData();
             }
         }
@@ -1038,6 +1077,27 @@
                 renderRoutinesList();
             }
 
+            const { data: customExData } = await _supabase
+                .from('user_exercises')
+                .select('*')
+                .eq('user_id', currentUser.id);
+
+            if (customExData) {
+                customExData.forEach(ce => {
+                    const exists = EXERCISE_LIBRARY.some(e => e.name.toLowerCase() === ce.name.toLowerCase());
+                    if (!exists) {
+                        EXERCISE_LIBRARY.push({
+                            name: ce.name,
+                            category: ce.category || 'Barbell',
+                            muscle: ce.muscle || 'General',
+                            videoId: '',
+                            desc: 'User custom synced exercise.'
+                        });
+                    }
+                });
+                renderExerciseLibrary();
+            }
+
             const { data: settingsData } = await _supabase
                 .from('user_settings')
                 .select('*')
@@ -1126,9 +1186,9 @@
             container.innerHTML = '';
 
             const defaultRoutines = [
-                { title: 'Push Day (Chest, Shoulders, Triceps)', desc: 'Focus on heavy presses and accessory isolation.', exercises: ['Barbell Bench Press', 'Incline Dumbbell Press', 'Dumbbell Shoulder Press'] },
-                { title: 'Pull Day (Back, Biceps)', desc: 'Build width and thickness in your upper body.', exercises: ['Deadlift', 'Barbell Row', 'Lat Pulldown'] },
-                { title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Comprehensive lower body strength routine.', exercises: ['Barbell Squat', 'Romanian Deadlift (RDL)', 'Seated Leg Press'] }
+                { id: 'default-push', title: 'Push Day (Chest, Shoulders, Triceps)', desc: 'Focus on heavy presses and accessory isolation.', exercises: ['Barbell Bench Press', 'Incline Dumbbell Press', 'Dumbbell Shoulder Press'], isDefault: true },
+                { id: 'default-pull', title: 'Pull Day (Back, Biceps)', desc: 'Build width and thickness in your upper body.', exercises: ['Deadlift', 'Barbell Row', 'Lat Pulldown'], isDefault: true },
+                { id: 'default-legs', title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Comprehensive lower body strength routine.', exercises: ['Barbell Squat', 'Romanian Deadlift (RDL)', 'Seated Leg Press'], isDefault: true }
             ];
 
             const allRoutines = [...defaultRoutines, ...customRoutines];
@@ -1142,7 +1202,10 @@
                             <h3 class="text-xs font-bold app-text">${r.title}</h3>
                             <p class="text-[10px] app-text-muted">${r.desc || ''}</p>
                         </div>
-                        <button onclick='startLiveWorkout("${r.title}", ${JSON.stringify(r.exercises || [])}); switchTab("workouts");' class="theme-bg text-white text-[10px] font-semibold px-3 py-1.5 rounded-xl transition">Start Routine</button>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick='startLiveWorkout("${r.title}", ${JSON.stringify(r.exercises || [])}); switchTab("workouts");' class="theme-bg text-white text-[10px] font-semibold px-3 py-1.5 rounded-xl transition">Start Routine</button>
+                            ${!r.isDefault ? `<button onclick="promptDeleteRoutine('${r.id}', '${r.title}')" class="px-2 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-[10px] font-semibold text-red-500 hover:opacity-80" title="Delete Routine">🗑️</button>` : ''}
+                        </div>
                     </div>
                     <div class="flex flex-wrap gap-1 pt-1">
                         ${(r.exercises || []).map(ex => `<span class="text-[9px] app-card-sub border app-border px-2 py-0.5 rounded-md app-text-muted">${ex}</span>`).join('')}
