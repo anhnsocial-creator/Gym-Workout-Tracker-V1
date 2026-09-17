@@ -15,20 +15,17 @@
     <!-- Top Header Bar -->
     <header class="w-full max-w-md md:max-w-6xl px-4 py-4 flex justify-between items-center border-b app-border app-header sticky top-0 z-30 backdrop-blur transition-colors duration-200">
         <div class="flex items-center gap-2.5">
-            <div id="header-avatar" class="hidden w-8 h-8 rounded-full overflow-hidden bg-amber-300 flex items-center justify-center shrink-0 border border-amber-400">
-                <img src="https://api.iconify.design/fluent-emoji:rabbit-face.svg" alt="Usagi" class="w-6 h-6 object-contain">
-            </div>
             <div>
                 <h1 class="text-xs font-semibold app-text-muted">YOUR TRAINING</h1>
                 <p id="header-greeting" class="text-lg font-bold tracking-tight app-text">Good morning.</p>
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <button onclick="toggleDarkMode()" class="p-2 rounded-xl app-card border app-border app-text hover:opacity-80 transition" title="Toggle Light/Dark Mode">
+            <button onclick="toggleDarkMode()" class="p-2 rounded-2xl app-card border app-border app-text hover:opacity-80 transition shadow-sm" title="Toggle Light/Dark Mode">
                 <span id="mode-icon">☀️</span>
             </button>
-            <span id="user-pill" class="text-[10px] app-card border app-border app-text-muted px-2.5 py-1.5 rounded-full truncate max-w-[100px]">Not logged in</span>
-            <button id="auth-modal-btn" class="text-xs app-btn-secondary px-3.5 py-1.5 rounded-xl transition border app-border">Sign In</button>
+            <span id="user-pill" class="text-[10px] app-card border app-border app-text-muted px-3 py-1.5 rounded-full truncate max-w-[100px] shadow-sm">Not logged in</span>
+            <button id="auth-modal-btn" class="text-xs app-btn-secondary px-3.5 py-1.5 rounded-xl transition border app-border font-semibold shadow-sm">Sign In</button>
         </div>
     </header>
 
@@ -52,7 +49,7 @@
                         <button type="button" onclick="togglePasswordVisibility('auth-password', this)" class="absolute right-3 top-2.5 text-xs text-zinc-400 hover:text-zinc-200">👁️</button>
                     </div>
 
-                    <button type="submit" id="auth-submit-btn" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Login</button>
+                    <button type="submit" id="auth-submit-btn" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">Login</button>
                     
                     <div class="flex justify-between items-center pt-1">
                         <button type="button" id="auth-switch-mode" class="text-[11px] app-text-muted hover:underline">Need an account? Sign up</button>
@@ -69,8 +66,8 @@
                 <div id="rest-countdown-display" class="text-4xl font-black theme-text">01:00</div>
                 <p id="rest-timer-modal-desc" class="text-xs app-text-muted">Catch your breath. Next set is waiting!</p>
                 <div class="grid grid-cols-2 gap-2 pt-2">
-                    <button onclick="addRestTime(30)" class="app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">+30s Rest</button>
-                    <button id="rest-modal-action-btn" onclick="dismissRestTimer()" class="theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Skip Rest</button>
+                    <button onclick="addRestTime(30)" class="app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition border app-border">+30s Rest</button>
+                    <button id="rest-modal-action-btn" onclick="dismissRestTimer()" class="theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">Skip Rest</button>
                 </div>
             </div>
         </div>
@@ -82,8 +79,8 @@
                 <h3 id="confirm-modal-title" class="text-sm font-bold uppercase tracking-wider app-text">Are you sure?</h3>
                 <p id="confirm-modal-desc" class="text-xs app-text-muted">Are you sure you want to proceed with this action?</p>
                 <div class="grid grid-cols-2 gap-2 pt-2">
-                    <button onclick="closeConfirmModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">Cancel</button>
-                    <button id="confirm-modal-accept-btn" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Confirm</button>
+                    <button onclick="closeConfirmModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition border app-border">Cancel</button>
+                    <button id="confirm-modal-accept-btn" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">Confirm</button>
                 </div>
             </div>
         </div>
@@ -98,7 +95,7 @@
                 <div id="day-modal-content" class="space-y-3 text-xs max-h-64 overflow-y-auto">
                     <!-- Populated dynamically -->
                 </div>
-                <button onclick="closeDayDetailsModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">Close</button>
+                <button onclick="closeDayDetailsModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition border app-border">Close</button>
             </div>
         </div>
 
@@ -133,7 +130,7 @@
                         <input type="checkbox" id="custom-ex-sync-permanent" checked class="rounded app-input border app-border cursor-pointer">
                         <label for="custom-ex-sync-permanent" class="text-xs app-text cursor-pointer">Permanently sync to my account log</label>
                     </div>
-                    <button onclick="saveCustomExercise()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Add to Session</button>
+                    <button onclick="saveCustomExercise()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">Add to Session</button>
                 </div>
             </div>
         </div>
@@ -162,19 +159,16 @@
                         </div>
                     </div>
                     <div id="edit-exercises-container" class="space-y-2 pt-2 border-t app-border"></div>
-                    <button onclick="promptSaveEditedWorkout()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Save Changes</button>
+                    <button onclick="promptSaveEditedWorkout()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">Save Changes</button>
                 </div>
             </div>
         </div>
 
-        <!-- EDIT ROUTINE MODAL (FULL LIFTOFF STYLE WORKOUT MENU) -->
+        <!-- EDIT ROUTINE MODAL (FULL WORKOUT MENU STYLE) -->
         <div id="edit-routine-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div class="app-card border app-border rounded-2xl p-5 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <span id="edit-routine-usagi-badge" class="hidden text-base">🐰</span>
-                        <h3 class="text-sm font-bold uppercase tracking-wider app-text">Edit Routine Menu</h3>
-                    </div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider app-text">Edit Routine Menu</h3>
                     <button onclick="closeEditRoutineModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
                 </div>
                 <input type="hidden" id="edit-routine-id">
@@ -196,10 +190,10 @@
                     </div>
                     
                     <div id="edit-routine-sets-builder" class="space-y-2 pt-2 border-t app-border">
-                        <h4 class="text-[10px] font-bold uppercase app-text-muted">Detailed Set Editor (Liftoff Style)</h4>
+                        <h4 class="text-[10px] font-bold uppercase app-text-muted">Detailed Set Editor</h4>
                         <div id="edit-routine-rows" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
                     </div>
-                    <button onclick="saveEditedRoutine()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Update Routine</button>
+                    <button onclick="saveEditedRoutine()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">Update Routine & Sync to Account</button>
                 </div>
             </div>
         </div>
@@ -207,10 +201,9 @@
         <!-- COLUMN 1: DASHBOARD & FEED (Home Tab) -->
         <section id="tab-home" class="space-y-4 md:block">
             <div class="theme-gradient rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
-                <div id="hero-usagi-watermark" class="hidden absolute right-3 -bottom-2 opacity-30 text-5xl pointer-events-none">🐰</div>
                 <div class="absolute -right-4 -bottom-4 opacity-25 font-black text-7xl pointer-events-none">⚡</div>
                 <div class="flex justify-between items-start mb-4">
-                    <span id="streak-badge-label" class="text-xs font-bold uppercase tracking-wider bg-black/20 text-white px-2.5 py-1 rounded-full transition-opacity duration-300">Streak: <span id="streak-count-val">0</span> Days</span>
+                    <span id="streak-badge-label" class="text-xs font-bold uppercase tracking-wider bg-black/20 text-white px-2.5 py-1 rounded-full transition-opacity duration-300 shadow-sm">Streak: <span id="streak-count-val">0</span> Days</span>
                     <span id="streak-fire-icon" class="text-2xl transition-opacity duration-300">🔥</span>
                 </div>
                 <div class="space-y-1">
@@ -233,12 +226,12 @@
                         <span id="stat-avg-duration" class="block text-base font-bold app-text">0m</span>
                         <span class="text-[10px] app-text-muted uppercase tracking-wider flex items-center justify-center gap-1">Duration ▾</span>
                     </div>
-                    <div id="duration-dropdown-menu" class="hidden absolute left-0 right-0 top-full mt-1 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-2 text-left w-72 -ml-12">
+                    <div id="duration-dropdown-menu" class="hidden absolute left-0 right-0 top-full mt-1 app-card border app-border rounded-2xl p-4 shadow-2xl z-20 space-y-2 text-left w-72 -ml-12">
                         <div class="flex justify-between items-center border-b app-border pb-1">
                             <span class="text-[10px] uppercase font-bold theme-text" id="duration-week-title">Weekly Duration Bar Graph</span>
                             <div class="flex items-center gap-1">
-                                <button onclick="shiftDurationWeek(-1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">◀</button>
-                                <button onclick="shiftDurationWeek(1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">▶</button>
+                                <button onclick="shiftDurationWeek(-1)" class="px-1.5 py-0.5 rounded-lg app-card-sub border app-border text-[10px]">◀</button>
+                                <button onclick="shiftDurationWeek(1)" class="px-1.5 py-0.5 rounded-lg app-card-sub border app-border text-[10px]">▶</button>
                                 <button onclick="toggleDurationDropdown()" class="text-xs app-text-muted ml-1">✕</button>
                             </div>
                         </div>
@@ -255,12 +248,12 @@
                         <span id="stat-total-volume" class="block text-base font-bold app-text">0</span>
                         <span class="text-[10px] app-text-muted uppercase tracking-wider flex items-center justify-center gap-1">Volume ▾</span>
                     </div>
-                    <div id="volume-dropdown-menu" class="hidden absolute right-0 left-0 top-full mt-1 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-2 text-left w-72 -mr-12">
+                    <div id="volume-dropdown-menu" class="hidden absolute right-0 left-0 top-full mt-1 app-card border app-border rounded-2xl p-4 shadow-2xl z-20 space-y-2 text-left w-72 -mr-12">
                         <div class="flex justify-between items-center border-b app-border pb-1">
                             <span class="text-[10px] uppercase font-bold theme-text" id="volume-week-title">Weekly Volume Bar Graph</span>
                             <div class="flex items-center gap-1">
-                                <button onclick="shiftVolumeWeek(-1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">◀</button>
-                                <button onclick="shiftVolumeWeek(1)" class="px-1.5 py-0.5 rounded app-card-sub text-[10px]">▶</button>
+                                <button onclick="shiftVolumeWeek(-1)" class="px-1.5 py-0.5 rounded-lg app-card-sub border app-border text-[10px]">◀</button>
+                                <button onclick="shiftVolumeWeek(1)" class="px-1.5 py-0.5 rounded-lg app-card-sub border app-border text-[10px]">▶</button>
                                 <button onclick="toggleVolumeDropdown()" class="text-xs app-text-muted ml-1">✕</button>
                             </div>
                         </div>
@@ -285,9 +278,9 @@
                 </button>
                 <div id="calendar-dropdown-body" class="hidden p-4 pt-0 space-y-3 border-t app-border">
                     <div class="flex justify-between items-center pt-3">
-                        <button onclick="changeCalendarMonth(-1)" class="p-1.5 rounded-lg app-card-sub border app-border app-text text-xs hover:opacity-80">◀ Prev</button>
+                        <button onclick="changeCalendarMonth(-1)" class="p-1.5 rounded-xl app-card-sub border app-border app-text text-xs hover:opacity-80 shadow-sm">◀ Prev</button>
                         <span id="calendar-month-year" class="text-xs font-bold app-text">Month Year</span>
-                        <button onclick="changeCalendarMonth(1)" class="p-1.5 rounded-lg app-card-sub border app-border app-text text-xs hover:opacity-80">Next ▶</button>
+                        <button onclick="changeCalendarMonth(1)" class="p-1.5 rounded-xl app-card-sub border app-border app-text text-xs hover:opacity-80 shadow-sm">Next ▶</button>
                     </div>
                     <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold app-text-muted">
                         <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
@@ -337,8 +330,8 @@
                         <div class="relative inline-block">
                             <h2 id="live-timer-display" onclick="toggleDurationEditorDropdown()" class="text-2xl font-black app-text cursor-pointer hover:underline" title="Click to edit duration">00:00 ▾</h2>
                             
-                            <!-- Apple-style Duration Edit Dropdown -->
-                            <div id="duration-editor-dropdown" class="hidden absolute left-0 top-full mt-2 app-card border app-border rounded-xl p-3 shadow-xl z-30 space-y-2 w-52">
+                            <!-- Duration Edit Dropdown -->
+                            <div id="duration-editor-dropdown" class="hidden absolute left-0 top-full mt-2 app-card border app-border rounded-2xl p-3 shadow-2xl z-30 space-y-2 w-52">
                                 <div class="flex justify-between items-center text-[10px] uppercase font-bold app-text-muted">
                                     <span>Edit Duration</span>
                                     <button onclick="toggleDurationEditorDropdown()">✕</button>
@@ -346,18 +339,18 @@
                                 <div class="grid grid-cols-3 gap-1">
                                     <div>
                                         <label class="block text-[8px] uppercase app-text-muted">Hrs</label>
-                                        <input type="number" id="edit-timer-hrs" min="0" value="0" class="w-full app-input border app-border rounded px-1 py-1 text-xs text-center font-bold">
+                                        <input type="number" id="edit-timer-hrs" min="0" value="0" class="w-full app-input border app-border rounded-xl px-1 py-1 text-xs text-center font-bold">
                                     </div>
                                     <div>
                                         <label class="block text-[8px] uppercase app-text-muted">Mins</label>
-                                        <input type="number" id="edit-timer-mins" min="0" max="59" value="0" class="w-full app-input border app-border rounded px-1 py-1 text-xs text-center font-bold">
+                                        <input type="number" id="edit-timer-mins" min="0" max="59" value="0" class="w-full app-input border app-border rounded-xl px-1 py-1 text-xs text-center font-bold">
                                     </div>
                                     <div>
                                         <label class="block text-[8px] uppercase app-text-muted">Secs</label>
-                                        <input type="number" id="edit-timer-secs" min="0" max="59" value="0" class="w-full app-input border app-border rounded px-1 py-1 text-xs text-center font-bold">
+                                        <input type="number" id="edit-timer-secs" min="0" max="59" value="0" class="w-full app-input border app-border rounded-xl px-1 py-1 text-xs text-center font-bold">
                                     </div>
                                 </div>
-                                <button onclick="applyCustomDuration()" class="w-full theme-bg text-white font-semibold py-1.5 rounded-lg text-xs transition">Resume Timer</button>
+                                <button onclick="applyCustomDuration()" class="w-full theme-bg text-white font-semibold py-1.5 rounded-xl text-xs transition shadow-md">Resume Timer</button>
                             </div>
                         </div>
                     </div>
@@ -370,15 +363,15 @@
                         <input type="text" id="session-name" value="Gym session" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
                     </div>
                     
-                    <!-- REST TIMER DROPDOWN & APPLE-STYLE INPUT -->
-                    <div class="app-card-sub border app-border p-3 rounded-xl space-y-2 relative">
+                    <!-- REST TIMER DROPDOWN -->
+                    <div class="app-card-sub border app-border p-3 rounded-2xl space-y-2 relative shadow-sm">
                         <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleRestDropdown()">
                             <span class="text-[10px] uppercase font-bold app-text">Rest Timer ▾</span>
                             <span id="selected-rest-label" class="text-xs font-bold theme-text">01:00</span>
                         </div>
                         
                         <!-- Dropdown Menu -->
-                        <div id="rest-dropdown-menu" class="hidden absolute left-3 right-3 top-12 app-card border app-border rounded-xl p-3 shadow-xl z-20 space-y-3">
+                        <div id="rest-dropdown-menu" class="hidden absolute left-3 right-3 top-14 app-card border app-border rounded-2xl p-4 shadow-2xl z-20 space-y-3">
                             <div class="flex justify-between items-center">
                                 <span class="text-[10px] uppercase font-bold app-text-muted">Set Rest Time (0-60 min/sec)</span>
                                 <button onclick="toggleRestDropdown()" class="text-xs app-text-muted hover:app-text">✕</button>
@@ -386,11 +379,11 @@
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="block text-[9px] uppercase font-semibold app-text-muted mb-1">Minutes</label>
-                                    <input type="number" id="rest-input-mins" min="0" max="60" value="1" oninput="updateRestFromInputs()" class="w-full app-input border app-border rounded-lg px-2 py-1.5 text-xs text-center app-text font-bold">
+                                    <input type="number" id="rest-input-mins" min="0" max="60" value="1" oninput="updateRestFromInputs()" class="w-full app-input border app-border rounded-xl px-2.5 py-1.5 text-xs text-center app-text font-bold">
                                 </div>
                                 <div>
                                     <label class="block text-[9px] uppercase font-semibold app-text-muted mb-1">Seconds</label>
-                                    <input type="number" id="rest-input-secs" min="0" max="60" value="0" oninput="updateRestFromInputs()" class="w-full app-input border app-border rounded-lg px-2 py-1.5 text-xs text-center app-text font-bold">
+                                    <input type="number" id="rest-input-secs" min="0" max="60" value="0" oninput="updateRestFromInputs()" class="w-full app-input border app-border rounded-xl px-2.5 py-1.5 text-xs text-center app-text font-bold">
                                 </div>
                             </div>
                         </div>
@@ -406,7 +399,7 @@
                         </div>
                     </div>
 
-                    <!-- SEARCH BAR & CATEGORY FILTER DROPDOWN ADDON -->
+                    <!-- SEARCH BAR & CATEGORY FILTER DROPDOWN -->
                     <div class="space-y-2">
                         <div class="relative">
                             <input type="text" id="exercise-search-input" oninput="handleExerciseFilter()" placeholder="🔍 Search exercises by name or muscle..." class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
@@ -434,10 +427,10 @@
                 </div>
 
                 <div class="space-y-2 pt-2 border-t app-border">
-                    <button id="save-workout-btn" onclick="saveWorkout()" class="w-full theme-bg text-white font-semibold py-3 rounded-xl text-xs transition disabled:opacity-40 disabled:pointer-events-none">
+                    <button id="save-workout-btn" onclick="saveWorkout()" class="w-full theme-bg text-white font-semibold py-3 rounded-xl text-xs transition disabled:opacity-40 disabled:pointer-events-none shadow-md">
                         Finish & Save Workout to Cloud
                     </button>
-                    <button id="save-routine-btn" onclick="promptSaveCurrentAsRoutine()" class="hidden w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition border app-border">
+                    <button id="save-routine-btn" onclick="promptSaveCurrentAsRoutine()" class="hidden w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition border app-border shadow-sm">
                         📋 Save Current Workout as Routine for Later
                     </button>
                 </div>
@@ -467,10 +460,9 @@
 
                 <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
                     <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🌗 Display Mode</h3>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button onclick="setMode('dark')" id="mode-dark-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition">🌙 Dark</button>
-                        <button onclick="setMode('light')" id="mode-light-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition">☀️ Light</button>
-                        <button onclick="setUsagiTheme()" id="mode-usagi-btn" class="p-2.5 rounded-xl border border-amber-400 bg-amber-500/10 text-xs font-semibold text-amber-500 flex items-center justify-center gap-1.5 transition hover:opacity-90">🐰 Usagi</button>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setMode('dark')" id="mode-dark-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition shadow-sm">🌙 Dark</button>
+                        <button onclick="setMode('light')" id="mode-light-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition shadow-sm">☀️ Light</button>
                     </div>
                 </div>
 
@@ -489,14 +481,14 @@
                     <div class="space-y-2">
                         <input type="email" id="settings-new-email" placeholder="New email address" 
                             class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
-                        <button type="button" onclick="changeEmailDirectly()" class="w-full app-btn-secondary font-semibold py-2 rounded-xl text-xs transition">Update Email</button>
+                        <button type="button" onclick="changeEmailDirectly()" class="w-full app-btn-secondary font-semibold py-2 rounded-xl text-xs transition border app-border shadow-sm">Update Email</button>
 
                         <div class="relative mt-2">
                             <input type="password" id="settings-new-password" placeholder="New password (6+ chars)" 
                                 class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current pr-10">
                             <button type="button" onclick="togglePasswordVisibility('settings-new-password', this)" class="absolute right-3 top-2.5 text-xs text-zinc-400 hover:text-zinc-200">👁️</button>
                         </div>
-                        <button type="button" onclick="changePasswordDirectly()" class="w-full app-btn-secondary font-semibold py-2 rounded-xl text-xs transition mt-1">Update Password</button>
+                        <button type="button" onclick="changePasswordDirectly()" class="w-full app-btn-secondary font-semibold py-2 rounded-xl text-xs transition mt-1 border app-border shadow-sm">Update Password</button>
                     </div>
                 </div>
             </section>
@@ -524,7 +516,7 @@
                     <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Exercises (Comma separated)</label>
                     <input type="text" id="custom-routine-exercises" placeholder="e.g. Barbell Squat, Leg Extension" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
                 </div>
-                <button onclick="saveCustomRoutine()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Save Routine to Cloud</button>
+                <button onclick="saveCustomRoutine()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-md">Save Routine to Cloud</button>
             </div>
         </div>
     </div>
@@ -536,11 +528,11 @@
                 <h3 id="modal-exercise-title" class="text-sm font-bold uppercase tracking-wider app-text">Exercise Demo</h3>
                 <button onclick="closeVideoModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
             </div>
-            <div class="w-full aspect-video app-card-sub rounded-xl overflow-hidden border app-border flex items-center justify-center relative">
+            <div class="w-full aspect-video app-card-sub rounded-xl overflow-hidden border app-border flex items-center justify-center relative shadow-inner">
                 <iframe id="modal-video-iframe" class="w-full h-full" src="" title="Exercise Demonstration" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
             <p id="modal-exercise-desc" class="text-xs app-text-muted text-center leading-relaxed"></p>
-            <button onclick="closeVideoModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">Got it</button>
+            <button onclick="closeVideoModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition border app-border shadow-sm">Got it</button>
         </div>
     </div>
 
@@ -579,13 +571,6 @@
             --bg-main: #09090b; --bg-card: #121214; --bg-card-sub: #18181b; --bg-input: #09090b;
             --text-main: #f4f4f5; --text-muted: #a1a1aa; --border-color: #27272a;
             --btn-sec-bg: #27272a; --btn-sec-hover: #3f3f46; --btn-sec-text: #f4f4f5;
-        }
-        html.usagi-theme {
-            --bg-main: #fffbeb; --bg-card: #fef3c7; --bg-card-sub: #fde68a; --bg-input: #fff7ed;
-            --text-main: #78350f; --text-muted: #92400e; --border-color: #fcd34d;
-            --btn-sec-bg: #fde68a; --btn-sec-hover: #fbcfe8; --btn-sec-text: #78350f;
-            --theme-color: #d97706;
-            --theme-gradient: linear-gradient(to bottom right, #f59e0b, #d97706);
         }
         body.app-body { background-color: var(--bg-main); color: var(--text-main); }
         .app-card { background-color: var(--bg-card); color: var(--text-main); }
@@ -627,12 +612,8 @@
         let currentDurationWeekOffset = 0;
         let currentVolumeWeekOffset = 0;
 
-        if (currentMode === 'usagi') {
-            setUsagiTheme(false);
-        } else {
-            setCustomThemeColor(currentThemeColor, false);
-            setMode(currentMode, false);
-        }
+        setCustomThemeColor(currentThemeColor, false);
+        setMode(currentMode, false);
         updateGreeting();
 
         function updateGreeting() {
@@ -642,22 +623,6 @@
             if (hour >= 12 && hour < 17) greeting = 'Good afternoon.';
             else if (hour >= 17 || hour < 5) greeting = 'Good evening.';
             if (greetingEl) greetingEl.textContent = `${greeting}`;
-        }
-
-        function setUsagiTheme(save = true) {
-            currentMode = 'usagi';
-            if (save) localStorage.setItem('liftpulse_mode', 'usagi');
-            document.documentElement.classList.add('usagi-theme');
-            document.documentElement.classList.remove('dark');
-            const modeIcon = document.getElementById('mode-icon');
-            if (modeIcon) modeIcon.innerText = '🐰';
-            
-            const avatar = document.getElementById('header-avatar');
-            if (avatar) avatar.classList.remove('hidden');
-            const watermark = document.getElementById('hero-usagi-watermark');
-            if (watermark) watermark.classList.remove('hidden');
-            const editBadge = document.getElementById('edit-routine-usagi-badge');
-            if (editBadge) editBadge.classList.remove('hidden');
         }
 
         function togglePasswordVisibility(inputId, btn) {
@@ -820,7 +785,7 @@
             }
         }
 
-        // --- REST TIMER CONTROLS & APPLE-STYLE DROPDOWN ---
+        // --- REST TIMER CONTROLS ---
         function toggleRestDropdown() {
             const dropdown = document.getElementById('rest-dropdown-menu');
             dropdown.classList.toggle('hidden');
@@ -889,7 +854,7 @@
             document.getElementById('rest-timer-modal').classList.add('hidden');
         }
 
-        // --- CUSTOM EXERCISE MODAL LOGIC WITH PERMANENT SYNC ---
+        // --- CUSTOM EXERCISE MODAL LOGIC ---
         function openCustomExerciseModal() {
             document.getElementById('custom-exercise-modal').classList.remove('hidden');
         }
@@ -932,7 +897,6 @@
                 }
             }
 
-            // Check if routine modal is open, add there; otherwise add to session
             if (!document.getElementById('edit-routine-modal').classList.contains('hidden')) {
                 editRoutineExercises.push({ name: name, sets: [{ weight: 135, reps: 10 }] });
                 renderEditRoutineRows();
@@ -986,7 +950,7 @@
             }
         }
 
-        // --- ROUTINE EDITING & DELETION LOGIC (FULL WORKOUT/LIFTOFF MENU STYLE) ---
+        // --- ROUTINE EDITING & DELETION LOGIC (SYNCED TO ACCOUNT) ---
         let editRoutineExercises = [];
 
         function openEditRoutineModal(routineId) {
@@ -1065,16 +1029,16 @@
                 let setsHtml = '';
                 sets.forEach((set, sIdx) => {
                     setsHtml += `
-                        <div class="flex items-center gap-2 mt-1.5 bg-black/5 dark:bg-white/5 p-2 rounded-lg">
+                        <div class="flex items-center gap-2 mt-1.5 app-card border app-border p-2 rounded-xl shadow-sm">
                             <span class="text-[9px] font-bold app-text-muted w-10">Set ${sIdx + 1}</span>
                             <div class="flex-1 grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="block text-[8px] uppercase app-text-muted">Weight (lbs)</label>
-                                    <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-wt" value="${set.weight || 135}" class="w-full app-input border app-border rounded px-2 py-1 text-xs">
+                                    <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-wt" value="${set.weight || 135}" class="w-full app-input border app-border rounded-xl px-2 py-1 text-xs">
                                 </div>
                                 <div>
                                     <label class="block text-[8px] uppercase app-text-muted">Reps</label>
-                                    <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-rep" value="${set.reps || 10}" class="w-full app-input border app-border rounded px-2 py-1 text-xs">
+                                    <input type="number" id="edit-routine-ex-${idx}-set-${sIdx}-rep" value="${set.reps || 10}" class="w-full app-input border app-border rounded-xl px-2 py-1 text-xs">
                                 </div>
                             </div>
                             <button onclick="removeSetFromEditRoutineExercise(${idx}, ${sIdx})" class="text-xs text-red-500 hover:underline px-1 self-end pb-1" title="Remove Set">✕</button>
@@ -1083,7 +1047,7 @@
                 });
 
                 container.innerHTML += `
-                    <div class="app-card-sub border app-border p-3 rounded-xl text-xs space-y-2">
+                    <div class="app-card-sub border app-border p-3 rounded-2xl text-xs space-y-2 shadow-sm">
                         <div class="flex justify-between items-center">
                             <span class="font-bold app-text">${idx + 1}. ${name}</span>
                             <div class="flex items-center gap-2">
@@ -1114,7 +1078,7 @@
             if (error) {
                 alert("Error updating routine: " + error.message);
             } else {
-                alert("Routine updated successfully!");
+                alert("Routine updated and synced successfully!");
                 closeEditRoutineModal();
                 fetchUserData();
             }
@@ -1123,7 +1087,7 @@
         function promptDeleteRoutine(routineId, routineTitle) {
             openConfirmModal(
                 "Delete Routine?",
-                `Are you sure you want to delete "${routineTitle}"? This cannot be undone.`,
+                `Are you sure you want to delete "${routineTitle}" from your account? This cannot be undone.`,
                 async () => {
                     closeConfirmModal();
                     await executeDeleteRoutine(routineId);
@@ -1165,14 +1129,14 @@
                     setsList.forEach((set, setIdx) => {
                         setsHtml += `
                             <div class="grid grid-cols-2 gap-2 mt-1">
-                                <div><span class="text-[9px] app-text-muted">Set ${setIdx + 1} Wt:</span> <input type="number" id="edit-ex-${exIdx}-set-${setIdx}-wt" value="${set.weight || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
-                                <div><span class="text-[9px] app-text-muted">Reps:</span> <input type="number" id="edit-ex-${exIdx}-set-${setIdx}-rep" value="${set.reps || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
+                                <div><span class="text-[9px] app-text-muted">Set ${setIdx + 1} Wt:</span> <input type="number" id="edit-ex-${exIdx}-set-${setIdx}-wt" value="${set.weight || 0}" class="w-full app-input border app-border rounded-xl px-2 py-1 text-xs"></div>
+                                <div><span class="text-[9px] app-text-muted">Reps:</span> <input type="number" id="edit-ex-${exIdx}-set-${setIdx}-rep" value="${set.reps || 0}" class="w-full app-input border app-border rounded-xl px-2 py-1 text-xs"></div>
                             </div>
                         `;
                     });
 
                     container.innerHTML += `
-                        <div class="app-card-sub border app-border p-2.5 rounded-xl text-xs space-y-1" data-edit-ex-idx="${exIdx}" data-set-count="${setsList.length}">
+                        <div class="app-card-sub border app-border p-3 rounded-2xl text-xs space-y-1 shadow-sm" data-edit-ex-idx="${exIdx}" data-set-count="${setsList.length}">
                             <p class="font-bold app-text">${ex.name || 'Exercise'}</p>
                             <div id="edit-ex-sets-wrapper-${exIdx}" class="space-y-1">
                                 ${setsHtml}
@@ -1357,7 +1321,7 @@
                 const hasWorkedOut = dayWorkouts.length > 0;
                 if (hasWorkedOut) activeDaysInMonth++;
 
-                dayCell.className = `h-7 w-7 mx-auto flex items-center justify-center rounded-full text-xs font-medium cursor-pointer transition ${hasWorkedOut ? 'theme-bg text-white font-bold shadow-sm hover:opacity-90' : 'app-text hover:bg-black/5 dark:hover:bg-white/5'}`;
+                dayCell.className = `h-7 w-7 mx-auto flex items-center justify-center rounded-xl text-xs font-medium cursor-pointer transition ${hasWorkedOut ? 'theme-bg text-white font-bold shadow-md hover:opacity-90' : 'app-text hover:bg-black/5 dark:hover:bg-white/5'}`;
                 dayCell.innerText = day;
                 dayCell.onclick = () => openDayDetailsModal(dateKey, dayWorkouts);
                 daysGrid.appendChild(dayCell);
@@ -1377,10 +1341,10 @@
                 workouts.forEach(w => {
                     const exs = (w.exercises || []).map(e => `• ${e.name} (${e.sets?.length || 1} sets)`).join('<br>');
                     content.innerHTML += `
-                        <div class="app-card-sub border app-border p-3 rounded-xl space-y-2">
+                        <div class="app-card-sub border app-border p-3 rounded-2xl space-y-2 shadow-sm">
                             <div class="flex justify-between items-center">
                                 <h4 class="font-bold app-text">${w.title}</h4>
-                                <button onclick="closeDayDetailsModal(); openEditWorkoutModal('${w.id}');" class="px-2 py-1 rounded bg-amber-500/10 text-amber-500 text-[10px] font-bold hover:underline">Edit Workout</button>
+                                <button onclick="closeDayDetailsModal(); openEditWorkoutModal('${w.id}');" class="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-500 text-[10px] font-bold hover:underline border border-amber-500/20">Edit Workout</button>
                             </div>
                             <p class="app-text-muted">Duration: ${w.duration || 45} mins | Volume: ${w.volume || 0} lbs</p>
                             <div class="text-[10px] app-text pt-1 border-t app-border">${exs || 'No specific exercises'}</div>
@@ -1514,7 +1478,7 @@
             `;
         }
 
-        // --- STREAK COUNTER WITH FADE & 4-DAY RESET ---
+        // --- STREAK COUNTER ---
         function calculateAndUpdateStreak(workouts) {
             if (!workouts || workouts.length === 0) {
                 applyStreakUI(0, 4);
@@ -1596,7 +1560,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- SEARCH & FILTER LOGIC FOR EXERCISE LIBRARY ---
+        // --- SEARCH & FILTER LOGIC ---
         function handleExerciseFilter() {
             const query = document.getElementById('exercise-search-input').value.toLowerCase().trim();
             const selectedCategory = document.getElementById('exercise-category-select').value;
@@ -1629,16 +1593,16 @@
             filtered.forEach(ex => {
                 const isSelected = selectedExercises.some(e => e.name === ex.name);
                 const div = document.createElement('div');
-                div.className = `app-card-sub border app-border p-2.5 rounded-xl flex justify-between items-center transition ${isSelected ? 'border-current' : ''}`;
+                div.className = `app-card-sub border app-border p-2.5 rounded-2xl flex justify-between items-center transition shadow-sm ${isSelected ? 'border-current' : ''}`;
                 div.innerHTML = `
                     <div class="flex items-center gap-2 cursor-pointer flex-1" onclick="toggleExerciseSelection('${ex.name}')">
-                        <div class="w-4 h-4 rounded border app-border flex items-center justify-center text-[10px] ${isSelected ? 'theme-bg text-white' : ''}">${isSelected ? '✓' : ''}</div>
+                        <div class="w-4 h-4 rounded-lg border app-border flex items-center justify-center text-[10px] ${isSelected ? 'theme-bg text-white' : ''}">${isSelected ? '✓' : ''}</div>
                         <div>
                             <p class="text-xs font-bold app-text">${ex.name}</p>
                             <p class="text-[10px] app-text-muted">${ex.muscle} • ${ex.category}</p>
                         </div>
                     </div>
-                    ${ex.videoId ? `<button onclick="openVideoModal('${ex.name}', '${ex.videoId}', '${ex.desc}')" class="p-1.5 rounded-lg app-card border app-border text-xs hover:opacity-80">📺</button>` : ''}
+                    ${ex.videoId ? `<button onclick="openVideoModal('${ex.name}', '${ex.videoId}', '${ex.desc}')" class="p-1.5 rounded-xl app-card border app-border text-xs hover:opacity-80 shadow-sm">📺</button>` : ''}
                 `;
                 listContainer.appendChild(div);
             });
@@ -1717,17 +1681,17 @@
                 exObj.sets.forEach((set, setIdx) => {
                     const isCompleted = set.completed;
                     setsHtml += `
-                        <div class="flex items-center gap-2 p-2 rounded-lg transition ${isCompleted ? 'border border-current bg-black/10 dark:bg-white/10' : 'bg-black/5 dark:bg-white/5'}">
-                            <button onclick="toggleSetCompletion(${exIdx}, ${setIdx})" class="w-6 h-6 rounded-lg border app-border flex items-center justify-center text-xs font-bold transition ${isCompleted ? 'theme-bg text-white' : 'app-card-sub app-text-muted'}" title="Check off set">${isCompleted ? '✓' : ''}</button>
+                        <div class="flex items-center gap-2 p-2 rounded-xl transition shadow-sm ${isCompleted ? 'border border-current bg-black/10 dark:bg-white/10' : 'app-card-sub border app-border'}">
+                            <button onclick="toggleSetCompletion(${exIdx}, ${setIdx})" class="w-6 h-6 rounded-xl border app-border flex items-center justify-center text-xs font-bold transition shadow-sm ${isCompleted ? 'theme-bg text-white' : 'app-card app-text-muted'}" title="Check off set">${isCompleted ? '✓' : ''}</button>
                             <span class="text-[10px] font-bold app-text-muted w-10">Set ${setIdx + 1}</span>
                             <div class="flex-1 grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="block text-[8px] uppercase app-text-muted">Weight (lbs)</label>
-                                    <input type="number" id="weight-${exIdx}-${setIdx}" value="${set.weight}" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                                    <input type="number" id="weight-${exIdx}-${setIdx}" value="${set.weight}" class="w-full app-input border app-border rounded-xl px-2 py-1 text-xs app-text">
                                 </div>
                                 <div>
                                     <label class="block text-[8px] uppercase app-text-muted">Reps</label>
-                                    <input type="number" id="reps-${exIdx}-${setIdx}" value="${set.reps}" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                                    <input type="number" id="reps-${exIdx}-${setIdx}" value="${set.reps}" class="w-full app-input border app-border rounded-xl px-2 py-1 text-xs app-text">
                                 </div>
                             </div>
                             <button onclick="removeSetFromExercise(${exIdx}, ${setIdx})" class="text-[10px] text-red-500 hover:underline px-1 self-end pb-1" title="Remove Set">✕</button>
@@ -1736,7 +1700,7 @@
                 });
 
                 const row = document.createElement('div');
-                row.className = 'app-card-sub border app-border p-3 rounded-xl space-y-2';
+                row.className = 'app-card-sub border app-border p-3 rounded-2xl space-y-2 shadow-sm';
                 row.innerHTML = `
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold app-text">${exIdx + 1}. ${exObj.name}</span>
@@ -1807,6 +1771,96 @@
             }
         }
 
+        // --- ROUTINES LIST & CUSTOM ROUTINE CREATION ---
+        function openCustomRoutineModal() {
+            document.getElementById('custom-routine-modal').classList.remove('hidden');
+        }
+
+        function closeCustomRoutineModal() {
+            document.getElementById('custom-routine-modal').classList.add('hidden');
+        }
+
+        async function saveCustomRoutine() {
+            if (!currentUser) {
+                alert("Please sign in to save routines.");
+                openAuthModal();
+                return;
+            }
+
+            const title = document.getElementById('custom-routine-title').value.trim();
+            const desc = document.getElementById('custom-routine-desc').value.trim();
+            const exInput = document.getElementById('custom-routine-exercises').value.trim();
+
+            if (!title) {
+                alert("Please enter a routine name.");
+                return;
+            }
+
+            const exercises = exInput ? exInput.split(',').map(name => ({
+                name: name.trim(),
+                sets: [{ weight: 135, reps: 10, completed: false }]
+            })) : [];
+
+            const { error } = await _supabase.from('routines').insert([{
+                user_id: currentUser.id,
+                title: title,
+                desc: desc,
+                exercises: exercises
+            }]);
+
+            if (error) {
+                alert("Error saving routine: " + error.message);
+            } else {
+                alert("Custom routine created and synced successfully!");
+                document.getElementById('custom-routine-title').value = '';
+                document.getElementById('custom-routine-desc').value = '';
+                document.getElementById('custom-routine-exercises').value = '';
+                closeCustomRoutineModal();
+                fetchUserData();
+            }
+        }
+
+        function renderRoutinesList() {
+            const container = document.getElementById('routines-list-container');
+            container.innerHTML = '';
+
+            const defaultRoutines = [
+                { id: 'default-push', title: 'Push Day (Chest, Shoulders, Triceps)', desc: 'Focus on heavy pressing movements', exercises: ['Barbell Bench Press', 'Dumbbell Shoulder Press', 'Tricep Pushdown (Cable)'] },
+                { id: 'default-pull', title: 'Pull Day (Back, Biceps)', desc: 'Focus on pulls and width', exercises: ['Deadlift', 'Lat Pulldown', 'Barbell Bicep Curl'] },
+                { id: 'default-legs', title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Focus on lower body strength', exercises: ['Barbell Squat', 'Romanian Deadlift (RDL)', 'Standing Calf Raise'] }
+            ];
+
+            const allRoutines = [...defaultRoutines, ...customRoutines];
+
+            allRoutines.forEach(routine => {
+                const isCustom = !routine.id.toString().startsWith('default-');
+                const exNames = (routine.exercises || []).map(e => typeof e === 'string' ? e : e.name).join(', ');
+
+                const div = document.createElement('div');
+                div.className = 'app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm';
+                div.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-sm font-bold app-text">${routine.title}</h3>
+                            <p class="text-xs app-text-muted mt-0.5">${routine.desc || 'Standard workout routine'}</p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            ${isCustom ? `
+                                <button onclick="openEditRoutineModal('${routine.id}')" class="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-500 text-[10px] font-bold hover:underline border border-amber-500/20">Edit</button>
+                                <button onclick="promptDeleteRoutine('${routine.id}', '${routine.title}')" class="px-2.5 py-1 rounded-xl bg-red-500/10 text-red-500 text-[10px] font-bold hover:underline border border-red-500/20">Delete</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <p class="text-[10px] app-text-muted font-medium truncate">Exercises: ${exNames || 'None'}</p>
+                    <button onclick='startLiveWorkout(${JSON.stringify(routine.title)}, ${JSON.stringify(routine.exercises)})' class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition border app-border shadow-sm">
+                        ⚡ Start Routine
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- FETCH USER DATA & AUTH ---
         async function fetchUserData() {
             if (!currentUser) return;
             const { data, error } = await _supabase
@@ -1919,180 +1973,38 @@
             }
 
             container.innerHTML = '';
-            workouts.forEach(w => {
-                const dateStr = new Date(w.date || w.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-                const div = document.createElement('div');
-                div.className = 'app-card border app-border rounded-2xl p-3.5 flex justify-between items-center shadow-sm';
-                div.innerHTML = `
-                    <div>
+            workouts.slice(0, 5).forEach(w => {
+                const dateParsed = new Date(w.date || w.created_at);
+                const dateStr = !isNaN(dateParsed) ? dateParsed.toLocaleDateString() : 'Recent';
+                const exs = (w.exercises || []).map(e => `• ${e.name} (${e.sets?.length || 1} sets)`).join('<br>');
+
+                const card = document.createElement('div');
+                card.className = 'app-card border app-border p-4 rounded-2xl space-y-2 shadow-sm';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
                         <h4 class="text-xs font-bold app-text">${w.title}</h4>
-                        <p class="text-[10px] app-text-muted">${dateStr} • ${w.duration || 45}m • ${w.volume || 0} lbs</p>
+                        <span class="text-[10px] app-text-muted">${dateStr}</span>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <button onclick="openEditWorkoutModal('${w.id}')" class="px-2.5 py-1 rounded-lg app-card-sub border app-border text-[10px] font-semibold app-text hover:opacity-80">Edit</button>
-                        <button onclick="promptDeleteWorkout('${w.id}')" class="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[10px] font-semibold text-red-500 hover:opacity-80">Delete</button>
+                    <div class="flex gap-4 text-[11px] app-text-muted">
+                        <span>⏱️ ${w.duration || 45} mins</span>
+                        <span>🏔️ ${w.volume || 0} lbs</span>
+                    </div>
+                    <div class="text-[10px] app-text pt-1 border-t app-border">${exs || 'No exercises logged'}</div>
+                    <div class="flex justify-end gap-2 pt-2 border-t app-border">
+                        <button onclick="openEditWorkoutModal('${w.id}')" class="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-500 text-[10px] font-bold hover:underline border border-amber-500/20">Edit Workout</button>
+                        <button onclick="promptDeleteWorkout('${w.id}')" class="px-2.5 py-1 rounded-xl bg-red-500/10 text-red-500 text-[10px] font-bold hover:underline border border-red-500/20">Delete</button>
                     </div>
                 `;
-                container.appendChild(div);
+                container.appendChild(card);
             });
         }
 
-        function renderRoutinesList() {
-            const container = document.getElementById('routines-list-container');
-            container.innerHTML = '';
-
-            const defaultRoutines = [
-                { id: 'default-push', title: 'Push Day (Chest, Shoulders, Triceps)', desc: 'Focus on heavy presses and accessory isolation.', exercises: ['Barbell Bench Press', 'Incline Dumbbell Press', 'Dumbbell Shoulder Press'], isDefault: true },
-                { id: 'default-pull', title: 'Pull Day (Back, Biceps)', desc: 'Heavy deadlifts and vertical/horizontal pulls.', exercises: ['Deadlift', 'Barbell Row', 'Lat Pulldown'], isDefault: true },
-                { id: 'default-legs', title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Deep squats and hamstring isolation.', exercises: ['Barbell Squat', 'Romanian Deadlift (RDL)', 'Seated Leg Press'], isDefault: true }
-            ];
-
-            const allRoutines = [...defaultRoutines, ...customRoutines];
-
-            allRoutines.forEach(r => {
-                const exs = (r.exercises || []).map(e => typeof e === 'string' ? e : e.name).join(', ');
-                const div = document.createElement('div');
-                div.className = 'app-card border app-border p-4 rounded-2xl space-y-2.5 shadow-sm';
-                div.innerHTML = `
-                    <div>
-                        <div class="flex items-center gap-1.5">
-                            ${currentMode === 'usagi' ? '<span class="text-xs">🐰</span>' : ''}
-                            <h3 class="text-xs font-bold app-text">${r.title}</h3>
-                        </div>
-                        <p class="text-[11px] app-text-muted">${r.desc || 'No description'}</p>
-                    </div>
-                    <p class="text-[10px] app-text-muted italic">${exs || 'No exercises listed'}</p>
-                    <div class="flex items-center gap-2 pt-1 border-t app-border">
-                        <button onclick="startLiveWorkout('${r.title}', ${JSON.stringify(r.exercises).replace(/"/g, '&quot;')})" class="flex-1 theme-bg text-white font-semibold py-2 rounded-xl text-xs transition">
-                            🚀 Start Routine
-                        </button>
-                        ${!r.isDefault ? `
-                            <button onclick="openEditRoutineModal('${r.id}')" class="px-3 py-2 rounded-xl app-card-sub border app-border text-xs font-semibold app-text hover:opacity-80">Edit</button>
-                            <button onclick="promptDeleteRoutine('${r.id}', '${r.title}')" class="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-xs font-semibold text-red-500 hover:opacity-80">Delete</button>
-                        ` : ''}
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // --- AUTH & THEME MANAGEMENT ---
-        function setMode(mode, save = true) {
-            currentMode = mode;
-            if (save) localStorage.setItem('liftpulse_mode', mode);
-
-            const avatar = document.getElementById('header-avatar');
-            const watermark = document.getElementById('hero-usagi-watermark');
-            const editBadge = document.getElementById('edit-routine-usagi-badge');
-
-            if (mode === 'usagi') {
-                setUsagiTheme(save);
-                return;
-            }
-
-            document.documentElement.classList.remove('usagi-theme');
-            if (avatar) avatar.classList.add('hidden');
-            if (watermark) watermark.classList.add('hidden');
-            if (editBadge) editBadge.classList.add('hidden');
-
-            const root = document.getElementById('html-root');
-            const icon = document.getElementById('mode-icon');
-            if (mode === 'dark') {
-                root.classList.add('dark');
-                if (icon) icon.innerText = '🌙';
-            } else {
-                root.classList.remove('dark');
-                if (icon) icon.innerText = '☀️';
-            }
-        }
-
-        async function setCustomThemeColor(color, saveToDb = true) {
-            currentThemeColor = color;
-            localStorage.setItem('liftpulse_custom_color', color);
-            document.documentElement.style.setProperty('--theme-color', color);
-            document.documentElement.style.setProperty('--theme-gradient', `linear-gradient(to bottom right, ${color}, #d97706)`);
-            const wheel = document.getElementById('color-wheel');
-            if (wheel) wheel.value = color;
-
-            if (saveToDb && currentUser) {
-                await _supabase.from('user_settings').upsert({
-                    user_id: currentUser.id,
-                    accent_color: color,
-                    updated_at: new Date()
-                }, { onConflict: 'user_id' });
-            }
-        }
-
-        function toggleDarkMode() {
-            if (currentMode === 'dark') setMode('light');
-            else if (currentMode === 'light') setUsagiTheme();
-            else setMode('dark');
-        }
-
-        function openCustomRoutineModal() {
-            document.getElementById('custom-routine-modal').classList.remove('hidden');
-        }
-
-        function closeCustomRoutineModal() {
-            document.getElementById('custom-routine-modal').classList.add('hidden');
-        }
-
-        async function saveCustomRoutine() {
-            if (!currentUser) {
-                alert("Please sign in to save custom routines.");
-                openAuthModal();
-                return;
-            }
-
-            const title = document.getElementById('custom-routine-title').value.trim();
-            const desc = document.getElementById('custom-routine-desc').value.trim();
-            const exercisesStr = document.getElementById('custom-routine-exercises').value.trim();
-
-            if (!title) {
-                alert("Please enter a routine title.");
-                return;
-            }
-
-            const exerciseNames = exercisesStr ? exercisesStr.split(',').map(s => s.trim()).filter(Boolean) : ['Barbell Bench Press'];
-            const exercisesPayload = exerciseNames.map(name => ({
-                name: name,
-                sets: [{ weight: 135, reps: 10, completed: false }]
-            }));
-
-            const { error } = await _supabase.from('routines').insert([{
-                user_id: currentUser.id,
-                title: title,
-                desc: desc,
-                exercises: exercisesPayload
-            }]);
-
-            if (error) {
-                alert("Error saving routine: " + error.message);
-            } else {
-                alert("Custom routine created successfully!");
-                closeCustomRoutineModal();
-                fetchUserData();
-            }
-        }
-
-        function openVideoModal(title, videoId, desc) {
-            document.getElementById('modal-exercise-title').innerText = title;
-            document.getElementById('modal-video-iframe').src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            document.getElementById('modal-exercise-desc').innerText = desc;
-            document.getElementById('video-modal').classList.remove('hidden');
-        }
-
-        function closeVideoModal() {
-            document.getElementById('modal-video-iframe').src = '';
-            document.getElementById('video-modal').classList.add('hidden');
-        }
-
-        // Auth handlers
+        // --- AUTH MODAL & STATE HANDLERS ---
         const authModal = document.getElementById('auth-modal');
         const authModalBtn = document.getElementById('auth-modal-btn');
-        const closeAuthModal = document.getElementById('close-auth-modal');
+        const closeAuthModalBtn = document.getElementById('close-auth-modal');
         const authForm = document.getElementById('auth-form');
-        const authSwitchMode = document.getElementById('auth-switch-mode');
+        const authSwitchModeBtn = document.getElementById('auth-switch-mode');
         const authModalTitle = document.getElementById('auth-modal-title');
         const authSubmitBtn = document.getElementById('auth-submit-btn');
 
@@ -2100,79 +2012,86 @@
             if (currentUser) {
                 promptSignOut();
             } else {
-                authModal.classList.remove('hidden');
+                openAuthModal();
             }
         };
 
-        if (closeAuthModal) closeAuthModal.onclick = () => authModal.classList.add('hidden');
+        closeAuthModalBtn.onclick = () => authModal.classList.add('hidden');
 
-        if (authSwitchMode) {
-            authSwitchMode.onclick = () => {
-                isSignUpMode = !isSignUpMode;
-                authModalTitle.innerText = isSignUpMode ? 'Create Cloud Account' : 'Sign In to Cloud Sync';
-                authSubmitBtn.innerText = isSignUpMode ? 'Register' : 'Login';
-                authSwitchMode.innerText = isSignUpMode ? 'Already have an account? Sign in' : "Need an account? Sign up";
-            };
+        function openAuthModal() {
+            authModal.classList.remove('hidden');
         }
 
-        if (authForm) {
-            authForm.onsubmit = async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('auth-email').value;
-                const password = document.getElementById('auth-password').value;
+        authSwitchModeBtn.onclick = () => {
+            isSignUpMode = !isSignUpMode;
+            authModalTitle.innerText = isSignUpMode ? "Sign Up for Cloud Sync" : "Sign In to Cloud Sync";
+            authSubmitBtn.innerText = isSignUpMode ? "Create Account" : "Login";
+            authSwitchModeBtn.innerText = isSignUpMode ? "Already have an account? Sign in" : "Need an account? Sign up";
+        };
 
-                if (isSignUpMode) {
-                    const { data, error } = await _supabase.auth.signUp({ email, password });
-                    if (error) alert("Sign up error: " + error.message);
-                    else {
-                        alert("Account created! Please check your email or log in.");
-                        authModal.classList.add('hidden');
-                    }
-                } else {
-                    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-                    if (error) alert("Login error: " + error.message);
-                    else {
-                        currentUser = data.user;
-                        updateAuthUI();
-                        authModal.classList.add('hidden');
-                        fetchUserData();
-                    }
+        authForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+
+            if (isSignUpMode) {
+                const { data, error } = await _supabase.auth.signUp({ email, password });
+                if (error) alert(error.message);
+                else {
+                    alert("Account created successfully! You are now logged in.");
+                    authModal.classList.add('hidden');
+                    checkSession();
                 }
-            };
-        }
+            } else {
+                const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+                if (error) alert(error.message);
+                else {
+                    alert("Logged in successfully!");
+                    authModal.classList.add('hidden');
+                    checkSession();
+                }
+            }
+        };
 
         function promptSignOut() {
-            openConfirmModal("Sign Out?", "Are you sure you want to sign out of your account?", async () => {
-                closeConfirmModal();
-                await _supabase.auth.signOut();
-                currentUser = null;
-                updateAuthUI();
-                globalWorkoutsData = [];
-                customRoutines = [];
-                renderRecentSessions([]);
-                renderRoutinesList();
-                renderCalendar();
-            });
+            openConfirmModal(
+                "Sign Out?",
+                "Are you sure you want to sign out of your account?",
+                async () => {
+                    closeConfirmModal();
+                    await _supabase.auth.signOut();
+                    currentUser = null;
+                    document.getElementById('user-pill').innerText = "Not logged in";
+                    authModalBtn.innerText = "Sign In";
+                    globalWorkoutsData = [];
+                    customRoutines = [];
+                    renderRoutinesList();
+                    updateDashboardStats([]);
+                    renderRecentSessions([]);
+                    renderCalendar();
+                }
+            );
         }
 
-        function updateAuthUI() {
-            const pill = document.getElementById('user-pill');
-            if (currentUser) {
-                pill.innerText = currentUser.email;
-                authModalBtn.innerText = 'Sign Out';
+        async function checkSession() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session && session.user) {
+                currentUser = session.user;
+                document.getElementById('user-pill').innerText = currentUser.email;
+                authModalBtn.innerText = "Sign Out";
+                fetchUserData();
             } else {
-                pill.innerText = 'Not logged in';
-                authModalBtn.innerText = 'Sign In';
+                renderRoutinesList();
             }
         }
 
         async function changeEmailDirectly() {
             if (!currentUser) { alert("Please sign in first."); return; }
-            const newEmail = document.getElementById('settings-new-email').value;
+            const newEmail = document.getElementById('settings-new-email').value.trim();
             if (!newEmail) { alert("Please enter a new email."); return; }
             const { error } = await _supabase.auth.updateUser({ email: newEmail });
             if (error) alert("Error updating email: " + error.message);
-            else alert("Email update confirmation sent. Please check your inbox.");
+            else alert("Email update verification sent. Please check your new inbox.");
         }
 
         async function changePasswordDirectly() {
@@ -2184,23 +2103,57 @@
             else alert("Password successfully updated!");
         }
 
-        // Initialize session
-        _supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                currentUser = session.user;
-                updateAuthUI();
-                fetchUserData();
+        function setMode(mode, save = true) {
+            currentMode = mode;
+            if (save) localStorage.setItem('liftpulse_mode', mode);
+            const htmlRoot = document.getElementById('html-root');
+            const modeIcon = document.getElementById('mode-icon');
+            if (mode === 'dark') {
+                htmlRoot.classList.add('dark');
+                if (modeIcon) modeIcon.innerText = '🌙';
+            } else {
+                htmlRoot.classList.remove('dark');
+                if (modeIcon) modeIcon.innerText = '☀️';
             }
-        });
+        }
 
-        _supabase.auth.onAuthStateChange((_event, session) => {
-            currentUser = session?.user || null;
-            updateAuthUI();
-            if (currentUser) fetchUserData();
-        });
+        function toggleDarkMode() {
+            const newMode = currentMode === 'dark' ? 'light' : 'dark';
+            setMode(newMode, true);
+        }
 
-        renderExerciseLibrary();
-        renderRoutinesList();
+        async function setCustomThemeColor(color, save = true) {
+            currentThemeColor = color;
+            if (save) localStorage.setItem('liftpulse_custom_color', color);
+            document.documentElement.style.setProperty('--theme-color', color);
+            document.documentElement.style.setProperty('--theme-gradient', `linear-gradient(to bottom right, ${color}, #d97706)`);
+
+            if (save && currentUser) {
+                await _supabase.from('user_settings').upsert({
+                    user_id: currentUser.id,
+                    accent_color: color
+                }, { onConflict: 'user_id' });
+            }
+            renderBarGraphCharts();
+        }
+
+        function openVideoModal(title, videoId, desc) {
+            document.getElementById('modal-exercise-title').innerText = title;
+            document.getElementById('modal-video-iframe').src = `https://www.youtube.com/embed/${videoId}`;
+            document.getElementById('modal-exercise-desc').innerText = desc;
+            document.getElementById('video-modal').classList.remove('hidden');
+        }
+
+        function closeVideoModal() {
+            document.getElementById('modal-video-iframe').src = '';
+            document.getElementById('video-modal').classList.add('hidden');
+        }
+
+        window.onload = () => {
+            checkSession();
+            renderExerciseLibrary();
+            renderRoutinesList();
+        };
     </script>
 </body>
 </html>
