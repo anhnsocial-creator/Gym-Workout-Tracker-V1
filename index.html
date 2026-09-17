@@ -554,7 +554,7 @@
             { name: 'Rowing Machine (Erg)', category: 'Cardio', muscle: 'Back', videoId: 'Hojvjd421V0', desc: 'Drive with legs, hinge back with hips, and pull handle to sternum.' }
         ];
 
-        let selectedExercises = [];
+        let selectedExercises = []; // Array of { name: string, sets: [{ weight: number, reps: number }] }
         let customRoutines = [];
         let globalWorkoutsData = [];
         let calendarCurrentDate = new Date();
@@ -568,7 +568,19 @@
             document.getElementById('save-routine-btn').classList.remove('hidden');
 
             document.getElementById('session-name').value = title;
-            selectedExercises = [...exercises];
+            
+            // Normalize incoming routine exercises to have default sets if they are strings or old objects
+            selectedExercises = exercises.map(ex => {
+                if (typeof ex === 'string') {
+                    return { name: ex, sets: [{ weight: 135, reps: 10 }] };
+                } else {
+                    return {
+                        name: ex.name,
+                        sets: ex.sets && ex.sets.length > 0 ? [...ex.sets] : [{ weight: ex.weight || 135, reps: ex.reps || 10 }]
+                    };
+                }
+            });
+
             document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
 
             renderExerciseLibrary();
@@ -637,8 +649,8 @@
                 }
             }
 
-            if (!selectedExercises.includes(name)) {
-                selectedExercises.push(name);
+            if (!selectedExercises.some(e => e.name === name)) {
+                selectedExercises.push({ name: name, sets: [{ weight: 135, reps: 10 }] });
             }
 
             document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
@@ -714,19 +726,31 @@
             document.getElementById('edit-session-volume').value = workout.volume || 0;
 
             const container = document.getElementById('edit-exercises-container');
-            container.innerHTML = '<h4 class="text-xs font-bold uppercase tracking-wider app-text mb-1">Exercises</h4>';
+            container.innerHTML = '<h4 class="text-xs font-bold uppercase tracking-wider app-text mb-1">Exercises & Sets</h4>';
 
             const exs = workout.exercises || [];
             if (exs.length === 0) {
                 container.innerHTML += '<p class="text-xs app-text-muted">No exercises recorded for this session.</p>';
             } else {
-                exs.forEach((ex, idx) => {
+                exs.forEach((ex, exIdx) => {
+                    // Normalize to support both legacy flat records and new multi-set records
+                    const setsList = ex.sets && ex.sets.length > 0 ? ex.sets : [{ weight: ex.weight || 0, reps: ex.reps || 0 }];
+                    
+                    let setsHtml = '';
+                    setsList.forEach((set, setIdx) => {
+                        setsHtml += `
+                            <div class="grid grid-cols-2 gap-2 mt-1">
+                                <div><span class="text-[9px] app-text-muted">Set ${setIdx + 1} Wt:</span> <input type="number" id="edit-ex-${exIdx}-set-${setIdx}-wt" value="${set.weight || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
+                                <div><span class="text-[9px] app-text-muted">Reps:</span> <input type="number" id="edit-ex-${exIdx}-set-${setIdx}-rep" value="${set.reps || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
+                            </div>
+                        `;
+                    });
+
                     container.innerHTML += `
-                        <div class="app-card-sub border app-border p-2 rounded-xl text-xs space-y-1">
+                        <div class="app-card-sub border app-border p-2.5 rounded-xl text-xs space-y-1" data-edit-ex-idx="${exIdx}" data-set-count="${setsList.length}">
                             <p class="font-bold app-text">${ex.name || 'Exercise'}</p>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><span class="text-[9px] app-text-muted">Weight:</span> <input type="number" id="edit-ex-wt-${idx}" value="${ex.weight || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
-                                <div><span class="text-[9px] app-text-muted">Reps:</span> <input type="number" id="edit-ex-rep-${idx}" value="${ex.reps || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
+                            <div id="edit-ex-sets-wrapper-${exIdx}" class="space-y-1">
+                                ${setsHtml}
                             </div>
                         </div>
                     `;
@@ -755,21 +779,37 @@
             const workoutId = document.getElementById('edit-workout-id').value;
             const newTitle = document.getElementById('edit-session-name').value;
             const newDuration = parseInt(document.getElementById('edit-session-duration').value) || 0;
-            const newVolume = parseFloat(document.getElementById('edit-session-volume').value) || 0;
 
             const workout = globalWorkoutsData.find(w => w.id == workoutId);
             if (!workout) return;
 
-            const updatedExercises = (workout.exercises || []).map((ex, idx) => {
-                const wt = parseFloat(document.getElementById(`edit-ex-wt-${idx}`).value) || 0;
-                const reps = parseFloat(document.getElementById(`edit-ex-rep-${idx}`).value) || 0;
-                return { ...ex, weight: wt, reps: reps };
+            let calculatedTotalVolume = 0;
+            const updatedExercises = (workout.exercises || []).map((ex, exIdx) => {
+                const cardEl = document.querySelector(`[data-edit-ex-idx="${exIdx}"]`);
+                const setCount = parseInt(cardEl?.getAttribute('data-set-count') || 1);
+                
+                const updatedSets = [];
+                for (let setIdx = 0; setIdx < setCount; setIdx++) {
+                    const wt = parseFloat(document.getElementById(`edit-ex-${exIdx}-set-${setIdx}-wt`).value) || 0;
+                    const reps = parseFloat(document.getElementById(`edit-ex-${exIdx}-set-${setIdx}-rep`).value) || 0;
+                    calculatedTotalVolume += wt * reps;
+                    updatedSets.push({ weight: wt, reps: reps });
+                }
+
+                return { 
+                    name: ex.name, 
+                    sets: updatedSets,
+                    weight: updatedSets[0]?.weight || 0, // Fallback compatibility
+                    reps: updatedSets[0]?.reps || 0       // Fallback compatibility
+                };
             });
+
+            const finalVolume = parseFloat(document.getElementById('edit-session-volume').value) || calculatedTotalVolume;
 
             const { error } = await _supabase.from('workouts').update({
                 title: newTitle,
                 duration: newDuration,
-                volume: newVolume,
+                volume: finalVolume,
                 exercises: updatedExercises
             }).eq('id', workoutId);
 
@@ -944,7 +984,7 @@
             }
 
             filtered.forEach(ex => {
-                const isSelected = selectedExercises.includes(ex.name);
+                const isSelected = selectedExercises.some(e => e.name === ex.name);
                 const div = document.createElement('div');
                 div.className = `app-card-sub border app-border p-2.5 rounded-xl flex justify-between items-center transition ${isSelected ? 'border-current' : ''}`;
                 div.innerHTML = `
@@ -962,14 +1002,47 @@
         }
 
         function toggleExerciseSelection(name) {
-            if (selectedExercises.includes(name)) {
-                selectedExercises = selectedExercises.filter(e => e !== name);
+            const existingIdx = selectedExercises.findIndex(e => e.name === name);
+            if (existingIdx !== -1) {
+                selectedExercises.splice(existingIdx, 1);
             } else {
-                selectedExercises.push(name);
+                selectedExercises.push({
+                    name: name,
+                    sets: [{ weight: 135, reps: 10 }]
+                });
             }
             document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
             handleExerciseFilter();
             renderBuilderRows();
+        }
+
+        // --- SET LEVEL ADD / REMOVE LOGIC ---
+        function addSetToExercise(exIdx) {
+            captureBuilderInputValues();
+            selectedExercises[exIdx].sets.push({ weight: 135, reps: 10 });
+            renderBuilderRows();
+        }
+
+        function removeSetFromExercise(exIdx, setIdx) {
+            captureBuilderInputValues();
+            if (selectedExercises[exIdx].sets.length <= 1) {
+                // If it's the last set, toggle off the entire exercise instead
+                toggleExerciseSelection(selectedExercises[exIdx].name);
+                return;
+            }
+            selectedExercises[exIdx].sets.splice(setIdx, 1);
+            renderBuilderRows();
+        }
+
+        function captureBuilderInputValues() {
+            selectedExercises.forEach((ex, exIdx) => {
+                ex.sets.forEach((set, setIdx) => {
+                    const wtInput = document.getElementById(`weight-${exIdx}-${setIdx}`);
+                    const repInput = document.getElementById(`reps-${exIdx}-${setIdx}`);
+                    if (wtInput) set.weight = parseFloat(wtInput.value) || 0;
+                    if (repInput) set.reps = parseFloat(repInput.value) || 0;
+                });
+            });
         }
 
         function renderBuilderRows() {
@@ -986,23 +1059,39 @@
             builderContainer.classList.remove('hidden');
             document.getElementById('save-workout-btn').removeAttribute('disabled');
 
-            selectedExercises.forEach((exName, idx) => {
+            selectedExercises.forEach((exObj, exIdx) => {
+                let setsHtml = '';
+                exObj.sets.forEach((set, setIdx) => {
+                    setsHtml += `
+                        <div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-lg">
+                            <span class="text-[10px] font-bold app-text-muted w-10">Set ${setIdx + 1}</span>
+                            <div class="flex-1 grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[8px] uppercase app-text-muted">Weight (lbs)</label>
+                                    <input type="number" id="weight-${exIdx}-${setIdx}" value="${set.weight}" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                                </div>
+                                <div>
+                                    <label class="block text-[8px] uppercase app-text-muted">Reps</label>
+                                    <input type="number" id="reps-${exIdx}-${setIdx}" value="${set.reps}" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                                </div>
+                            </div>
+                            <button onclick="removeSetFromExercise(${exIdx}, ${setIdx})" class="text-[10px] text-red-500 hover:underline px-1 self-end pb-1" title="Remove Set">✕</button>
+                        </div>
+                    `;
+                });
+
                 const row = document.createElement('div');
                 row.className = 'app-card-sub border app-border p-3 rounded-xl space-y-2';
                 row.innerHTML = `
                     <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold app-text">${idx + 1}. ${exName}</span>
-                        <button onclick="toggleExerciseSelection('${exName}')" class="text-[10px] app-text-muted hover:app-text">Remove</button>
+                        <span class="text-xs font-bold app-text">${exIdx + 1}. ${exObj.name}</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="addSetToExercise(${exIdx})" class="text-[10px] theme-text font-semibold hover:underline">+ Add Set</button>
+                            <button onclick="toggleExerciseSelection('${exObj.name}')" class="text-[10px] app-text-muted hover:app-text">Remove Exercise</button>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[9px] uppercase app-text-muted">Weight (lbs)</label>
-                            <input type="number" id="weight-${idx}" value="135" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
-                        </div>
-                        <div>
-                            <label class="block text-[9px] uppercase app-text-muted">Reps</label>
-                            <input type="number" id="reps-${idx}" value="10" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
-                        </div>
+                    <div class="space-y-1.5">
+                        ${setsHtml}
                     </div>
                 `;
                 rowsContainer.appendChild(row);
@@ -1017,14 +1106,24 @@
             }
 
             if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+            captureBuilderInputValues();
 
             const sessionName = document.getElementById('session-name').value || "Gym session";
             let totalVolume = 0;
-            const exercisesData = selectedExercises.map((exName, idx) => {
-                const wt = parseFloat(document.getElementById(`weight-${idx}`).value) || 0;
-                const reps = parseFloat(document.getElementById(`reps-${idx}`).value) || 0;
-                totalVolume += wt * reps;
-                return { name: exName, weight: wt, reps: reps };
+            
+            const exercisesData = selectedExercises.map((exObj) => {
+                let exVolume = 0;
+                exObj.sets.forEach(set => {
+                    exVolume += (set.weight * set.reps);
+                });
+                totalVolume += exVolume;
+
+                return {
+                    name: exObj.name,
+                    sets: exObj.sets,
+                    weight: exObj.sets[0]?.weight || 0, // Legacy fallback
+                    reps: exObj.sets[0]?.reps || 0       // Legacy fallback
+                };
             });
 
             const durationMinutes = Math.max(1, Math.round(workoutSecondsElapsed / 60));
@@ -1194,6 +1293,9 @@
             const allRoutines = [...defaultRoutines, ...customRoutines];
 
             allRoutines.forEach(r => {
+                // Normalize routine exercises display names
+                const exerciseNames = (r.exercises || []).map(ex => typeof ex === 'string' ? ex : ex.name);
+
                 const div = document.createElement('div');
                 div.className = 'app-card border app-border p-4 rounded-2xl space-y-2 shadow-sm';
                 div.innerHTML = `
@@ -1208,7 +1310,7 @@
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-1 pt-1">
-                        ${(r.exercises || []).map(ex => `<span class="text-[9px] app-card-sub border app-border px-2 py-0.5 rounded-md app-text-muted">${ex}</span>`).join('')}
+                        ${exerciseNames.map(exName => `<span class="text-[9px] app-card-sub border app-border px-2 py-0.5 rounded-md app-text-muted">${exName}</span>`).join('')}
                     </div>
                 `;
                 container.appendChild(div);
@@ -1227,7 +1329,9 @@
             const title = document.getElementById('custom-routine-title').value;
             const desc = document.getElementById('custom-routine-desc').value;
             const exInput = document.getElementById('custom-routine-exercises').value;
-            const exercises = exInput.split(',').map(s => s.trim()).filter(Boolean);
+            const exerciseNames = exInput.split(',').map(s => s.trim()).filter(Boolean);
+            
+            const exercises = exerciseNames.map(name => ({ name: name, sets: [{ weight: 135, reps: 10 }] }));
 
             if (!title) { alert("Please provide a routine name."); return; }
 
