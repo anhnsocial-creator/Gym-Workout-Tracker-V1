@@ -19,7 +19,6 @@
             <p id="header-greeting" class="text-lg font-bold tracking-tight app-text">Good morning.</p>
         </div>
         <div class="flex items-center gap-2">
-            <!-- Mode Toggle Quick Button -->
             <button onclick="toggleDarkMode()" class="p-2 rounded-xl app-card border app-border app-text hover:opacity-80 transition" title="Toggle Light/Dark Mode">
                 <span id="mode-icon">☀️</span>
             </button>
@@ -41,8 +40,13 @@
                 <form id="auth-form" class="space-y-3">
                     <input type="email" id="auth-email" required placeholder="Email address" 
                         class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-current app-text">
-                    <input type="password" id="auth-password" required placeholder="Password" 
-                        class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-current app-text">
+                    
+                    <div class="relative">
+                        <input type="password" id="auth-password" required placeholder="Password" 
+                            class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-current app-text pr-10">
+                        <button type="button" onclick="togglePasswordVisibility('auth-password', this)" class="absolute right-3 top-2.5 text-xs text-zinc-400 hover:text-zinc-200">👁️</button>
+                    </div>
+
                     <button type="submit" id="auth-submit-btn" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Login</button>
                     
                     <div class="flex justify-between items-center pt-1">
@@ -52,9 +56,50 @@
             </div>
         </div>
 
+        <!-- CONFIRMATION MODAL OVERLAY -->
+        <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl text-center">
+                <span class="text-3xl">⚠️</span>
+                <h3 id="confirm-modal-title" class="text-sm font-bold uppercase tracking-wider app-text">Are you sure?</h3>
+                <p id="confirm-modal-desc" class="text-xs app-text-muted">Are you sure you want to proceed with this action?</p>
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="closeConfirmModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">Cancel</button>
+                    <button id="confirm-modal-accept-btn" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- EDIT WORKOUT MODAL -->
+        <div id="edit-workout-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold uppercase tracking-wider app-text">Edit Workout Session</h3>
+                    <button onclick="closeEditWorkoutModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+                </div>
+                <input type="hidden" id="edit-workout-id">
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Session Name</label>
+                        <input type="text" id="edit-session-name" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Duration (Mins)</label>
+                            <input type="number" id="edit-session-duration" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Total Volume (lbs)</label>
+                            <input type="number" id="edit-session-volume" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                        </div>
+                    </div>
+                    <div id="edit-exercises-container" class="space-y-2 pt-2 border-t app-border"></div>
+                    <button onclick="promptSaveEditedWorkout()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
         <!-- COLUMN 1: DASHBOARD & FEED (Home Tab) -->
         <section id="tab-home" class="space-y-4 md:block">
-            <!-- Streak & Volume Hero Card -->
             <div class="theme-gradient rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
                 <div class="absolute -right-4 -bottom-4 opacity-25 font-black text-7xl pointer-events-none">⚡</div>
                 <div class="flex justify-between items-start mb-4">
@@ -67,7 +112,6 @@
                 </div>
             </div>
 
-            <!-- Quick Stats Grid -->
             <div class="grid grid-cols-3 gap-2.5">
                 <div class="app-card border app-border p-3 rounded-2xl text-center shadow-sm">
                     <span class="block text-xl mb-1">📅</span>
@@ -98,23 +142,16 @@
                     </div>
                     <span id="calendar-chevron" class="text-xs font-bold app-text-muted transition-transform duration-200">▼</span>
                 </button>
-                
-                <!-- Calendar Content Dropdown Body -->
                 <div id="calendar-dropdown-body" class="hidden p-4 pt-0 space-y-3 border-t app-border">
                     <div class="flex justify-between items-center pt-3">
                         <button onclick="changeCalendarMonth(-1)" class="p-1.5 rounded-lg app-card-sub border app-border app-text text-xs hover:opacity-80">◀ Prev</button>
                         <span id="calendar-month-year" class="text-xs font-bold app-text">Month Year</span>
                         <button onclick="changeCalendarMonth(1)" class="p-1.5 rounded-lg app-card-sub border app-border app-text text-xs hover:opacity-80">Next ▶</button>
                     </div>
-
-                    <!-- Days Header -->
                     <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold app-text-muted">
                         <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
                     </div>
-
-                    <!-- Grid Days Container -->
                     <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
-
                     <div class="flex items-center justify-between pt-1 text-[10px] app-text-muted border-t app-border">
                         <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full theme-bg inline-block"></span> Workout Completed</span>
                         <span id="calendar-active-count">0 days active</span>
@@ -122,7 +159,6 @@
                 </div>
             </div>
 
-            <!-- Quick Action Button -->
             <button onclick="switchTab('workouts')" class="md:hidden w-full app-card hover:opacity-90 border app-border app-text font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition text-xs shadow-md">
                 <span>+</span> Start Live Workout Session
             </button>
@@ -142,7 +178,6 @@
 
         <!-- COLUMN 2: ACTIVE WORKOUT SESSION & BUILDER -->
         <section id="tab-workouts" class="space-y-4 md:block">
-            <!-- START WORKOUT BANNER / CONTROL -->
             <div id="pre-workout-container" class="app-card border app-border p-5 rounded-2xl space-y-4 shadow-sm text-center">
                 <div class="space-y-1">
                     <span class="text-3xl">⏱️</span>
@@ -154,7 +189,6 @@
                 </button>
             </div>
 
-            <!-- ACTIVE WORKOUT LIVE DASHBOARD (Hidden until started) -->
             <div id="active-workout-container" class="hidden app-card border app-border p-4 rounded-2xl space-y-4 shadow-sm">
                 <div class="flex justify-between items-center border-b app-border pb-3">
                     <div>
@@ -171,14 +205,12 @@
                     </div>
                 </div>
 
-                <!-- Exercise Selector & Filter -->
                 <div class="space-y-3 pt-2 border-t app-border">
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold uppercase tracking-wider app-text">Select Exercises</span>
                         <span id="selected-count" class="text-[10px] theme-text font-medium">0 selected</span>
                     </div>
 
-                    <!-- Category Filter Pills -->
                     <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px]">
                         <button onclick="filterExercises('All')" class="filter-pill theme-bg text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap transition">All</button>
                         <button onclick="filterExercises('Free weight')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Free weight</button>
@@ -187,11 +219,9 @@
                         <button onclick="filterExercises('Calisthenics')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Calisthenics</button>
                     </div>
 
-                    <!-- Expanded Exercise List -->
                     <div id="exercise-library-list" class="space-y-2 max-h-52 overflow-y-auto pr-1"></div>
                 </div>
 
-                <!-- Active Builder Set Container for Selected Exercises -->
                 <div id="active-sets-builder" class="space-y-3 hidden pt-3 border-t app-border">
                     <h3 class="text-xs font-bold uppercase tracking-wider theme-text">Configure Sets</h3>
                     <div id="builder-rows" class="space-y-2"></div>
@@ -205,7 +235,6 @@
 
         <!-- COLUMN 3: ROUTINES & SETTINGS -->
         <div class="space-y-4">
-            <!-- TAB 3: ROUTINES VIEW -->
             <section id="tab-routines" class="space-y-4 md:block">
                 <div class="flex justify-between items-center">
                     <div>
@@ -216,19 +245,15 @@
                         + Custom Routine
                     </button>
                 </div>
-
-                <!-- Routines Container List -->
                 <div id="routines-list-container" class="space-y-3"></div>
             </section>
 
-            <!-- TAB 4: SETTINGS VIEW -->
             <section id="tab-settings" class="space-y-4 md:block pt-2">
                 <div>
                     <h2 class="text-base font-bold app-text">Settings</h2>
                     <p class="text-xs app-text-muted">Manage account access, login credentials, and app themes.</p>
                 </div>
 
-                <!-- Appearance / Mode Card -->
                 <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
                     <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🌗 Display Mode</h3>
                     <div class="grid grid-cols-2 gap-2">
@@ -237,18 +262,14 @@
                     </div>
                 </div>
 
-                <!-- Color Wheel Accent Picker -->
                 <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
                     <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🎨 Custom Accent Color</h3>
                     <div class="flex items-center gap-3">
                         <input type="color" id="color-wheel" onchange="setCustomThemeColor(this.value)" value="#f97316" class="w-12 h-10 rounded-xl cursor-pointer bg-transparent border app-border p-1">
-                        <div class="text-xs app-text-muted">
-                            Pick any color from the color wheel to dynamically update your theme.
-                        </div>
+                        <div class="text-xs app-text-muted">Pick any color from the color wheel to dynamically update your theme.</div>
                     </div>
                 </div>
 
-                <!-- Change Credentials Card -->
                 <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
                     <div>
                         <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🔒 Account Security</h3>
@@ -258,9 +279,12 @@
                             class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
                         <button type="button" onclick="changeEmailDirectly()" class="w-full app-btn-secondary font-semibold py-2 rounded-xl text-xs transition">Update Email</button>
 
-                        <input type="password" id="settings-new-password" placeholder="New password (6+ chars)" 
-                            class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current mt-2">
-                        <button type="button" onclick="changePasswordDirectly()" class="w-full app-btn-secondary font-semibold py-2 rounded-xl text-xs transition">Update Password</button>
+                        <div class="relative mt-2">
+                            <input type="password" id="settings-new-password" placeholder="New password (6+ chars)" 
+                                class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current pr-10">
+                            <button type="button" onclick="togglePasswordVisibility('settings-new-password', this)" class="absolute right-3 top-2.5 text-xs text-zinc-400 hover:text-zinc-200">👁️</button>
+                        </div>
+                        <button type="button" onclick="changePasswordDirectly()" class="w-full app-btn-secondary font-semibold py-2 rounded-xl text-xs transition mt-1">Update Password</button>
                     </div>
                 </div>
             </section>
@@ -328,41 +352,22 @@
         </button>
     </nav>
 
-    <!-- Theme Stylesheet Injector & Explicit Mode Variable mapping -->
+    <!-- Theme Styles & App Script -->
     <style>
         :root {
             --theme-color: #f97316;
             --theme-gradient: linear-gradient(to bottom right, #ea580c, #d97706);
         }
-
-        /* LIGHT MODE PALETTE */
         html:not(.dark) {
-            --bg-main: #f4f4f5;
-            --bg-card: #ffffff;
-            --bg-card-sub: #f1f3f5;
-            --bg-input: #f9fafb;
-            --text-main: #18181b;
-            --text-muted: #71717a;
-            --border-color: #e4e4e7;
-            --btn-sec-bg: #f4f4f5;
-            --btn-sec-hover: #e4e4e7;
-            --btn-sec-text: #27272a;
+            --bg-main: #f4f4f5; --bg-card: #ffffff; --bg-card-sub: #f1f3f5; --bg-input: #f9fafb;
+            --text-main: #18181b; --text-muted: #71717a; --border-color: #e4e4e7;
+            --btn-sec-bg: #f4f4f5; --btn-sec-hover: #e4e4e7; --btn-sec-text: #27272a;
         }
-
-        /* DARK MODE PALETTE */
         html.dark {
-            --bg-main: #09090b;
-            --bg-card: #121214;
-            --bg-card-sub: #18181b;
-            --bg-input: #09090b;
-            --text-main: #f4f4f5;
-            --text-muted: #a1a1aa;
-            --border-color: #27272a;
-            --btn-sec-bg: #27272a;
-            --btn-sec-hover: #3f3f46;
-            --btn-sec-text: #f4f4f5;
+            --bg-main: #09090b; --bg-card: #121214; --bg-card-sub: #18181b; --bg-input: #09090b;
+            --text-main: #f4f4f5; --text-muted: #a1a1aa; --border-color: #27272a;
+            --btn-sec-bg: #27272a; --btn-sec-hover: #3f3f46; --btn-sec-text: #f4f4f5;
         }
-
         body.app-body { background-color: var(--bg-main); color: var(--text-main); }
         .app-card { background-color: var(--bg-card); color: var(--text-main); }
         .app-card-sub { background-color: var(--bg-card-sub); }
@@ -373,14 +378,12 @@
         .app-text-muted { color: var(--text-muted); }
         .app-btn-secondary { background-color: var(--btn-sec-bg); color: var(--btn-sec-text); }
         .app-btn-secondary:hover { background-color: var(--btn-sec-hover); }
-
         .theme-bg { background-color: var(--theme-color); }
         .theme-text { color: var(--theme-color); }
         .theme-gradient { background: var(--theme-gradient); }
         input:focus { border-color: var(--theme-color) !important; }
     </style>
 
-    <!-- App Script -->
     <script>
         const SUPABASE_URL = 'https://iampcdalppcqgcuztrqb.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_jClQ2iDvEQfHVpZBHNNkSA_68g9w51G';
@@ -404,6 +407,17 @@
             if (hour >= 12 && hour < 17) greeting = 'Good afternoon.';
             else if (hour >= 17 || hour < 5) greeting = 'Good evening.';
             if (greetingEl) greetingEl.textContent = greeting;
+        }
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerText = '🙈';
+            } else {
+                input.type = 'password';
+                btn.innerText = '👁️';
+            }
         }
 
         const EXERCISE_LIBRARY = [
@@ -434,7 +448,6 @@
         let globalWorkoutsData = [];
         let calendarCurrentDate = new Date();
 
-        // Live Timer state
         let workoutTimerInterval = null;
         let workoutSecondsElapsed = 0;
 
@@ -449,7 +462,6 @@
             renderExerciseLibrary();
             renderBuilderRows();
 
-            // Start clock
             workoutSecondsElapsed = 0;
             if (workoutTimerInterval) clearInterval(workoutTimerInterval);
             workoutTimerInterval = setInterval(() => {
@@ -469,6 +481,123 @@
             }
         }
 
+        // --- EDIT & DELETE WORKOUT LOGIC ---
+        function openEditWorkoutModal(workoutId) {
+            const workout = globalWorkoutsData.find(w => w.id === workoutId);
+            if (!workout) return;
+
+            document.getElementById('edit-workout-id').value = workout.id;
+            document.getElementById('edit-session-name').value = workout.title || 'Gym session';
+            document.getElementById('edit-session-duration').value = workout.duration || 45;
+            document.getElementById('edit-session-volume').value = workout.volume || 0;
+
+            const container = document.getElementById('edit-exercises-container');
+            container.innerHTML = '<h4 class="text-xs font-bold uppercase tracking-wider app-text mb-1">Exercises</h4>';
+
+            const exs = workout.exercises || [];
+            if (exs.length === 0) {
+                container.innerHTML += '<p class="text-xs app-text-muted">No exercises recorded for this session.</p>';
+            } else {
+                exs.forEach((ex, idx) => {
+                    container.innerHTML += `
+                        <div class="app-card-sub border app-border p-2 rounded-xl text-xs space-y-1">
+                            <p class="font-bold app-text">${ex.name || 'Exercise'}</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><span class="text-[9px] app-text-muted">Weight:</span> <input type="number" id="edit-ex-wt-${idx}" value="${ex.weight || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
+                                <div><span class="text-[9px] app-text-muted">Reps:</span> <input type="number" id="edit-ex-rep-${idx}" value="${ex.reps || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('edit-workout-modal').classList.remove('hidden');
+        }
+
+        function closeEditWorkoutModal() {
+            document.getElementById('edit-workout-modal').classList.add('hidden');
+        }
+
+        function promptSaveEditedWorkout() {
+            openConfirmModal(
+                "Save Changes?",
+                "Are you sure you want to update this workout with your new changes?",
+                async () => {
+                    closeConfirmModal();
+                    await executeSaveEditedWorkout();
+                }
+            );
+        }
+
+        async function executeSaveEditedWorkout() {
+            const workoutId = document.getElementById('edit-workout-id').value;
+            const newTitle = document.getElementById('edit-session-name').value;
+            const newDuration = parseInt(document.getElementById('edit-session-duration').value) || 0;
+            const newVolume = parseFloat(document.getElementById('edit-session-volume').value) || 0;
+
+            const workout = globalWorkoutsData.find(w => w.id == workoutId);
+            if (!workout) return;
+
+            const updatedExercises = (workout.exercises || []).map((ex, idx) => {
+                const wt = parseFloat(document.getElementById(`edit-ex-wt-${idx}`).value) || 0;
+                const reps = parseFloat(document.getElementById(`edit-ex-rep-${idx}`).value) || 0;
+                return { ...ex, weight: wt, reps: reps };
+            });
+
+            const { error } = await _supabase.from('workouts').update({
+                title: newTitle,
+                duration: newDuration,
+                volume: newVolume,
+                exercises: updatedExercises
+            }).eq('id', workoutId);
+
+            if (error) {
+                alert("Error updating workout: " + error.message);
+            } else {
+                alert("Workout successfully updated!");
+                closeEditWorkoutModal();
+                fetchUserData();
+            }
+        }
+
+        function promptDeleteWorkout(workoutId) {
+            openConfirmModal(
+                "Delete Workout?",
+                "Are you sure you want to delete this workout session? This action cannot be undone.",
+                async () => {
+                    closeConfirmModal();
+                    await executeDeleteWorkout(workoutId);
+                }
+            );
+        }
+
+        async function executeDeleteWorkout(workoutId) {
+            const { error } = await _supabase.from('workouts').delete().eq('id', workoutId);
+            if (error) {
+                alert("Error deleting workout: " + error.message);
+            } else {
+                alert("Workout deleted successfully.");
+                fetchUserData();
+            }
+        }
+
+        // Generic Confirmation Modal Control
+        function openConfirmModal(title, desc, onConfirmCallback) {
+            document.getElementById('confirm-modal-title').innerText = title;
+            document.getElementById('confirm-modal-desc').innerText = desc;
+            const acceptBtn = document.getElementById('confirm-modal-accept-btn');
+            // Remove old listeners to avoid stacking
+            const newAcceptBtn = acceptBtn.cloneNode(true);
+            acceptBtn.parentNode.replaceChild(newAcceptBtn, acceptBtn);
+            newAcceptBtn.addEventListener('click', onConfirmCallback);
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
+        // --- CALENDAR & APP LOGIC ---
         function toggleCalendarDropdown() {
             const body = document.getElementById('calendar-dropdown-body');
             const chevron = document.getElementById('calendar-chevron');
@@ -508,10 +637,8 @@
             });
 
             let activeDaysInMonth = 0;
-
             for (let i = 0; i < firstDayIndex; i++) {
-                const emptyCell = document.createElement('div');
-                daysGrid.appendChild(emptyCell);
+                daysGrid.appendChild(document.createElement('div'));
             }
 
             for (let day = 1; day <= totalDays; day++) {
@@ -536,17 +663,13 @@
                 const sec = document.getElementById(`tab-${t}`);
                 if (sec) sec.classList.add('hidden');
                 const navBtn = document.getElementById(`nav-${t}`);
-                if (navBtn) {
-                    navBtn.className = "nav-btn flex flex-col items-center app-text-muted hover:app-text transition";
-                }
+                if (navBtn) navBtn.className = "nav-btn flex flex-col items-center app-text-muted hover:app-text transition";
             });
 
             const activeSec = document.getElementById(`tab-${tabId}`);
             if (activeSec) activeSec.classList.remove('hidden');
             const activeNav = document.getElementById(`nav-${tabId}`);
-            if (activeNav) {
-                activeNav.className = "nav-btn flex flex-col items-center theme-text transition";
-            }
+            if (activeNav) activeNav.className = "nav-btn flex flex-col items-center theme-text transition";
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -561,7 +684,6 @@
         function renderExerciseLibrary(filter = 'All') {
             const listContainer = document.getElementById('exercise-library-list');
             listContainer.innerHTML = '';
-
             const filtered = filter === 'All' ? EXERCISE_LIBRARY : EXERCISE_LIBRARY.filter(e => e.category === filter);
 
             filtered.forEach(ex => {
@@ -729,8 +851,8 @@
             }
 
             container.innerHTML = '';
-            workouts.slice(0, 5).forEach(w => {
-                const dateStr = new Date(w.date || w.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            workouts.forEach(w => {
+                const dateStr = new Date(w.date || w.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
                 const div = document.createElement('div');
                 div.className = 'app-card border app-border rounded-2xl p-3.5 flex justify-between items-center shadow-sm';
                 div.innerHTML = `
@@ -738,7 +860,10 @@
                         <h4 class="text-xs font-bold app-text">${w.title}</h4>
                         <p class="text-[10px] app-text-muted">${dateStr} • ${w.duration || 45}m • ${w.volume || 0} lbs</p>
                     </div>
-                    <span class="text-xs font-semibold theme-text">Completed ✓</span>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="openEditWorkoutModal('${w.id}')" class="px-2.5 py-1 rounded-lg app-card-sub border app-border text-[10px] font-semibold app-text hover:opacity-80">Edit</button>
+                        <button onclick="promptDeleteWorkout('${w.id}')" class="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[10px] font-semibold text-red-500 hover:opacity-80">Delete</button>
+                    </div>
                 `;
                 container.appendChild(div);
             });
@@ -789,16 +914,10 @@
             const exInput = document.getElementById('custom-routine-exercises').value;
             const exercises = exInput.split(',').map(s => s.trim()).filter(Boolean);
 
-            if (!title) {
-                alert("Please provide a routine name.");
-                return;
-            }
+            if (!title) { alert("Please provide a routine name."); return; }
 
             const { error } = await _supabase.from('routines').insert([{
-                user_id: currentUser.id,
-                title: title,
-                desc: desc,
-                exercises: exercises
+                user_id: currentUser.id, title: title, desc: desc, exercises: exercises
             }]);
 
             if (error) {
@@ -948,9 +1067,17 @@
             if (!currentUser) { alert("Please sign in first."); return; }
             const newPassword = document.getElementById('settings-new-password').value;
             if (!newPassword || newPassword.length < 6) { alert("Password must be at least 6 characters."); return; }
-            const { error } = await _supabase.auth.updateUser({ password: newPassword });
-            if (error) alert("Error: " + error.message);
-            else alert("Password successfully updated.");
+            
+            openConfirmModal(
+                "Update Password?",
+                "Are you sure you want to change your account password?",
+                async () => {
+                    closeConfirmModal();
+                    const { error } = await _supabase.auth.updateUser({ password: newPassword });
+                    if (error) alert("Error: " + error.message);
+                    else alert("Password successfully updated.");
+                }
+            );
         }
 
         renderRoutinesList();
