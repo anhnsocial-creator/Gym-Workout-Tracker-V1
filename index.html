@@ -251,6 +251,7 @@
                         <button onclick="filterExercises('Machine')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Machine</button>
                         <button onclick="filterExercises('Cables')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Cables</button>
                         <button onclick="filterExercises('Calisthenics')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Calisthenics</button>
+                        <button onclick="filterExercises('Cardio')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Cardio</button>
                     </div>
 
                     <div id="exercise-library-list" class="space-y-2 max-h-52 overflow-y-auto pr-1"></div>
@@ -461,26 +462,231 @@
         }
 
         const EXERCISE_LIBRARY = [
-            { name: 'Barbell Bench Press', category: 'Free weight', muscle: 'Chest', videoId: 'gRVjAtPip0Y', desc: 'Retract shoulder blades, plant feet firmly, and press the barbell in a slight arc over your chest.' },
-            { name: 'Incline Dumbbell Press', category: 'Free weight', muscle: 'Chest', videoId: '8iPEnkdISio', desc: 'Set bench to 30-45 degrees, press dumbbells up while keeping elbows tucked at 45 degrees.' },
-            { name: 'Chest Fly Machine', category: 'Machine', muscle: 'Chest', videoId: 'Iiph0bt9-cg', desc: 'Maintain a slight bend in your elbows and squeeze your inner chest together at peak contraction.' },
-            { name: 'Cable Crossover', category: 'Cables', muscle: 'Chest', videoId: 'taI4XduLpTk', desc: 'Bring handles together in a hugging motion across your chest for maximum tension.' },
-            { name: 'Push Ups', category: 'Calisthenics', muscle: 'Chest', videoId: 'IODxDxX7oi4', desc: 'Keep body in a rigid plank position, lowering chest to the floor before pressing back up.' },
-            { name: 'Deadlift', category: 'Free weight', muscle: 'Back', videoId: 'op9kVnSso6Q', desc: 'Keep a neutral spine, engage lats, and drive the floor away with your legs locked in.' },
-            { name: 'Barbell Row', category: 'Free weight', muscle: 'Back', videoId: 'G8l_8chR5BE', desc: 'Hinge forward to torso parallel, pull the bar into your lower ribcage, and squeeze your back.' },
-            { name: 'Lat Pulldown', category: 'Machine', muscle: 'Back', videoId: 'CAwf7n6Luuc', desc: 'Drive elbows down and back toward your hips while keeping your chest lifted high.' },
-            { name: 'Seated Cable Row', category: 'Cables', muscle: 'Back', videoId: 'GZbfZ033f74', desc: 'Keep a straight torso, pull handle to your belly button, and squeeze shoulder blades together.' },
-            { name: 'Pull Ups', category: 'Calisthenics', muscle: 'Back', videoId: 'eGo4IYlbE5g', desc: 'Initiate pull by depressing shoulder blades and pulling your chin entirely over the bar.' },
-            { name: 'Dumbbell Shoulder Press', category: 'Free weight', muscle: 'Shoulders', videoId: 'qEswVCRioUs', desc: 'Press dumbbells overhead in a controlled path without excessive lower back arching.' },
-            { name: 'Dumbbell Lateral Raise', category: 'Free weight', muscle: 'Shoulders', videoId: '3VcKaXpzqRo', desc: 'Lead slightly with your elbows out to the sides to isolate side delts without swinging.' },
-            { name: 'Face Pull', category: 'Cables', muscle: 'Shoulders', videoId: 'rep-qVOkqgk', desc: 'Pull rope attachment toward your forehead, separating hands and flaring elbows high for rear delts.' },
-            { name: 'Barbell Squat', category: 'Free weight', muscle: 'Legs', videoId: 'bEv6CCg2BC8', desc: 'Keep chest up, core braced, and break parallel by sitting back into your hips.' },
-            { name: 'Romanian Deadlift (RDL)', category: 'Free weight', muscle: 'Hamstrings', videoId: 'JCXUYuzwNrM', desc: 'Hinge at the hips with a slight knee bend, lowering the bar along your shins until a deep hamstring stretch is felt.' },
-            { name: 'Seated Leg Press', category: 'Machine', muscle: 'Legs', videoId: 'IZxyjW7MPJQ', desc: 'Place feet shoulder-width on the platform, lower safely to 90 degrees, and press through heels.' },
-            { name: 'Leg Extension Machine', category: 'Machine', muscle: 'Legs', videoId: 'YyvSfVjQeL0', desc: 'Secure pad against lower shins and extend legs fully, squeezing quads at the top.' },
-            { name: 'One-Arm Tricep Extension', category: 'Cables', muscle: 'Arms', videoId: 'nRiJVZDpdL0', desc: 'Keep upper arm locked in place by your side and fully extend forearm downward with cable or band.' },
-            { name: 'Hammer Curl', category: 'Free weight', muscle: 'Arms', videoId: 'zWbo4fEtKGY', desc: 'Hold dumbbells with a neutral grip and curl upward to target brachialis and forearms.' },
-            { name: 'Stationary Cycling', category: 'Cardio', muscle: 'Legs', videoId: '7Y8j952f4kg', desc: 'Maintain steady cadence and resistance to boost conditioning and leg endurance.' }
+            // Shoulders
+            { name: "Military Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight", videoId: "qEswVCRioUs", desc: "Press barbell overhead in a controlled path." },
+            { name: "Dumbbell Shoulder Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight", videoId: "qEswVCRioUs", desc: "Press dumbbells overhead in a controlled path." },
+            { name: "Arnold Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight", videoId: "3VcKaXpzqRo", desc: "Rotate palms as you press overhead." },
+            { name: "Dumbbell Lateral Raise", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight", videoId: "3VcKaXpzqRo", desc: "Lead slightly with your elbows out to the sides." },
+            { name: "Face Pull", category: "Shoulders", muscle: "Shoulders", equipment: "Cables", videoId: "rep-qVOkqgk", desc: "Pull rope attachment toward your forehead for rear delts." },
+            { name: "Upright Row", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Shoulder Press", category: "Shoulders", muscle: "Shoulders", equipment: "Machine" },
+            { name: "Push Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Seated Shoulder Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Machine Shoulder Press", category: "Shoulders", muscle: "Shoulders", equipment: "Machine" },
+            { name: "Dumbbell Front Raise", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Cable Lateral Raise", category: "Shoulders", muscle: "Shoulders", equipment: "Cables" },
+            { name: "Machine Reverse Fly", category: "Shoulders", muscle: "Shoulders", equipment: "Machine" },
+            { name: "Seated Dumbbell Shoulder Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Dumbbell Upright Row", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Cable Reverse Fly", category: "Shoulders", muscle: "Shoulders", equipment: "Cables" },
+            { name: "Barbell Front Raise", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Behind the Neck Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Handstand Push Ups", category: "Shoulders", muscle: "Shoulders", equipment: "Calisthenics" },
+            { name: "Log Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Split Jerk", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Machine Lateral Raise", category: "Shoulders", muscle: "Shoulders", equipment: "Machine" },
+            { name: "Landmine Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Muscle Snatch", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Z Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Viking Press", category: "Shoulders", muscle: "Shoulders", equipment: "Machine" },
+            { name: "Shoulder Pin Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Dumbbell Z Press", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+            { name: "Cable Upright Row", category: "Shoulders", muscle: "Shoulders", equipment: "Cables" },
+            { name: "Dumbbell External Rotation", category: "Shoulders", muscle: "Shoulders", equipment: "Free weight" },
+
+            // Core
+            { name: "Crunches", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Hanging Leg Raise", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Cable Crunch", category: "Core", muscle: "Core", equipment: "Cables" },
+            { name: "Ab Wheel Rollout", category: "Core", muscle: "Core", equipment: "Free weight" },
+            { name: "Russian Twist", category: "Core", muscle: "Core", equipment: "Free weight" },
+            { name: "Sit Ups", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Machine Seated Crunch", category: "Core", muscle: "Core", equipment: "Machine" },
+            { name: "Dumbbell Side Bend", category: "Core", muscle: "Core", equipment: "Free weight" },
+            { name: "Cable Woodchopper", category: "Core", muscle: "Core", equipment: "Cables" },
+            { name: "Torso Rotation Machine", category: "Core", muscle: "Core", equipment: "Machine" },
+            { name: "Lying Leg Raise", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Captain's Chair Leg Raise", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Toes to Bar", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Hanging Knee Raise", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Captain's Chair Knee Raise", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Decline Sit-up", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Decline Crunch", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Bicycle Crunch", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Reverse Crunches", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Flutter Kicks", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Mountain Climbers", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "High Pulley Crunch", category: "Core", muscle: "Core", equipment: "Cables" },
+            { name: "Standing Cable Crunch", category: "Core", muscle: "Core", equipment: "Cables" },
+            { name: "Side Crunch", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Superman", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Roman Chair Side Bend", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Scissor Kicks", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Plank", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+            { name: "Side Plank", category: "Core", muscle: "Core", equipment: "Calisthenics" },
+
+            // Cardio
+            { name: "Running", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Air Bike", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Battle Ropes", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Cycling", category: "Cardio", muscle: "Cardio", equipment: "Cardio", videoId: "7Y8j952f4kg", desc: "Maintain steady cadence." },
+            { name: "Elliptical Trainer", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Rowing Machine", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Spinning", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Stair Machine", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Treadmill", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Jump Rope", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Boxing", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Climbing", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "HIIT", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Hiking", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Skating", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Skiing", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Snowboarding", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Sprints", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Swimming", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Walking", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Rucking", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Golf", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Waterpolo", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Archery", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+            { name: "Plates", category: "Cardio", muscle: "Cardio", equipment: "Cardio" },
+
+            // Arms
+            { name: "Barbell Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Dumbbell Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Hammer Curl", category: "Arms", muscle: "Arms", equipment: "Free weight", videoId: "zWbo4fEtKGY", desc: "Hold dumbbells with neutral grip." },
+            { name: "Preacher Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "EZ Bar Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Close Grip Bench Press", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Tricep Pushdown", category: "Arms", muscle: "Arms", equipment: "Cables" },
+            { name: "Lying Tricep Extension", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Single Arm Tricep Pushdown", category: "Arms", muscle: "Arms", equipment: "Cables" },
+            { name: "Single Arm Hammer Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Tricep Rope Pushdown", category: "Arms", muscle: "Arms", equipment: "Cables" },
+            { name: "Dumbbell Tricep Extension", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Tricep Extension", category: "Arms", muscle: "Arms", equipment: "Cables" },
+            { name: "Dumbbell Concentration Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Cable Bicep Curl", category: "Arms", muscle: "Arms", equipment: "Cables" },
+            { name: "Incline Dumbbell Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Lying Dumbbell Tricep Extension", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Wrist Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Seated Dip Machine", category: "Arms", muscle: "Arms", equipment: "Machine" },
+            { name: "Machine Preacher Curl", category: "Arms", muscle: "Arms", equipment: "Machine" },
+            { name: "Reverse Barbell Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Reverse Wrist Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "One Arm Cable Bicep Curl", category: "Arms", muscle: "Arms", equipment: "Cables" },
+            { name: "Machine Bicep Curl", category: "Arms", muscle: "Arms", equipment: "Machine" },
+            { name: "Strict Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Machine Tricep Extension", category: "Arms", muscle: "Arms", equipment: "Machine" },
+            { name: "Cable Overhead Tricep Extension", category: "Arms", muscle: "Arms", equipment: "Cables" },
+            { name: "Dumbbell Wrist Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Diamond Push Ups", category: "Arms", muscle: "Arms", equipment: "Calisthenics" },
+            { name: "One Arm Dumbbell Preacher Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Incline Hammer Curl", category: "Arms", muscle: "Arms", equipment: "Free weight" },
+            { name: "Cable Crossover Tricep Extension", category: "Arms", muscle: "Arms", equipment: "Cables" },
+
+            // Legs
+            { name: "Deadlift", category: "Legs", muscle: "Back/Legs", equipment: "Free weight", videoId: "op9kVnSso6Q", desc: "Keep a neutral spine and drive floor away." },
+            { name: "Squat", category: "Legs", muscle: "Legs", equipment: "Free weight", videoId: "bEv6CCg2BC8", desc: "Keep chest up and core braced." },
+            { name: "Front Squat", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Romanian Deadlift", category: "Legs", muscle: "Hamstrings", equipment: "Free weight", videoId: "JCXUYuzwNrM", desc: "Hinge at hips for hamstring stretch." },
+            { name: "Sumo Deadlift", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Hip Thrust", category: "Legs", muscle: "Glutes", equipment: "Free weight" },
+            { name: "Bulgarian Split Squat", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Sled Leg Press", category: "Legs", muscle: "Legs", equipment: "Machine" },
+            { name: "Leg Extension", category: "Legs", muscle: "Legs", equipment: "Machine", videoId: "YyvSfVjQeL0", desc: "Extend legs fully, squeezing quads." },
+            { name: "Lying Leg Curl", category: "Legs", muscle: "Hamstrings", equipment: "Machine" },
+            { name: "Goblet Squat", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Hex Bar Deadlift", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Horizontal Leg Press", category: "Legs", muscle: "Legs", equipment: "Machine" },
+            { name: "Single Leg Extension", category: "Legs", muscle: "Legs", equipment: "Machine" },
+            { name: "Seated Leg Curl", category: "Legs", muscle: "Hamstrings", equipment: "Machine" },
+            { name: "Hack Squat", category: "Legs", muscle: "Legs", equipment: "Machine" },
+            { name: "Pendulum Squat", category: "Legs", muscle: "Legs", equipment: "Machine" },
+            { name: "Dumbbell Bulgarian Split Squat", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Machine Calf Raise", category: "Legs", muscle: "Calves", equipment: "Machine" },
+            { name: "Dumbbell Calf Raise", category: "Legs", muscle: "Calves", equipment: "Free weight" },
+            { name: "Vertical Leg Press", category: "Legs", muscle: "Legs", equipment: "Machine" },
+            { name: "Box Squat", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Bodyweight Squat", category: "Legs", muscle: "Legs", equipment: "Calisthenics" },
+            { name: "Seated Calf Raise", category: "Legs", muscle: "Calves", equipment: "Machine" },
+            { name: "Dumbbell Romanian Deadlift", category: "Legs", muscle: "Hamstrings", equipment: "Free weight" },
+            { name: "Dead Morning", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Barbell Lunge", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Smith Machine Squat", category: "Legs", muscle: "Legs", equipment: "Machine" },
+            { name: "Safety Bar Squat", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Zercher Squat", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Hip Abduction", category: "Legs", muscle: "Glutes", equipment: "Machine" },
+            { name: "Overhead Squat", category: "Legs", muscle: "Legs", equipment: "Free weight" },
+            { name: "Hip Adduction", category: "Legs", muscle: "Legs", equipment: "Machine" },
+            { name: "Pistol Squat", category: "Legs", muscle: "Legs", equipment: "Calisthenics" },
+
+            // Chest
+            { name: "Bench Press", category: "Chest", muscle: "Chest", equipment: "Free weight", videoId: "gRVjAtPip0Y", desc: "Retract shoulder blades and press bar in a slight arc." },
+            { name: "Incline Bench Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Dumbbell Bench Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Incline Dumbbell Bench Press", category: "Chest", muscle: "Chest", equipment: "Free weight", videoId: "8iPEnkdISio", desc: "Set bench to 30-45 degrees." },
+            { name: "Push Ups", category: "Chest", muscle: "Chest", equipment: "Calisthenics", videoId: "IODxDxX7oi4", desc: "Keep body in rigid plank position." },
+            { name: "Dips", category: "Chest", muscle: "Chest", equipment: "Calisthenics" },
+            { name: "Cable Fly", category: "Chest", muscle: "Chest", equipment: "Cables", videoId: "taI4XduLpTk", desc: "Bring handles together in a hugging motion." },
+            { name: "Incline Machine Bench Press", category: "Chest", muscle: "Chest", equipment: "Machine" },
+            { name: "Assisted Dips", category: "Chest", muscle: "Chest", equipment: "Machine" },
+            { name: "Chest Press", category: "Chest", muscle: "Chest", equipment: "Machine" },
+            { name: "Cable Chest Press", category: "Chest", muscle: "Chest", equipment: "Cables" },
+            { name: "Decline Bench Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Dumbbell Fly", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Machine Chest Fly", category: "Chest", muscle: "Chest", equipment: "Machine", videoId: "Iiph0bt9-cg", desc: "Maintain slight bend in elbows." },
+            { name: "Smith Machine Bench Press", category: "Chest", muscle: "Chest", equipment: "Machine" },
+            { name: "Smith Machine Incline Bench Press", category: "Chest", muscle: "Chest", equipment: "Machine" },
+            { name: "Low to High Cable Fly", category: "Chest", muscle: "Chest", equipment: "Cables" },
+            { name: "High to Low Cable Fly", category: "Chest", muscle: "Chest", equipment: "Cables" },
+            { name: "Floor Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Incline Dumbbell Fly", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Dumbbell Floor Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Decline Dumbbell Bench Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Reverse Grip Bench Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Paused Bench Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "One Arm Push Ups", category: "Chest", muscle: "Chest", equipment: "Calisthenics" },
+            { name: "Close Grip Dumbbell Bench Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Bench Pin Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Barbell Pullover", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Wide Grip Bench Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+            { name: "Decline Push Up", category: "Chest", muscle: "Chest", equipment: "Calisthenics" },
+            { name: "Close Grip Incline Bench Press", category: "Chest", muscle: "Chest", equipment: "Free weight" },
+
+            // Back
+            { name: "Pull Ups", category: "Back", muscle: "Back", equipment: "Calisthenics", videoId: "eGo4IYlbE5g", desc: "Pull chin entirely over the bar." },
+            { name: "Chin Ups", category: "Back", muscle: "Back", equipment: "Calisthenics" },
+            { name: "Bent Over Row", category: "Back", muscle: "Back", equipment: "Free weight", videoId: "G8l_8chR5BE", desc: "Hinge forward and pull bar into lower ribcage." },
+            { name: "Lat Pulldown", category: "Back", muscle: "Back", equipment: "Cables", videoId: "CAwf7n6Luuc", desc: "Drive elbows down and back toward your hips." },
+            { name: "Seated Cable Row", category: "Back", muscle: "Back", equipment: "Cables", videoId: "GZbfZ033f74", desc: "Pull handle to your belly button." },
+            { name: "Dumbbell Row", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "T Bar Row", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Assisted Pull Ups", category: "Back", muscle: "Back", equipment: "Machine" },
+            { name: "Machine High Row", category: "Back", muscle: "Back", equipment: "Machine" },
+            { name: "Assisted Chin Ups", category: "Back", muscle: "Back", equipment: "Machine" },
+            { name: "Barbell Shrug", category: "Back", muscle: "Traps", equipment: "Free weight" },
+            { name: "Dumbbell Shrug", category: "Back", muscle: "Traps", equipment: "Free weight" },
+            { name: "Pendlay Row", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Machine Row", category: "Back", muscle: "Back", equipment: "Machine" },
+            { name: "Dumbbell Pullover", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Dumbbell Reverse Fly", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Chest Supported Dumbbell Row", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Close Grip Lat Pulldown", category: "Back", muscle: "Back", equipment: "Cables" },
+            { name: "Reverse Grip Lat Pulldown", category: "Back", muscle: "Back", equipment: "Cables" },
+            { name: "Straight Arm Pulldown", category: "Back", muscle: "Back", equipment: "Cables" },
+            { name: "Bench Pull", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Yates Row", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Clean High Pull", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Machine Back Extension", category: "Back", muscle: "Lower Back", equipment: "Machine" },
+            { name: "Neutral Grip Pull Ups", category: "Back", muscle: "Back", equipment: "Calisthenics" },
+            { name: "Snatch Deadlift", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Clean Pull", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Pause Deadlift", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Back Extension", category: "Back", muscle: "Lower Back", equipment: "Calisthenics" },
+            { name: "Bent Over Dumbbell Row", category: "Back", muscle: "Back", equipment: "Free weight" },
+            { name: "Dumbbell Bench Pul", category: "Back", muscle: "Back", equipment: "Free weight" }
         ];
 
         let selectedExercises = [];
@@ -542,14 +748,13 @@
                 return;
             }
 
-            // Check if it already exists in EXERCISE_LIBRARY
             const exists = EXERCISE_LIBRARY.some(e => e.name.toLowerCase() === name.toLowerCase());
             if (!exists) {
                 EXERCISE_LIBRARY.push({
                     name: name,
                     category: category,
                     muscle: muscle,
-                    videoId: '', // custom exercises might not have demo video IDs
+                    videoId: '',
                     desc: 'Custom added exercise.'
                 });
             }
@@ -581,7 +786,7 @@
 
             const title = document.getElementById('session-name').value || "Custom Routine";
             const desc = prompt("Enter a short description or notes for this routine:", "Saved from live session");
-            if (desc === null) return; // Canceled
+            if (desc === null) return;
 
             const { error } = await _supabase.from('routines').insert([{
                 user_id: currentUser.id,
@@ -698,7 +903,6 @@
             }
         }
 
-        // --- ACCENT COLOR CHANGE WITH CONFIRMATION & CLOUD SYNC ---
         function promptChangeThemeColor(newColor) {
             openConfirmModal(
                 "Change Accent Color?",
@@ -713,7 +917,6 @@
             );
         }
 
-        // Generic Confirmation Modal Control
         function openConfirmModal(title, desc, onConfirmCallback, onCancelCallback = null) {
             document.getElementById('confirm-modal-title').innerText = title;
             document.getElementById('confirm-modal-desc').innerText = desc;
@@ -735,7 +938,6 @@
             document.getElementById('confirm-modal').classList.add('hidden');
         }
 
-        // --- CALENDAR & APP LOGIC ---
         function toggleCalendarDropdown() {
             const body = document.getElementById('calendar-dropdown-body');
             const chevron = document.getElementById('calendar-chevron');
@@ -833,7 +1035,7 @@
                         <div class="w-4 h-4 rounded border app-border flex items-center justify-center text-[10px] ${isSelected ? 'theme-bg text-white' : ''}">${isSelected ? '✓' : ''}</div>
                         <div>
                             <p class="text-xs font-bold app-text">${ex.name}</p>
-                            <p class="text-[10px] app-text-muted">${ex.muscle} • ${ex.category}</p>
+                            <p class="text-[10px] app-text-muted">${ex.muscle || 'General'} • ${ex.category} • ${ex.equipment}</p>
                         </div>
                     </div>
                     ${ex.videoId ? `<button onclick="openVideoModal('${ex.name}', '${ex.videoId}', '${ex.desc}')" class="p-1.5 rounded-lg app-card border app-border text-xs hover:opacity-80">📺</button>` : ''}
@@ -1046,9 +1248,9 @@
             container.innerHTML = '';
 
             const defaultRoutines = [
-                { title: 'Push Day (Chest, Shoulders, Triceps)', desc: 'Focus on heavy presses and accessory isolation.', exercises: ['Barbell Bench Press', 'Incline Dumbbell Press', 'Dumbbell Shoulder Press'] },
-                { title: 'Pull Day (Back, Biceps)', desc: 'Build width and thickness in your upper body.', exercises: ['Deadlift', 'Barbell Row', 'Lat Pulldown'] },
-                { title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Comprehensive lower body strength routine.', exercises: ['Barbell Squat', 'Romanian Deadlift (RDL)', 'Seated Leg Press'] }
+                { title: 'Push Day (Chest, Shoulders, Triceps)', desc: 'Focus on heavy presses and accessory isolation.', exercises: ['Bench Press', 'Dumbbell Shoulder Press', 'Tricep Pushdown'] },
+                { title: 'Pull Day (Back, Biceps)', desc: 'Build width and thickness in your upper body.', exercises: ['Deadlift', 'Bent Over Row', 'Lat Pulldown'] },
+                { title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Comprehensive lower body strength routine.', exercises: ['Squat', 'Romanian Deadlift', 'Sled Leg Press'] }
             ];
 
             const allRoutines = [...defaultRoutines, ...customRoutines];
@@ -1113,7 +1315,6 @@
             document.getElementById('video-modal').classList.add('hidden');
         }
 
-        // Auth Modal Handlers
         const authModal = document.getElementById('auth-modal');
         const authModalBtn = document.getElementById('auth-modal-btn');
         const closeAuthModal = document.getElementById('close-auth-modal');
