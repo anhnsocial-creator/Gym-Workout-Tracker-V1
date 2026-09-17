@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiftPulse - Gym Streak Tracker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta name="theme-color" content="#09090b">
+</head>
+<body id="app-body" class="app-body min-h-screen flex flex-col items-center justify-start pb-24 md:pb-12 select-none transition-colors duration-200">
+
+    <!-- Top Header Bar -->
+    <header class="w-full max-w-md md:max-w-6xl px-4 py-4 flex justify-between items-center border-b app-border app-header sticky top-0 z-30 backdrop-blur transition-colors duration-200">
+        <div>
+            <h1 class="text-xs font-semibold app-text-muted">YOUR TRAINING</h1>
+            <p id="header-greeting" class="text-lg font-bold tracking-tight app-text">Good morning.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <!-- Mode Toggle Quick Button -->
+            <button onclick="toggleDarkMode()" class="p-2 rounded-xl app-card border app-border app-text hover:opacity-80 transition" title="Toggle Light/Dark Mode">
+                <span id="mode-icon">☀️</span>
+            </button>
+            <span id="user-pill" class="text-[10px] app-card border app-border app-text-muted px-2.5 py-1.5 rounded-full truncate max-w-[100px]">Not logged in</span>
+            <button id="auth-modal-btn" class="text-xs app-btn-secondary px-3.5 py-1.5 rounded-xl transition border app-border">Sign In</button>
+        </div>
+    </header>
+
+    <!-- Main View Container -->
+    <main class="w-full max-w-md md:max-w-6xl p-4 space-y-4 md:grid md:grid-cols-3 md:gap-6 md:space-y-0 md:items-start pt-6">
+
+        <!-- AUTH MODAL OVERLAY -->
+        <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+                <div class="flex justify-between items-center">
+                    <h3 id="auth-modal-title" class="text-sm font-bold uppercase tracking-wider app-text">Sign In to Cloud Sync</h3>
+                    <button id="close-auth-modal" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+                </div>
+                <form id="auth-form" class="space-y-3">
+                    <input type="email" id="auth-email" required placeholder="Email address" 
+                        class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-current app-text">
+                    <input type="password" id="auth-password" required placeholder="Password" 
+                        class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-current app-text">
+                    <button type="submit" id="auth-submit-btn" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Login</button>
+                    
+                    <div class="flex justify-between items-center pt-1">
+                        <button type="button" id="auth-switch-mode" class="text-[11px] app-text-muted hover:underline">Need an account? Sign up</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- COLUMN 1: DASHBOARD & FEED (Home Tab) -->
+        <section id="tab-home" class="space-y-4 md:block">
+            <!-- Streak & Volume Hero Card -->
+            <div class="theme-gradient rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 opacity-25 font-black text-7xl pointer-events-none">⚡</div>
+                <div class="flex justify-between items-start mb-4">
+                    <span class="text-xs font-bold uppercase tracking-wider bg-black/20 text-white px-2.5 py-1 rounded-full">Streak & Volume</span>
+                    <span class="text-2xl">🔥</span>
+                </div>
+                <div class="space-y-1">
+                    <h2 id="streak-sessions" class="text-3xl font-black tracking-tight text-white">0 sessions</h2>
+                    <p id="stat-total-volume-hero" class="text-xs font-semibold text-white/90">Total Volume Lifted: 0 lbs</p>
+                </div>
+            </div>
+
+            <!-- Quick Stats Grid -->
+            <div class="grid grid-cols-3 gap-2.5">
+                <div class="app-card border app-border p-3 rounded-2xl text-center shadow-sm">
+                    <span class="block text-xl mb-1">📅</span>
+                    <span id="stat-total-sessions" class="block text-base font-bold app-text">0</span>
+                    <span class="text-[10px] app-text-muted uppercase tracking-wider">Sessions</span>
+                </div>
+                <div class="app-card border app-border p-3 rounded-2xl text-center shadow-sm">
+                    <span class="block text-xl mb-1">⏱️</span>
+                    <span id="stat-avg-duration" class="block text-base font-bold app-text">0m</span>
+                    <span class="text-[10px] app-text-muted uppercase tracking-wider">Avg Duration</span>
+                </div>
+                <div class="app-card border app-border p-3 rounded-2xl text-center shadow-sm">
+                    <span class="block text-xl mb-1">🏔️</span>
+                    <span id="stat-total-volume" class="block text-base font-bold app-text">0</span>
+                    <span class="text-[10px] app-text-muted uppercase tracking-wider">Volume (lbs)</span>
+                </div>
+            </div>
+
+            <!-- COLLAPSIBLE CALENDAR DROPDOWN SECTION -->
+            <div class="app-card border app-border rounded-2xl shadow-sm overflow-hidden transition-all duration-200">
+                <button onclick="toggleCalendarDropdown()" class="w-full p-4 flex justify-between items-center hover:opacity-80 transition text-left">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-base">🗓️</span>
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider app-text">Workout Calendar View</h3>
+                            <p class="text-[10px] app-text-muted">Tap to expand or hide your workout history</p>
+                        </div>
+                    </div>
+                    <span id="calendar-chevron" class="text-xs font-bold app-text-muted transition-transform duration-200">▼</span>
+                </button>
+                
+                <!-- Calendar Content Dropdown Body -->
+                <div id="calendar-dropdown-body" class="hidden p-4 pt-0 space-y-3 border-t app-border">
+                    <div class="flex justify-between items-center pt-3">
+                        <button onclick="changeCalendarMonth(-1)" class="p-1.5 rounded-lg app-card-sub border app-border app-text text-xs hover:opacity-80">◀ Prev</button>
+                        <span id="calendar-month-year" class="text-xs font-bold app-text">Month Year</span>
+                        <button onclick="changeCalendarMonth(1)" class="p-1.5 rounded-lg app-card-sub border app-border app-text text-xs hover:opacity-80">Next ▶</button>
+                    </div>
+
+                    <!-- Days Header -->
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold app-text-muted">
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+
+                    <!-- Grid Days Container -->
+                    <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
+
+                    <div class="flex items-center justify-between pt-1 text-[10px] app-text-muted border-t app-border">
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full theme-bg inline-block"></span> Workout Completed</span>
+                        <span id="calendar-active-count">0 days active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Action Button -->
+            <button onclick="switchTab('workouts')" class="md:hidden w-full app-card hover:opacity-90 border app-border app-text font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition text-xs shadow-md">
+                <span>+</span> Log a workout & view exercises
+            </button>
+
+            <!-- Recent Sessions Feed -->
+            <div class="space-y-2.5 pt-2">
+                <h3 class="text-xs font-semibold app-text-muted uppercase tracking-wider">Recent sessions</h3>
+                <div id="recent-sessions-list" class="space-y-2">
+                    <div class="app-card border app-border rounded-2xl p-6 text-center space-y-2 shadow-sm">
+                        <span class="text-2xl">📋</span>
+                        <h4 class="text-xs font-bold app-text">No sessions yet</h4>
+                        <p class="text-[11px] app-text-muted">Log your first session and start building your streak.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLUMN 2: WORKOUTS & EXERCISE BUILDER -->
+        <section id="tab-workouts" class="space-y-4 md:block">
+            <div class="app-card border app-border p-4 rounded-2xl space-y-4 shadow-sm">
+                <div>
+                    <h2 class="text-sm font-bold app-text">Workouts & Exercise Library</h2>
+                    <p class="text-[11px] app-text-muted">Select exercises to build your session and check out video demonstrations.</p>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Session Name</label>
+                        <input type="text" id="session-name" value="Gym session" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                    </div>
+                </div>
+
+                <!-- Exercise Selector & Filter -->
+                <div class="space-y-3 pt-2 border-t app-border">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold uppercase tracking-wider app-text">Select Exercises</span>
+                        <span id="selected-count" class="text-[10px] theme-text font-medium">0 selected</span>
+                    </div>
+
+                    <!-- Category Filter Pills -->
+                    <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px]">
+                        <button onclick="filterExercises('All')" class="filter-pill theme-bg text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap transition">All</button>
+                        <button onclick="filterExercises('Free weight')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Free weight</button>
+                        <button onclick="filterExercises('Machine')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Machine</button>
+                        <button onclick="filterExercises('Cables')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Cables</button>
+                        <button onclick="filterExercises('Calisthenics')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Calisthenics</button>
+                    </div>
+
+                    <!-- Expanded Exercise List -->
+                    <div id="exercise-library-list" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+                </div>
+
+                <!-- Active Builder Set Container for Selected Exercises -->
+                <div id="active-sets-builder" class="space-y-3 hidden pt-3 border-t app-border">
+                    <h3 class="text-xs font-bold uppercase tracking-wider theme-text">Configure Sets</h3>
+                    <div id="builder-rows" class="space-y-2"></div>
+                </div>
+
+                <button id="save-workout-btn" onclick="saveWorkout()" class="w-full theme-bg text-white font-semibold py-3 rounded-xl text-xs transition disabled:opacity-40 disabled:pointer-events-none">
+                    Save Workout to Cloud
+                </button>
+            </div>
+        </section>
+
+        <!-- COLUMN 3: ROUTINES & SETTINGS -->
+        <div class="space-y-4">
+            <!-- TAB 3: ROUTINES VIEW -->
+            <section id="tab-routines" class="space-y-4 md:block">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-base font-bold app-text">Routines</h2>
+                        <p class="text-xs app-text-muted">Your reliable sessions, ready when you are.</p>
+                    </div>
+                    <button onclick="openCustomRoutineModal()" class="text-xs app-card border app-border app-text px-3 py-1.5 rounded-xl hover:opacity-80 transition font-semibold shadow-sm">
+                        + Custom Routine
+                    </button>
+                </div>
+
+                <!-- Routines Container List -->
+                <div id="routines-list-container" class="space-y-3"></div>
+            </section>
+
+            <!-- TAB 4: SETTINGS VIEW -->
+            <section id="tab-settings" class="space-y-4 md:block pt-2">
+                <div>
+                    <h2 class="text-base font-bold app-text">Settings</h2>
+                    <p class="text-xs app-text-muted">Manage account access, login credentials, and app themes.</p>
+                </div>
+
+                <!-- Appearance / Mode Card -->
+                <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
+                    <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🌗 Display Mode</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setMode('dark')" id="mode-dark-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition">🌙 Dark Mode</button>
+                        <button onclick="setMode('light')" id="mode-light-btn" class="p-2.5 rounded-xl border app-border app-card-sub text-xs font-semibold app-text flex items-center justify-center gap-1.5 transition">☀️ Light Mode</button>
+                    </div>
+                </div>
+
+                <!-- Color Wheel Accent Picker -->
+                <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
+                    <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🎨 Custom Accent Color</h3>
+                    <div class="flex items-center gap-3">
+                        <input type="color" id="color-wheel" onchange="setCustomThemeColor(this.value)" value="#f97316" class="w-12 h-10 rounded-xl cursor-pointer bg-transparent border app-border p-1">
+                        <div class="text-xs app-text-muted">
+                            Pick any color from the color wheel to dynamically update your theme.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Credentials Card -->
+                <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🔒 Account Security</h3>
+                    </div>
+                    <div class="space-y-2">
+                        <input type="email" id="settings-new-email" placeholder="New email address" 
+                            class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                        <button type="button" onclick="changeEmailDirectly()" class="w-full app-btn-secondary font-semibold py-2 rounded-xl text-xs transition">Update Email</button>
+
+                        <input type="password" id="settings-new-password" placeholder="New password (6+ chars)" 
+                            class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current mt-2">
+                        <button type="button" onclick="changePasswordDirectly()" class="w-full app-btn-secondary font-semibold py-2 rounded-xl text-xs transition">Update Password</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- CUSTOM ROUTINE MODAL -->
+    <div id="custom-routine-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold uppercase tracking-wider app-text">Create Custom Routine</h3>
+                <button onclick="closeCustomRoutineModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Routine Name</label>
+                    <input type="text" id="custom-routine-title" placeholder="e.g. Heavy Leg Day" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Description / Notes</label>
+                    <input type="text" id="custom-routine-desc" placeholder="e.g. Focus on deep squats & hamstrings" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold app-text-muted mb-1">Exercises (Comma separated)</label>
+                    <input type="text" id="custom-routine-exercises" placeholder="e.g. Barbell Squat, Leg Extension Machine" class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current">
+                </div>
+                <button onclick="saveCustomRoutine()" class="w-full theme-bg text-white font-semibold py-2.5 rounded-xl text-xs transition">Save Routine to Cloud</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIDEO DEMONSTRATION MODAL -->
+    <div id="video-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="app-card border app-border rounded-2xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 id="modal-exercise-title" class="text-sm font-bold uppercase tracking-wider app-text">Exercise Demo</h3>
+                <button onclick="closeVideoModal()" class="app-text-muted hover:app-text text-sm px-2">✕</button>
+            </div>
+            <div class="w-full aspect-video app-card-sub rounded-xl overflow-hidden border app-border flex items-center justify-center relative">
+                <iframe id="modal-video-iframe" class="w-full h-full" src="" title="Exercise Demonstration" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            <p id="modal-exercise-desc" class="text-xs app-text-muted text-center leading-relaxed"></p>
+            <button onclick="closeVideoModal()" class="w-full app-btn-secondary font-semibold py-2.5 rounded-xl text-xs transition">Got it</button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar (Mobile only) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 app-header border-t app-border backdrop-blur-md z-30 max-w-md mx-auto flex justify-around py-3 px-2">
+        <button onclick="switchTab('home')" id="nav-home" class="nav-btn flex flex-col items-center theme-text transition">
+            <span class="text-lg">🏠</span>
+            <span class="text-[10px] font-medium mt-0.5">Dashboard</span>
+        </button>
+        <button onclick="switchTab('workouts')" id="nav-workouts" class="nav-btn flex flex-col items-center app-text-muted hover:app-text transition">
+            <span class="text-lg">⚡</span>
+            <span class="text-[10px] font-medium mt-0.5">Workouts</span>
+        </button>
+        <button onclick="switchTab('routines')" id="nav-routines" class="nav-btn flex flex-col items-center app-text-muted hover:app-text transition">
+            <span class="text-lg">📋</span>
+            <span class="text-[10px] font-medium mt-0.5">Routines</span>
+        </button>
+        <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn flex flex-col items-center app-text-muted hover:app-text transition">
+            <span class="text-lg">⚙️</span>
+            <span class="text-[10px] font-medium mt-0.5">Settings</span>
+        </button>
+    </nav>
+
+    <!-- Theme Stylesheet Injector & Explicit Mode Variable mapping -->
+    <style>
+        :root {
+            --theme-color: #f97316;
+            --theme-gradient: linear-gradient(to bottom right, #ea580c, #d97706);
+        }
+
+        /* LIGHT MODE PALETTE */
+        html:not(.dark) {
+            --bg-main: #f4f4f5;
+            --bg-card: #ffffff;
+            --bg-card-sub: #f1f3f5;
+            --bg-input: #f9fafb;
+            --text-main: #18181b;
+            --text-muted: #71717a;
+            --border-color: #e4e4e7;
+            --btn-sec-bg: #f4f4f5;
+            --btn-sec-hover: #e4e4e7;
+            --btn-sec-text: #27272a;
+        }
+
+        /* DARK MODE PALETTE */
+        html.dark {
+            --bg-main: #09090b;
+            --bg-card: #121214;
+            --bg-card-sub: #18181b;
+            --bg-input: #09090b;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --border-color: #27272a;
+            --btn-sec-bg: #27272a;
+            --btn-sec-hover: #3f3f46;
+            --btn-sec-text: #f4f4f5;
+        }
+
+        body.app-body { background-color: var(--bg-main); color: var(--text-main); }
+        .app-card { background-color: var(--bg-card); color: var(--text-main); }
+        .app-card-sub { background-color: var(--bg-card-sub); }
+        .app-input { background-color: var(--bg-input); color: var(--text-main); }
+        .app-header { background-color: var(--bg-card); background-color: color-mix(in srgb, var(--bg-card) 85%, transparent); }
+        .app-border { border-color: var(--border-color); }
+        .app-text { color: var(--text-main); }
+        .app-text-muted { color: var(--text-muted); }
+        .app-btn-secondary { background-color: var(--btn-sec-bg); color: var(--btn-sec-text); }
+        .app-btn-secondary:hover { background-color: var(--btn-sec-hover); }
+
+        .theme-bg { background-color: var(--theme-color); }
+        .theme-text { color: var(--theme-color); }
+        .theme-gradient { background: var(--theme-gradient); }
+        input:focus { border-color: var(--theme-color) !important; }
+    </style>
+
+    <!-- App Script -->
+    <script>
+        // UPDATED SUPABASE CREDENTIALS
+        const SUPABASE_URL = 'https://iampcdalppcqgcuztrqb.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_jClQ2iDvEQfHVpZBHNNkSA_68g9w51G';
+
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let isSignUpMode = false;
+        let currentThemeColor = localStorage.getItem('liftpulse_custom_color') || '#f97316';
+        let currentMode = localStorage.getItem('liftpulse_mode') || 'dark';
+
+        setCustomThemeColor(currentThemeColor, false);
+        setMode(currentMode, false);
+        updateGreeting();
+
+        function updateGreeting() {
+            const hour = new Date().getHours();
+            const greetingEl = document.getElementById('header-greeting');
+            
+            let greeting = 'Good morning.';
+            if (hour >= 12 && hour < 17) {
+                greeting = 'Good afternoon.';
+            } else if (hour >= 17 || hour < 5) {
+                greeting = 'Good evening.';
+            }
+            
+            if (greetingEl) {
+                greetingEl.textContent = greeting;
+            }
+        }
+
+        const EXERCISE_LIBRARY = [
+            { name: 'Barbell Bench Press', category: 'Free weight', muscle: 'Chest', videoId: 'gRVjAtPip0Y', desc: 'Retract shoulder blades, plant feet firmly, and press the barbell in a slight arc over your chest.' },
+            { name: 'Incline Dumbbell Press', category: 'Free weight', muscle: 'Chest', videoId: '8iPEnkdISio', desc: 'Set bench to 30-45 degrees, press dumbbells up while keeping elbows tucked at 45 degrees.' },
+            { name: 'Chest Fly Machine', category: 'Machine', muscle: 'Chest', videoId: 'Iiph0bt9-cg', desc: 'Maintain a slight bend in your elbows and squeeze your inner chest together at peak contraction.' },
+            { name: 'Cable Crossover', category: 'Cables', muscle: 'Chest', videoId: 'taI4XduLpTk', desc: 'Bring handles together in a hugging motion across your chest for maximum tension.' },
+            { name: 'Push Ups', category: 'Calisthenics', muscle: 'Chest', videoId: 'IODxDxX7oi4', desc: 'Keep body in a rigid plank position, lowering chest to the floor before pressing back up.' },
+            { name: 'Deadlift', category: 'Free weight', muscle: 'Back', videoId: 'op9kVnSso6Q', desc: 'Keep a neutral spine, engage lats, and drive the floor away with your legs locked in.' },
+            { name: 'Barbell Row', category: 'Free weight', muscle: 'Back', videoId: 'G8l_8chR5BE', desc: 'Hinge forward to torso parallel, pull the bar into your lower ribcage, and squeeze your back.' },
+            { name: 'Lat Pulldown', category: 'Machine', muscle: 'Back', videoId: 'CAwf7n6Luuc', desc: 'Drive elbows down and back toward your hips while keeping your chest lifted high.' },
+            { name: 'Seated Cable Row', category: 'Cables', muscle: 'Back', videoId: 'GZbfZ033f74', desc: 'Keep a straight torso, pull handle to your belly button, and squeeze shoulder blades together.' },
+            { name: 'Pull Ups', category: 'Calisthenics', muscle: 'Back', videoId: 'eGo4IYlbE5g', desc: 'Initiate pull by depressing shoulder blades and pulling your chin entirely over the bar.' },
+            { name: 'Dumbbell Shoulder Press', category: 'Free weight', muscle: 'Shoulders', videoId: 'qEswVCRioUs', desc: 'Press dumbbells overhead in a controlled path without excessive lower back arching.' },
+            { name: 'Dumbbell Lateral Raise', category: 'Free weight', muscle: 'Shoulders', videoId: '3VcKaXpzqRo', desc: 'Lead slightly with your elbows out to the sides to isolate side delts without swinging.' },
+            { name: 'Face Pull', category: 'Cables', muscle: 'Shoulders', videoId: 'rep-qVOkqgk', desc: 'Pull rope attachment toward your forehead, separating hands and flaring elbows high for rear delts.' },
+            { name: 'Barbell Squat', category: 'Free weight', muscle: 'Legs', videoId: 'bEv6CCg2BC8', desc: 'Keep chest up, core braced, and break parallel by sitting back into your hips.' },
+            { name: 'Romanian Deadlift (RDL)', category: 'Free weight', muscle: 'Hamstrings', videoId: 'JCXUYuzwNrM', desc: 'Hinge at the hips with a slight knee bend, lowering the bar along your shins until a deep hamstring stretch is felt.' },
+            { name: 'Seated Leg Press', category: 'Machine', muscle: 'Legs', videoId: 'IZxyjW7MPJQ', desc: 'Place feet shoulder-width on the platform, lower safely to 90 degrees, and press through heels.' },
+            { name: 'Leg Extension Machine', category: 'Machine', muscle: 'Legs', videoId: 'YyvSfVjQeL0', desc: 'Secure pad against lower shins and extend legs fully, squeezing quads at the top.' },
+            { name: 'One-Arm Tricep Extension', category: 'Cables', muscle: 'Arms', videoId: 'nRiJVZDpdL0', desc: 'Keep upper arm locked in place by your side and fully extend forearm downward with cable or band.' },
+            { name: 'Hammer Curl', category: 'Free weight', muscle: 'Arms', videoId: 'zWbo4fEtKGY', desc: 'Hold dumbbells with a neutral grip and curl upward to target brachialis and forearms.' },
+            { name: 'Stationary Cycling', category: 'Cardio', muscle: 'Legs', videoId: '7Y8j952f4kg', desc: 'Maintain steady cadence and resistance to boost conditioning and leg endurance.' }
+        ];
+
+        let selectedExercises = [];
+        let customRoutines = [];
+        let globalWorkoutsData = [];
+        let calendarCurrentDate = new Date();
+
+        function toggleCalendarDropdown() {
+            const body = document.getElementById('calendar-dropdown-body');
+            const chevron = document.getElementById('calendar-chevron');
+            body.classList.toggle('hidden');
+            if (!body.classList.contains('hidden')) {
+                chevron.style.transform = 'rotate(180deg)';
+                renderCalendar();
+            } else {
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function changeCalendarMonth(direction) {
+            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + direction);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const year = calendarCurrentDate.getFullYear();
+            const month = calendarCurrentDate.getMonth();
+
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const daysGrid = document.getElementById('calendar-days-grid');
+            daysGrid.innerHTML = '';
+
+            const workoutDatesSet = new Set();
+            globalWorkoutsData.forEach(w => {
+                const parsed = new Date(w.date || w.created_at);
+                if (!isNaN(parsed)) {
+                    const yyyyMmDd = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+                    workoutDatesSet.add(yyyyMmDd);
+                }
+            });
+
+            let activeDaysInMonth = 0;
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                daysGrid.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dayCell = document.createElement('div');
+                const formattedMonth = String(month + 1).padStart(2, '0');
+                const formattedDay = String(day).padStart(2, '0');
+                const dateKey = `${year}-${formattedMonth}-${formattedDay}`;
+
+                const hasWorkedOut = workoutDatesSet.has(dateKey);
+                if (hasWorkedOut) activeDaysInMonth++;
+
+                dayCell.className = `h-7 w-7 mx-auto flex items-center justify-center rounded-full text-xs font-medium ${hasWorkedOut ? 'theme-bg text-white font-bold' : 'app-text'}`;
+                dayCell.innerText = day;
+                daysGrid.appendChild(dayCell);
+            }
+
+            document.getElementById('calendar-active-count').innerText = `${activeDaysInMonth} days active`;
+        }
+
+        function switchTab(tabId) {
+            ['home', 'workouts', 'routines', 'settings'].forEach(t => {
+                const sec = document.getElementById(`tab-${t}`);
+                if (sec) sec.classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (navBtn) {
+                    navBtn.className = "nav-btn flex flex-col items-center app-text-muted hover:app-text transition";
+                }
+            });
+
+            const activeSec = document.getElementById(`tab-${tabId}`);
+            if (activeSec) activeSec.classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.className = "nav-btn flex flex-col items-center theme-text transition";
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function filterExercises(category) {
+            document.querySelectorAll('.filter-pill').forEach(btn => {
+                btn.className = "filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition";
+            });
+            event.target.className = "filter-pill theme-bg text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap transition";
+            renderExerciseLibrary(category);
+        }
+
+        function renderExerciseLibrary(filter = 'All') {
+            const listContainer = document.getElementById('exercise-library-list');
+            listContainer.innerHTML = '';
+
+            const filtered = filter === 'All' ? EXERCISE_LIBRARY : EXERCISE_LIBRARY.filter(e => e.category === filter);
+
+            filtered.forEach(ex => {
+                const isSelected = selectedExercises.includes(ex.name);
+                const div = document.createElement('div');
+                div.className = `app-card-sub border app-border p-2.5 rounded-xl flex justify-between items-center transition ${isSelected ? 'border-current' : ''}`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-2 cursor-pointer flex-1" onclick="toggleExerciseSelection('${ex.name}')">
+                        <div class="w-4 h-4 rounded border app-border flex items-center justify-center text-[10px] ${isSelected ? 'theme-bg text-white' : ''}">${isSelected ? '✓' : ''}</div>
+                        <div>
+                            <p class="text-xs font-bold app-text">${ex.name}</p>
+                            <p class="text-[10px] app-text-muted">${ex.muscle} • ${ex.category}</p>
+                        </div>
+                    </div>
+                    <button onclick="openVideoModal('${ex.name}', '${ex.videoId}', '${ex.desc}')" class="p-1.5 rounded-lg app-card border app-border text-xs hover:opacity-80">📺</button>
+                `;
+                listContainer.appendChild(div);
+            });
+        }
+
+        function toggleExerciseSelection(name) {
+            if (selectedExercises.includes(name)) {
+                selectedExercises = selectedExercises.filter(e => e !== name);
+            } else {
+                selectedExercises.push(name);
+            }
+            document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
+            renderExerciseLibrary();
+            renderBuilderRows();
+        }
+
+        function renderBuilderRows() {
+            const builderContainer = document.getElementById('active-sets-builder');
+            const rowsContainer = document.getElementById('builder-rows');
+            rowsContainer.innerHTML = '';
+
+            if (selectedExercises.length === 0) {
+                builderContainer.classList.add('hidden');
+                document.getElementById('save-workout-btn').setAttribute('disabled', 'true');
+                return;
+            }
+
+            builderContainer.classList.remove('hidden');
+            document.getElementById('save-workout-btn').removeAttribute('disabled');
+
+            selectedExercises.forEach((exName, idx) => {
+                const row = document.createElement('div');
+                row.className = 'app-card-sub border app-border p-3 rounded-xl space-y-2';
+                row.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold app-text">${idx + 1}. ${exName}</span>
+                        <button onclick="toggleExerciseSelection('${exName}')" class="text-[10px] app-text-muted hover:app-text">Remove</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[9px] uppercase app-text-muted">Weight (lbs)</label>
+                            <input type="number" id="weight-${idx}" value="135" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] uppercase app-text-muted">Reps</label>
+                            <input type="number" id="reps-${idx}" value="10" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                        </div>
+                    </div>
+                `;
+                rowsContainer.appendChild(row);
+            });
+        }
+
+        async function saveWorkout() {
+            if (!currentUser) {
+                alert("Please sign in to save workouts to the cloud.");
+                openAuthModal();
+                return;
+            }
+
+            const sessionName = document.getElementById('session-name').value || "Gym session";
+            let totalVolume = 0;
+            const exercisesData = selectedExercises.map((exName, idx) => {
+                const wt = parseFloat(document.getElementById(`weight-${idx}`).value) || 0;
+                const reps = parseFloat(document.getElementById(`reps-${idx}`).value) || 0;
+                totalVolume += wt * reps;
+                return { name: exName, weight: wt, reps: reps };
+            });
+
+            const workoutPayload = {
+                user_id: currentUser.id,
+                title: sessionName,
+                exercises: exercisesData,
+                volume: totalVolume,
+                duration: 45,
+                date: new Date().toISOString()
+            };
+
+            const { error } = await _supabase.from('workouts').insert([workoutPayload]);
+            if (error) {
+                alert("Error saving workout: " + error.message);
+            } else {
+                alert("Workout successfully saved to cloud!");
+                selectedExercises = [];
+                document.getElementById('selected-count').innerText = "0 selected";
+                renderExerciseLibrary();
+                renderBuilderRows();
+                fetchUserData();
+                switchTab('home');
+            }
+        }
+
+        async function fetchUserData() {
+            if (!currentUser) return;
+            const { data, error } = await _supabase
+                .from('workouts')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('date', { ascending: false });
+
+            if (!error && data) {
+                globalWorkoutsData = data;
+                updateDashboardStats(data);
+                renderRecentSessions(data);
+                renderCalendar();
+            }
+
+            const { data: routinesData } = await _supabase
+                .from('routines')
+                .select('*')
+                .eq('user_id', currentUser.id);
+
+            if (routinesData) {
+                customRoutines = routinesData;
+                renderRoutinesList();
+            }
+        }
+
+        function updateDashboardStats(workouts) {
+            const totalSessions = workouts.length;
+            let totalVol = 0;
+            workouts.forEach(w => { totalVol += (w.volume || 0); });
+
+            document.getElementById('streak-sessions').innerText = `${totalSessions} session${totalSessions === 1 ? '' : 's'}`;
+            document.getElementById('stat-total-sessions').innerText = totalSessions;
+            document.getElementById('stat-total-volume').innerText = totalVol.toLocaleString();
+            document.getElementById('stat-total-volume-hero').innerText = `Total Volume Lifted: ${totalVol.toLocaleString()} lbs`;
+            document.getElementById('stat-avg-duration').innerText = totalSessions > 0 ? "45m" : "0m";
+        }
+
+        function renderRecentSessions(workouts) {
+            const container = document.getElementById('recent-sessions-list');
+            if (!workouts || workouts.length === 0) {
+                container.innerHTML = `
+                    <div class="app-card border app-border rounded-2xl p-6 text-center space-y-2 shadow-sm">
+                        <span class="text-2xl">📋</span>
+                        <h4 class="text-xs font-bold app-text">No sessions yet</h4>
+                        <p class="text-[11px] app-text-muted">Log your first session and start building your streak.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            workouts.slice(0, 5).forEach(w => {
+                const dateStr = new Date(w.date || w.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                const div = document.createElement('div');
+                div.className = 'app-card border app-border rounded-2xl p-3.5 flex justify-between items-center shadow-sm';
+                div.innerHTML = `
+                    <div>
+                        <h4 class="text-xs font-bold app-text">${w.title}</h4>
+                        <p class="text-[10px] app-text-muted">${dateStr} • ${w.volume || 0} lbs lifted</p>
+                    </div>
+                    <span class="text-xs font-semibold theme-text">Completed ✓</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderRoutinesList() {
+            const container = document.getElementById('routines-list-container');
+            container.innerHTML = '';
+
+            const defaultRoutines = [
+                { title: 'Push Day (Chest, Shoulders, Triceps)', desc: 'Focus on heavy presses and accessory isolation.', exercises: ['Barbell Bench Press', 'Incline Dumbbell Press', 'Dumbbell Shoulder Press'] },
+                { title: 'Pull Day (Back, Biceps)', desc: 'Build width and thickness in your upper body.', exercises: ['Deadlift', 'Barbell Row', 'Lat Pulldown'] },
+                { title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Comprehensive lower body strength routine.', exercises: ['Barbell Squat', 'Romanian Deadlift (RDL)', 'Seated Leg Press'] }
+            ];
+
+            const allRoutines = [...defaultRoutines, ...customRoutines];
+
+            allRoutines.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'app-card border app-border p-4 rounded-2xl space-y-2 shadow-sm';
+                div.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xs font-bold app-text">${r.title}</h3>
+                            <p class="text-[10px] app-text-muted">${r.desc || ''}</p>
+                        </div>
+                        <button onclick='loadRoutineIntoBuilder(${JSON.stringify(r.exercises || [])}, "${r.title}")' class="theme-bg text-white text-[10px] font-semibold px-3 py-1.5 rounded-xl transition">Start Routine</button>
+                    </div>
+                    <div class="flex flex-wrap gap-1 pt-1">
+                        ${(r.exercises || []).map(ex => `<span class="text-[9px] app-card-sub border app-border px-2 py-0.5 rounded-md app-text-muted">${ex}</span>`).join('')}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function loadRoutineIntoBuilder(exercises, title) {
+            selectedExercises = exercises.filter(ex => EXERCISE_LIBRARY.some(lib => lib.name === ex));
+            document.getElementById('session-name').value = title;
+            document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
+            renderExerciseLibrary();
+            renderBuilderRows();
+            switchTab('workouts');
+        }
+
+        function openCustomRoutineModal() { document.getElementById('custom-routine-modal').classList.remove('hidden'); }
+        function closeCustomRoutineModal() { document.getElementById('custom-routine-modal').classList.add('hidden'); }
+
+        async function saveCustomRoutine() {
+            if (!currentUser) {
+                alert("Please sign in to save routines.");
+                openAuthModal();
+                return;
+            }
+            const title = document.getElementById('custom-routine-title').value;
+            const desc = document.getElementById('custom-routine-desc').value;
+            const exInput = document.getElementById('custom-routine-exercises').value;
+            const exercises = exInput.split(',').map(s => s.trim()).filter(Boolean);
+
+            if (!title) {
+                alert("Please provide a routine name.");
+                return;
+            }
+
+            const { error } = await _supabase.from('routines').insert([{
+                user_id: currentUser.id,
+                title: title,
+                desc: desc,
+                exercises: exercises
+            }]);
+
+            if (error) {
+                alert("Error saving routine: " + error.message);
+            } else {
+                alert("Custom routine saved!");
+                closeCustomRoutineModal();
+                fetchUserData();
+            }
+        }
+
+        function openVideoModal(title, videoId, desc) {
+            document.getElementById('modal-exercise-title').innerText = title;
+            document.getElementById('modal-video-iframe').src = `https://www.youtube.com/embed/${videoId}`;
+            document.getElementById('modal-exercise-desc').innerText = desc;
+            document.getElementById('video-modal').classList.remove('hidden');
+        }
+
+        function closeVideoModal() {
+            document.getElementById('modal-video-iframe').src = '';
+            document.getElementById('video-modal').classList.add('hidden');
+        }
+
+        // Auth Modal Handlers
+        const authModal = document.getElementById('auth-modal');
+        const authModalBtn = document.getElementById('auth-modal-btn');
+        const closeAuthModal = document.getElementById('close-auth-modal');
+        const authForm = document.getElementById('auth-form');
+        const authSwitchMode = document.getElementById('auth-switch-mode');
+        const authModalTitle = document.getElementById('auth-modal-title');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+
+        function openAuthModal() { authModal.classList.remove('hidden'); }
+        function closeAuthModalFn() { authModal.classList.add('hidden'); }
+
+        authModalBtn.addEventListener('click', () => {
+            if (currentUser) {
+                _supabase.auth.signOut().then(() => {
+                    currentUser = null;
+                    authModalBtn.innerText = "Sign In";
+                    document.getElementById('user-pill').innerText = "Not logged in";
+                    globalWorkoutsData = [];
+                    updateDashboardStats([]);
+                    renderRecentSessions([]);
+                    renderCalendar();
+                    alert("Signed out successfully.");
+                });
+            } else {
+                openAuthModal();
+            }
+        });
+
+        closeAuthModal.addEventListener('click', closeAuthModalFn);
+
+        authSwitchMode.addEventListener('click', () => {
+            isSignUpMode = !isSignUpMode;
+            if (isSignUpMode) {
+                authModalTitle.innerText = "Create Cloud Account";
+                authSubmitBtn.innerText = "Sign Up";
+                authSwitchMode.innerText = "Already have an account? Login";
+            } else {
+                authModalTitle.innerText = "Sign In to Cloud Sync";
+                authSubmitBtn.innerText = "Login";
+                authSwitchMode.innerText = "Need an account? Sign up";
+            }
+        });
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+
+            if (isSignUpMode) {
+                const { data, error } = await _supabase.auth.signUp({ email, password });
+                if (error) alert("Sign up error: " + error.message);
+                else {
+                    alert("Check your email for confirmation or account is created!");
+                    closeAuthModalFn();
+                }
+            } else {
+                const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+                if (error) alert("Login error: " + error.message);
+                else {
+                    currentUser = data.user;
+                    authModalBtn.innerText = "Sign Out";
+                    document.getElementById('user-pill').innerText = currentUser.email.split('@')[0];
+                    closeAuthModalFn();
+                    fetchUserData();
+                }
+            }
+        });
+
+        _supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                currentUser = session.user;
+                authModalBtn.innerText = "Sign Out";
+                document.getElementById('user-pill').innerText = currentUser.email.split('@')[0];
+                fetchUserData();
+            }
+        });
+
+        _supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                currentUser = session.user;
+                authModalBtn.innerText = "Sign Out";
+                document.getElementById('user-pill').innerText = currentUser.email.split('@')[0];
+                fetchUserData();
+            }
+        });
+
+        function setCustomThemeColor(color, save = true) {
+            currentThemeColor = color;
+            document.documentElement.style.setProperty('--theme-color', color);
+            document.documentElement.style.setProperty('--theme-gradient', `linear-gradient(to bottom right, ${color}, #d97706)`);
+            if (save) localStorage.setItem('liftpulse_custom_color', color);
+        }
+
+        function setMode(mode, save = true) {
+            currentMode = mode;
+            const htmlRoot = document.getElementById('html-root');
+            const modeIcon = document.getElementById('mode-icon');
+            if (mode === 'dark') {
+                htmlRoot.classList.add('dark');
+                if (modeIcon) modeIcon.innerText = '🌙';
+            } else {
+                htmlRoot.classList.remove('dark');
+                if (modeIcon) modeIcon.innerText = '☀️';
+            }
+            if (save) localStorage.setItem('liftpulse_mode', mode);
+        }
+
+        function toggleDarkMode() {
+            const newMode = currentMode === 'dark' ? 'light' : 'dark';
+            setMode(newMode);
+        }
+
+        async function changeEmailDirectly() {
+            if (!currentUser) { alert("Please sign in first."); return; }
+            const newEmail = document.getElementById('settings-new-email').value;
+            if (!newEmail) { alert("Enter a valid new email."); return; }
+            const { error } = await _supabase.auth.updateUser({ email: newEmail });
+            if (error) alert("Error: " + error.message);
+            else alert("Email update verification sent. Check your inbox.");
+        }
+
+        async function changePasswordDirectly() {
+            if (!currentUser) { alert("Please sign in first."); return; }
+            const newPassword = document.getElementById('settings-new-password').value;
+            if (!newPassword || newPassword.length < 6) { alert("Password must be at least 6 characters."); return; }
+            const { error } = await _supabase.auth.updateUser({ password: newPassword });
+            if (error) alert("Error: " + error.message);
+            else alert("Password successfully updated.");
+        }
+
+        renderExerciseLibrary();
+        renderRoutinesList();
+    </script>
+</body>
+</html>
