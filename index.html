@@ -436,445 +436,370 @@
             { name: 'Face Pull', category: 'Cables', muscle: 'Shoulders', videoId: 'rep-qVOkqgk', desc: 'Pull rope attachment toward your forehead, separating hands and flaring elbows high for rear delts.' },
             { name: 'Barbell Squat', category: 'Free weight', muscle: 'Legs', videoId: 'bEv6CCg2BC8', desc: 'Keep chest up, core braced, and break parallel by sitting back into your hips.' },
             { name: 'Romanian Deadlift (RDL)', category: 'Free weight', muscle: 'Hamstrings', videoId: 'JCXUYuzwNrM', desc: 'Hinge at the hips with a slight knee bend, lowering the bar along your shins until a deep hamstring stretch is felt.' },
-            { name: 'Seated Leg Press', category: 'Machine', muscle: 'Legs', videoId: 'IZxyjW7MPJQ', desc: 'Place feet shoulder-width on the platform, lower safely to 90 degrees, and press through heels.' },
-            { name: 'Leg Extension Machine', category: 'Machine', muscle: 'Legs', videoId: 'YyvSfVjQeL0', desc: 'Secure pad against lower shins and extend legs fully, squeezing quads at the top.' },
-            { name: 'One-Arm Tricep Extension', category: 'Cables', muscle: 'Arms', videoId: 'nRiJVZDpdL0', desc: 'Keep upper arm locked in place by your side and fully extend forearm downward with cable or band.' },
-            { name: 'Hammer Curl', category: 'Free weight', muscle: 'Arms', videoId: 'zWbo4fEtKGY', desc: 'Hold dumbbells with a neutral grip and curl upward to target brachialis and forearms.' },
-            { name: 'Stationary Cycling', category: 'Cardio', muscle: 'Legs', videoId: '7Y8j952f4kg', desc: 'Maintain steady cadence and resistance to boost conditioning and leg endurance.' }
+            { name: 'Leg Press Machine', category: 'Machine', muscle: 'Legs', videoId: 'IZxyjW7MPJQ', desc: 'Place feet shoulder-width on the platform, lower sled until knees are at 90 degrees, and press up.' },
+            { name: 'Leg Extension Machine', category: 'Machine', muscle: 'Legs', videoId: 'YyvSfVjQeL0', desc: 'Adjust pad against lower shins and extend legs fully, squeezing quads at the top.' },
+            { name: 'Seated Leg Curl Machine', category: 'Machine', muscle: 'Hamstrings', videoId: 'ELOCsoDSmrg', desc: 'Secure thigh pad snugly and curl weight downward/backward, contracting hamstrings.' },
+            { name: 'Standing Calf Raise', category: 'Machine', muscle: 'Calves', videoId: 'gwLzBJYoWlI', desc: 'Lower heels below platform level for a full stretch, then rise onto your toes as high as possible.' },
+            { name: 'Barbell Bicep Curl', category: 'Free weight', muscle: 'Biceps', videoId: 'ykJmrZ5v0Oo', desc: 'Keep elbows locked at your sides and curl the bar upward, squeezing biceps at the top.' },
+            { name: 'Dumbbell Hammer Curl', category: 'Free weight', muscle: 'Biceps', videoId: 'zWbVzchCYqI', desc: 'Hold dumbbells with a neutral grip (palms facing each other) and curl up to target brachialis and biceps.' },
+            { name: 'Tricep Pushdown', category: 'Cables', muscle: 'Triceps', videoId: '2-LAMcpzODU', desc: 'Keep elbows pinned to your ribs and press the cable attachment straight down, locking out triceps.' },
+            { name: 'Overhead Tricep Extension', category: 'Cables', muscle: 'Triceps', videoId: 'nRiJVZDpdj0', desc: 'Extend arms overhead with cable or dumbbell, keeping elbows pointed forward to stretch long head.' },
+            { name: 'Plank', category: 'Calisthenics', muscle: 'Abs', videoId: 'ASdvN_XEl_c', desc: 'Maintain a straight line from head to heels, engaging core and glutes continuously.' },
+            { name: 'Hanging Leg Raise', category: 'Calisthenics', muscle: 'Abs', videoId: 'Pr1OBvMUsUs', desc: 'Hang from a pull-up bar and raise legs or knees toward your chest without swinging.' }
         ];
 
         let selectedExercises = [];
+        let currentFilter = 'All';
+        let activeTimerInterval = null;
+        let activeTimerSeconds = 0;
+        let liveWorkoutActive = false;
         let customRoutines = [];
-        let globalWorkoutsData = [];
         let calendarCurrentDate = new Date();
+        let currentEditingWorkoutId = null;
 
-        let workoutTimerInterval = null;
-        let workoutSecondsElapsed = 0;
+        // Initialization & Supabase Auth State
+        _supabase.auth.onAuthStateChange((event, session) => {
+            currentUser = session?.user || null;
+            updateAuthUI();
+            if (currentUser) {
+                loadWorkoutsFromCloud();
+                loadRoutinesFromCloud();
+            } else {
+                renderWorkouts([]);
+                renderRoutines([]);
+            }
+        });
 
-        function startLiveWorkout(title = "Gym session", exercises = []) {
-            document.getElementById('pre-workout-container').classList.add('hidden');
-            document.getElementById('active-workout-container').classList.remove('hidden');
-
-            document.getElementById('session-name').value = title;
-            selectedExercises = [...exercises];
-            document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
-
-            renderExerciseLibrary();
-            renderBuilderRows();
-
-            workoutSecondsElapsed = 0;
-            if (workoutTimerInterval) clearInterval(workoutTimerInterval);
-            workoutTimerInterval = setInterval(() => {
-                workoutSecondsElapsed++;
-                const mins = String(Math.floor(workoutSecondsElapsed / 60)).padStart(2, '0');
-                const secs = String(workoutSecondsElapsed % 60).padStart(2, '0');
-                document.getElementById('live-timer-display').innerText = `${mins}:${secs}`;
-            }, 1000);
-        }
-
-        function cancelLiveWorkout() {
-            if (confirm("Are you sure you want to cancel this workout? Progress will be lost.")) {
-                if (workoutTimerInterval) clearInterval(workoutTimerInterval);
-                document.getElementById('active-workout-container').classList.add('hidden');
-                document.getElementById('pre-workout-container').classList.remove('hidden');
-                selectedExercises = [];
+        function updateAuthUI() {
+            const userPill = document.getElementById('user-pill');
+            const authBtn = document.getElementById('auth-modal-btn');
+            if (currentUser) {
+                userPill.textContent = currentUser.email;
+                authBtn.textContent = 'Sign Out';
+                authBtn.onclick = handleSignOut;
+            } else {
+                userPill.textContent = 'Not logged in';
+                authBtn.textContent = 'Sign In';
+                authBtn.onclick = openAuthModal;
             }
         }
 
-        // --- EDIT & DELETE WORKOUT LOGIC ---
-        function openEditWorkoutModal(workoutId) {
-            const workout = globalWorkoutsData.find(w => w.id === workoutId);
-            if (!workout) return;
+        // Authentication & Modal Handlers
+        const authModal = document.getElementById('auth-modal');
+        const authForm = document.getElementById('auth-form');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+        const authSwitchModeBtn = document.getElementById('auth-switch-mode');
+        const authModalTitle = document.getElementById('auth-modal-title');
 
-            document.getElementById('edit-workout-id').value = workout.id;
-            document.getElementById('edit-session-name').value = workout.title || 'Gym session';
-            document.getElementById('edit-session-duration').value = workout.duration || 45;
-            document.getElementById('edit-session-volume').value = workout.volume || 0;
+        document.getElementById('close-auth-modal').onclick = () => authModal.classList.add('hidden');
 
-            const container = document.getElementById('edit-exercises-container');
-            container.innerHTML = '<h4 class="text-xs font-bold uppercase tracking-wider app-text mb-1">Exercises</h4>';
+        function openAuthModal() {
+            authModal.classList.remove('hidden');
+        }
 
-            const exs = workout.exercises || [];
-            if (exs.length === 0) {
-                container.innerHTML += '<p class="text-xs app-text-muted">No exercises recorded for this session.</p>';
+        authSwitchModeBtn.onclick = () => {
+            isSignUpMode = !isSignUpMode;
+            if (isSignUpMode) {
+                authModalTitle.textContent = 'Create LiftPulse Account';
+                authSubmitBtn.textContent = 'Sign Up';
+                authSwitchModeBtn.textContent = 'Already have an account? Sign in';
             } else {
-                exs.forEach((ex, idx) => {
-                    container.innerHTML += `
-                        <div class="app-card-sub border app-border p-2 rounded-xl text-xs space-y-1">
-                            <p class="font-bold app-text">${ex.name || 'Exercise'}</p>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><span class="text-[9px] app-text-muted">Weight:</span> <input type="number" id="edit-ex-wt-${idx}" value="${ex.weight || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
-                                <div><span class="text-[9px] app-text-muted">Reps:</span> <input type="number" id="edit-ex-rep-${idx}" value="${ex.reps || 0}" class="w-full app-input border app-border rounded px-2 py-0.5 text-xs"></div>
+                authModalTitle.textContent = 'Sign In to Cloud Sync';
+                authSubmitBtn.textContent = 'Login';
+                authSwitchModeBtn.textContent = "Need an account? Sign up";
+            }
+        };
+
+        authForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            
+            if (isSignUpMode) {
+                const { error } = await _supabase.auth.signUp({ email, password });
+                if (error) alert(error.message);
+                else {
+                    alert('Signup successful! Check your email if confirmation is required, or log in.');
+                    authModal.classList.add('hidden');
+                }
+            } else {
+                const { error } = await _supabase.auth.signInWithPassword({ email, password });
+                if (error) alert(error.message);
+                else {
+                    authModal.classList.add('hidden');
+                }
+            }
+        };
+
+        async function handleSignOut() {
+            await _supabase.auth.signOut();
+            currentUser = null;
+            updateAuthUI();
+            alert('Signed out successfully.');
+        }
+
+        // Tab Navigation
+        function switchTab(tabId) {
+            const tabs = ['home', 'workouts', 'routines', 'settings'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                if (el) el.classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (navBtn) {
+                    navBtn.classList.remove('theme-text');
+                    navBtn.classList.add('app-text-muted');
+                }
+            });
+            
+            const activeEl = document.getElementById(`tab-${tabId}`);
+            if (activeEl) activeEl.classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.remove('app-text-muted');
+                activeNav.classList.add('theme-text');
+            }
+        }
+
+        // Theme & Customization
+        function toggleDarkMode() {
+            currentMode = currentMode === 'dark' ? 'light' : 'dark';
+            setMode(currentMode, true);
+        }
+
+        function setMode(mode, save = true) {
+            currentMode = mode;
+            if (save) localStorage.setItem('liftpulse_mode', mode);
+            const htmlRoot = document.getElementById('html-root');
+            const modeIcon = document.getElementById('mode-icon');
+            if (mode === 'dark') {
+                htmlRoot.classList.add('dark');
+                if (modeIcon) modeIcon.textContent = '🌙';
+            } else {
+                htmlRoot.classList.remove('dark');
+                if (modeIcon) modeIcon.textContent = '☀️';
+            }
+        }
+
+        function promptChangeThemeColor(color) {
+            setCustomThemeColor(color, true);
+        }
+
+        function setCustomThemeColor(color, save = true) {
+            currentThemeColor = color;
+            if (save) localStorage.setItem('liftpulse_custom_color', color);
+            document.documentElement.style.setProperty('--theme-color', color);
+            document.documentElement.style.setProperty('--theme-gradient', `linear-gradient(to bottom right, ${color}, #d97706)`);
+            const colorWheel = document.getElementById('color-wheel');
+            if (colorWheel) colorWheel.value = color;
+        }
+
+        // Exercise Filtering & Library Rendering
+        function renderExerciseLibrary() {
+            const container = document.getElementById('exercise-library-list');
+            if (!container) return;
+            
+            const filtered = currentFilter === 'All' 
+                ? EXERCISE_LIBRARY 
+                : EXERCISE_LIBRARY.filter(ex => ex.category === currentFilter);
+                
+            container.innerHTML = filtered.map(ex => {
+                const isSelected = selectedExercises.some(s => s.name === ex.name);
+                return `
+                    <div class="app-card-sub border app-border rounded-xl p-2.5 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <button onclick="openVideoModal('${ex.name}')" class="text-sm">🎥</button>
+                            <div>
+                                <h4 class="font-bold app-text">${ex.name}</h4>
+                                <span class="text-[10px] app-text-muted">${ex.category} • ${ex.muscle}</span>
                             </div>
                         </div>
-                    `;
-                });
-            }
-
-            document.getElementById('edit-workout-modal').classList.remove('hidden');
-        }
-
-        function closeEditWorkoutModal() {
-            document.getElementById('edit-workout-modal').classList.add('hidden');
-        }
-
-        function promptSaveEditedWorkout() {
-            openConfirmModal(
-                "Save Changes?",
-                "Are you sure you want to update this workout with your new changes?",
-                async () => {
-                    closeConfirmModal();
-                    await executeSaveEditedWorkout();
-                }
-            );
-        }
-
-        async function executeSaveEditedWorkout() {
-            const workoutId = document.getElementById('edit-workout-id').value;
-            const newTitle = document.getElementById('edit-session-name').value;
-            const newDuration = parseInt(document.getElementById('edit-session-duration').value) || 0;
-            const newVolume = parseFloat(document.getElementById('edit-session-volume').value) || 0;
-
-            const workout = globalWorkoutsData.find(w => w.id == workoutId);
-            if (!workout) return;
-
-            const updatedExercises = (workout.exercises || []).map((ex, idx) => {
-                const wt = parseFloat(document.getElementById(`edit-ex-wt-${idx}`).value) || 0;
-                const reps = parseFloat(document.getElementById(`edit-ex-rep-${idx}`).value) || 0;
-                return { ...ex, weight: wt, reps: reps };
-            });
-
-            const { error } = await _supabase.from('workouts').update({
-                title: newTitle,
-                duration: newDuration,
-                volume: newVolume,
-                exercises: updatedExercises
-            }).eq('id', workoutId);
-
-            if (error) {
-                alert("Error updating workout: " + error.message);
-            } else {
-                alert("Workout successfully updated!");
-                closeEditWorkoutModal();
-                fetchUserData();
-            }
-        }
-
-        function promptDeleteWorkout(workoutId) {
-            openConfirmModal(
-                "Delete Workout?",
-                "Are you sure you want to delete this workout session? This action cannot be undone.",
-                async () => {
-                    closeConfirmModal();
-                    await executeDeleteWorkout(workoutId);
-                }
-            );
-        }
-
-        async function executeDeleteWorkout(workoutId) {
-            const { error } = await _supabase.from('workouts').delete().eq('id', workoutId);
-            if (error) {
-                alert("Error deleting workout: " + error.message);
-            } else {
-                alert("Workout deleted successfully.");
-                fetchUserData();
-            }
-        }
-
-        // --- ACCENT COLOR CHANGE WITH CONFIRMATION & CLOUD SYNC ---
-        function promptChangeThemeColor(newColor) {
-            openConfirmModal(
-                "Change Accent Color?",
-                `Are you sure you want to update your theme accent color to ${newColor}?`,
-                async () => {
-                    closeConfirmModal();
-                    await setCustomThemeColor(newColor, true);
-                },
-                () => {
-                    // Revert color wheel input if canceled
-                    document.getElementById('color-wheel').value = currentThemeColor;
-                }
-            );
-        }
-
-        // Generic Confirmation Modal Control
-        function openConfirmModal(title, desc, onConfirmCallback, onCancelCallback = null) {
-            document.getElementById('confirm-modal-title').innerText = title;
-            document.getElementById('confirm-modal-desc').innerText = desc;
-            
-            const acceptBtn = document.getElementById('confirm-modal-accept-btn');
-            const newAcceptBtn = acceptBtn.cloneNode(true);
-            acceptBtn.parentNode.replaceChild(newAcceptBtn, acceptBtn);
-            newAcceptBtn.addEventListener('click', onConfirmCallback);
-
-            // Handle Cancel button behavior
-            window.activeCancelCallback = onCancelCallback;
-            document.getElementById('confirm-modal').classList.remove('hidden');
-        }
-
-        function closeConfirmModal() {
-            if (window.activeCancelCallback) {
-                window.activeCancelCallback();
-                window.activeCancelCallback = null;
-            }
-            document.getElementById('confirm-modal').classList.add('hidden');
-        }
-
-        // --- CALENDAR & APP LOGIC ---
-        function toggleCalendarDropdown() {
-            const body = document.getElementById('calendar-dropdown-body');
-            const chevron = document.getElementById('calendar-chevron');
-            body.classList.toggle('hidden');
-            if (!body.classList.contains('hidden')) {
-                chevron.style.transform = 'rotate(180deg)';
-                renderCalendar();
-            } else {
-                chevron.style.transform = 'rotate(0deg)';
-            }
-        }
-
-        function changeCalendarMonth(direction) {
-            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + direction);
-            renderCalendar();
-        }
-
-        function renderCalendar() {
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            const year = calendarCurrentDate.getFullYear();
-            const month = calendarCurrentDate.getMonth();
-
-            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
-
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const totalDays = new Date(year, month + 1, 0).getDate();
-            const daysGrid = document.getElementById('calendar-days-grid');
-            daysGrid.innerHTML = '';
-
-            const workoutDatesSet = new Set();
-            globalWorkoutsData.forEach(w => {
-                const parsed = new Date(w.date || w.created_at);
-                if (!isNaN(parsed)) {
-                    const yyyyMmDd = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
-                    workoutDatesSet.add(yyyyMmDd);
-                }
-            });
-
-            let activeDaysInMonth = 0;
-            for (let i = 0; i < firstDayIndex; i++) {
-                daysGrid.appendChild(document.createElement('div'));
-            }
-
-            for (let day = 1; day <= totalDays; day++) {
-                const dayCell = document.createElement('div');
-                const formattedMonth = String(month + 1).padStart(2, '0');
-                const formattedDay = String(day).padStart(2, '0');
-                const dateKey = `${year}-${formattedMonth}-${formattedDay}`;
-
-                const hasWorkedOut = workoutDatesSet.has(dateKey);
-                if (hasWorkedOut) activeDaysInMonth++;
-
-                dayCell.className = `h-7 w-7 mx-auto flex items-center justify-center rounded-full text-xs font-medium ${hasWorkedOut ? 'theme-bg text-white font-bold' : 'app-text'}`;
-                dayCell.innerText = day;
-                daysGrid.appendChild(dayCell);
-            }
-
-            document.getElementById('calendar-active-count').innerText = `${activeDaysInMonth} days active`;
-        }
-
-        function switchTab(tabId) {
-            ['home', 'workouts', 'routines', 'settings'].forEach(t => {
-                const sec = document.getElementById(`tab-${t}`);
-                if (sec) sec.classList.add('hidden');
-                const navBtn = document.getElementById(`nav-${t}`);
-                if (navBtn) navBtn.className = "nav-btn flex flex-col items-center app-text-muted hover:app-text transition";
-            });
-
-            const activeSec = document.getElementById(`tab-${tabId}`);
-            if (activeSec) activeSec.classList.remove('hidden');
-            const activeNav = document.getElementById(`nav-${tabId}`);
-            if (activeNav) activeNav.className = "nav-btn flex flex-col items-center theme-text transition";
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        <button onclick="toggleSelectExercise('${ex.name}')" class="px-3 py-1 rounded-lg text-xs font-semibold transition ${isSelected ? 'theme-bg text-white' : 'app-btn-secondary'}">
+                            ${isSelected ? 'Added ✓' : '+ Add'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
         }
 
         function filterExercises(category) {
+            currentFilter = category;
             document.querySelectorAll('.filter-pill').forEach(btn => {
-                btn.className = "filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition";
+                if (btn.textContent.trim() === category) {
+                    btn.className = 'filter-pill theme-bg text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap transition';
+                } else {
+                    btn.className = 'filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition';
+                }
             });
-            event.target.className = "filter-pill theme-bg text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap transition";
-            renderExerciseLibrary(category);
+            renderExerciseLibrary();
         }
 
-        function renderExerciseLibrary(filter = 'All') {
-            const listContainer = document.getElementById('exercise-library-list');
-            listContainer.innerHTML = '';
-            const filtered = filter === 'All' ? EXERCISE_LIBRARY : EXERCISE_LIBRARY.filter(e => e.category === filter);
-
-            filtered.forEach(ex => {
-                const isSelected = selectedExercises.includes(ex.name);
-                const div = document.createElement('div');
-                div.className = `app-card-sub border app-border p-2.5 rounded-xl flex justify-between items-center transition ${isSelected ? 'border-current' : ''}`;
-                div.innerHTML = `
-                    <div class="flex items-center gap-2 cursor-pointer flex-1" onclick="toggleExerciseSelection('${ex.name}')">
-                        <div class="w-4 h-4 rounded border app-border flex items-center justify-center text-[10px] ${isSelected ? 'theme-bg text-white' : ''}">${isSelected ? '✓' : ''}</div>
-                        <div>
-                            <p class="text-xs font-bold app-text">${ex.name}</p>
-                            <p class="text-[10px] app-text-muted">${ex.muscle} • ${ex.category}</p>
-                        </div>
-                    </div>
-                    <button onclick="openVideoModal('${ex.name}', '${ex.videoId}', '${ex.desc}')" class="p-1.5 rounded-lg app-card border app-border text-xs hover:opacity-80">📺</button>
-                `;
-                listContainer.appendChild(div);
-            });
-        }
-
-        function toggleExerciseSelection(name) {
-            if (selectedExercises.includes(name)) {
-                selectedExercises = selectedExercises.filter(e => e !== name);
+        function toggleSelectExercise(name) {
+            const existingIndex = selectedExercises.findIndex(s => s.name === name);
+            if (existingIndex > -1) {
+                selectedExercises.splice(existingIndex, 1);
             } else {
-                selectedExercises.push(name);
+                selectedExercises.push({ name, sets: [{ weight: '', reps: '' }] });
             }
-            document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
+            document.getElementById('selected-count').textContent = `${selectedExercises.length} selected`;
             renderExerciseLibrary();
             renderBuilderRows();
         }
 
         function renderBuilderRows() {
-            const builderContainer = document.getElementById('active-sets-builder');
-            const rowsContainer = document.getElementById('builder-rows');
-            rowsContainer.innerHTML = '';
-
+            const container = document.getElementById('builder-rows');
+            const builderSection = document.getElementById('active-sets-builder');
+            if (!container || !builderSection) return;
+            
             if (selectedExercises.length === 0) {
-                builderContainer.classList.add('hidden');
-                document.getElementById('save-workout-btn').setAttribute('disabled', 'true');
+                builderSection.classList.add('hidden');
                 return;
             }
-
-            builderContainer.classList.remove('hidden');
-            document.getElementById('save-workout-btn').removeAttribute('disabled');
-
-            selectedExercises.forEach((exName, idx) => {
-                const row = document.createElement('div');
-                row.className = 'app-card-sub border app-border p-3 rounded-xl space-y-2';
-                row.innerHTML = `
+            builderSection.classList.remove('hidden');
+            
+            container.innerHTML = selectedExercises.map((ex, exIndex) => `
+                <div class="app-card-sub border app-border rounded-xl p-3 space-y-2 text-xs">
                     <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold app-text">${idx + 1}. ${exName}</span>
-                        <button onclick="toggleExerciseSelection('${exName}')" class="text-[10px] app-text-muted hover:app-text">Remove</button>
+                        <span class="font-bold app-text">${ex.name}</span>
+                        <button onclick="addSetToExercise(${exIndex})" class="text-[10px] theme-text font-semibold hover:underline">+ Add Set</button>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[9px] uppercase app-text-muted">Weight (lbs)</label>
-                            <input type="number" id="weight-${idx}" value="135" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
-                        </div>
-                        <div>
-                            <label class="block text-[9px] uppercase app-text-muted">Reps</label>
-                            <input type="number" id="reps-${idx}" value="10" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
-                        </div>
+                    <div class="space-y-1.5">
+                        ${ex.sets.map((set, setIndex) => `
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] app-text-muted w-10">Set ${setIndex + 1}</span>
+                                <input type="number" placeholder="Lbs" value="${set.weight}" onchange="updateSetData(${exIndex}, ${setIndex}, 'weight', this.value)" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                                <input type="number" placeholder="Reps" value="${set.reps}" onchange="updateSetData(${exIndex}, ${setIndex}, 'reps', this.value)" class="w-full app-input border app-border rounded-lg px-2 py-1 text-xs app-text">
+                                <button onclick="removeSetFromExercise(${exIndex}, ${setIndex})" class="text-zinc-400 hover:text-red-500 text-xs px-1">✕</button>
+                            </div>
+                        `).join('')}
                     </div>
-                `;
-                rowsContainer.appendChild(row);
-            });
+                </div>
+            `).join('');
         }
 
+        function addSetToExercise(exIndex) {
+            selectedExercises[exIndex].sets.push({ weight: '', reps: '' });
+            renderBuilderRows();
+        }
+
+        function removeSetFromExercise(exIndex, setIndex) {
+            selectedExercises[exIndex].sets.splice(setIndex, 1);
+            if (selectedExercises[exIndex].sets.length === 0) {
+                selectedExercises.splice(exIndex, 1);
+                document.getElementById('selected-count').textContent = `${selectedExercises.length} selected`;
+                renderExerciseLibrary();
+            }
+            renderBuilderRows();
+        }
+
+        function updateSetData(exIndex, setIndex, field, value) {
+            selectedExercises[exIndex].sets[setIndex][field] = value;
+        }
+
+        // Live Workout Session Management
+        function startLiveWorkout() {
+            liveWorkoutActive = true;
+            document.getElementById('pre-workout-container').classList.add('hidden');
+            document.getElementById('active-workout-container').classList.remove('hidden');
+            
+            activeTimerSeconds = 0;
+            if (activeTimerInterval) clearInterval(activeTimerInterval);
+            activeTimerInterval = setInterval(() => {
+                activeTimerSeconds++;
+                const mins = Math.floor(activeTimerSeconds / 60).toString().padStart(2, '0');
+                const secs = (activeTimerSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('live-timer-display').textContent = `${mins}:${secs}`;
+            }, 1000);
+            
+            renderExerciseLibrary();
+        }
+
+        function cancelLiveWorkout() {
+            if (confirm('Are you sure you want to cancel this workout? Progress will be lost.')) {
+                resetWorkoutState();
+            }
+        }
+
+        function resetWorkoutState() {
+            liveWorkoutActive = false;
+            if (activeTimerInterval) clearInterval(activeTimerInterval);
+            activeTimerSeconds = 0;
+            selectedExercises = [];
+            document.getElementById('pre-workout-container').classList.remove('hidden');
+            document.getElementById('active-workout-container').classList.add('hidden');
+            document.getElementById('active-sets-builder').classList.add('hidden');
+            document.getElementById('live-timer-display').textContent = '00:00';
+            document.getElementById('session-name').value = 'Gym session';
+            document.getElementById('selected-count').textContent = '0 selected';
+            renderExerciseLibrary();
+        }
+
+        // Cloud Storage Sync via Supabase
         async function saveWorkout() {
             if (!currentUser) {
-                alert("Please sign in to save workouts to the cloud.");
+                alert('Please sign in to save workouts to cloud sync.');
                 openAuthModal();
                 return;
             }
-
-            if (workoutTimerInterval) clearInterval(workoutTimerInterval);
-
-            const sessionName = document.getElementById('session-name').value || "Gym session";
+            if (selectedExercises.length === 0) {
+                alert('Please add at least one exercise to your workout session.');
+                return;
+            }
+            
+            const sessionName = document.getElementById('session-name').value || 'Gym session';
+            const durationMins = Math.max(1, Math.round(activeTimerSeconds / 60));
+            
             let totalVolume = 0;
-            const exercisesData = selectedExercises.map((exName, idx) => {
-                const wt = parseFloat(document.getElementById(`weight-${idx}`).value) || 0;
-                const reps = parseFloat(document.getElementById(`reps-${idx}`).value) || 0;
-                totalVolume += wt * reps;
-                return { name: exName, weight: wt, reps: reps };
+            selectedExercises.forEach(ex => {
+                ex.sets.forEach(set => {
+                    const w = parseFloat(set.weight) || 0;
+                    const r = parseFloat(set.reps) || 0;
+                    totalVolume += w * r;
+                });
             });
-
-            const durationMinutes = Math.max(1, Math.round(workoutSecondsElapsed / 60));
 
             const workoutPayload = {
                 user_id: currentUser.id,
-                title: sessionName,
-                exercises: exercisesData,
+                name: sessionName,
+                duration: durationMins,
                 volume: totalVolume,
-                duration: durationMinutes,
+                exercises: selectedExercises,
                 date: new Date().toISOString()
             };
 
             const { error } = await _supabase.from('workouts').insert([workoutPayload]);
             if (error) {
-                alert("Error saving workout: " + error.message);
+                alert('Error saving workout: ' + error.message);
             } else {
-                alert("Workout successfully saved to cloud!");
-                document.getElementById('active-workout-container').classList.add('hidden');
-                document.getElementById('pre-workout-container').classList.remove('hidden');
-                selectedExercises = [];
-                fetchUserData();
+                alert('Workout saved successfully to cloud!');
+                resetWorkoutState();
+                loadWorkoutsFromCloud();
                 switchTab('home');
             }
         }
 
-        async function fetchUserData() {
+        async function loadWorkoutsFromCloud() {
             if (!currentUser) return;
             const { data, error } = await _supabase
                 .from('workouts')
                 .select('*')
                 .eq('user_id', currentUser.id)
                 .order('date', { ascending: false });
-
-            if (!error && data) {
-                globalWorkoutsData = data;
-                updateDashboardStats(data);
-                renderRecentSessions(data);
-                renderCalendar();
+                
+            if (error) {
+                console.error('Error loading workouts:', error.message);
+                return;
             }
-
-            const { data: routinesData } = await _supabase
-                .from('routines')
-                .select('*')
-                .eq('user_id', currentUser.id);
-
-            if (routinesData) {
-                customRoutines = routinesData;
-                renderRoutinesList();
-            }
-
-            // Fetch cloud user settings (like accent color)
-            const { data: settingsData } = await _supabase
-                .from('user_settings')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .single();
-
-            if (settingsData && settingsData.accent_color) {
-                setCustomThemeColor(settingsData.accent_color, true);
-            }
+            renderWorkouts(data || []);
+            updateDashboardStats(data || []);
+            renderCalendar(data || []);
         }
 
-        function updateDashboardStats(workouts) {
-            const totalSessions = workouts.length;
-            let totalVol = 0;
-            let totalDur = 0;
-            workouts.forEach(w => { 
-                totalVol += (w.volume || 0); 
-                totalDur += (w.duration || 45);
-            });
-            const avgDur = totalSessions > 0 ? Math.round(totalDur / totalSessions) : 0;
-
-            document.getElementById('streak-sessions').innerText = `${totalSessions} session${totalSessions === 1 ? '' : 's'}`;
-            document.getElementById('stat-total-sessions').innerText = totalSessions;
-            document.getElementById('stat-total-volume').innerText = totalVol.toLocaleString();
-            document.getElementById('stat-total-volume-hero').innerText = `Total Volume Lifted: ${totalVol.toLocaleString()} lbs`;
-            document.getElementById('stat-avg-duration').innerText = `${avgDur}m`;
-        }
-
-        function renderRecentSessions(workouts) {
-            const container = document.getElementById('recent-sessions-list');
-            if (!workouts || workouts.length === 0) {
-                container.innerHTML = `
+        function renderWorkouts(workouts) {
+            const listEl = document.getElementById('recent-sessions-list');
+            if (!listEl) return;
+            
+            if (workouts.length === 0) {
+                listEl.innerHTML = `
                     <div class="app-card border app-border rounded-2xl p-6 text-center space-y-2 shadow-sm">
                         <span class="text-2xl">📋</span>
                         <h4 class="text-xs font-bold app-text">No sessions yet</h4>
@@ -883,249 +808,289 @@
                 `;
                 return;
             }
-
-            container.innerHTML = '';
-            workouts.forEach(w => {
-                const dateStr = new Date(w.date || w.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-                const div = document.createElement('div');
-                div.className = 'app-card border app-border rounded-2xl p-3.5 flex justify-between items-center shadow-sm';
-                div.innerHTML = `
-                    <div>
-                        <h4 class="text-xs font-bold app-text">${w.title}</h4>
-                        <p class="text-[10px] app-text-muted">${dateStr} • ${w.duration || 45}m • ${w.volume || 0} lbs</p>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <button onclick="openEditWorkoutModal('${w.id}')" class="px-2.5 py-1 rounded-lg app-card-sub border app-border text-[10px] font-semibold app-text hover:opacity-80">Edit</button>
-                        <button onclick="promptDeleteWorkout('${w.id}')" class="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[10px] font-semibold text-red-500 hover:opacity-80">Delete</button>
+            
+            listEl.innerHTML = workouts.map(w => {
+                const dateStr = new Date(w.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                return `
+                    <div class="app-card border app-border rounded-2xl p-4 space-y-2.5 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[10px] font-semibold app-text-muted">${dateStr}</span>
+                                <h4 class="text-xs font-bold app-text">${w.name}</h4>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button onclick="openEditWorkoutModal('${w.id}')" class="text-xs p-1 app-card-sub rounded-lg hover:opacity-80">✏️</button>
+                                <button onclick="promptDeleteWorkout('${w.id}')" class="text-xs p-1 app-card-sub rounded-lg hover:opacity-80 text-red-500">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 text-[10px] app-text-muted">
+                            <span>⏱️ ${w.duration} mins</span>
+                            <span>🏔️ ${w.volume.toLocaleString()} lbs</span>
+                            <span>💪 ${w.exercises?.length || 0} exercises</span>
+                        </div>
                     </div>
                 `;
-                container.appendChild(div);
-            });
+            }).join('');
         }
 
-        function renderRoutinesList() {
+        function updateDashboardStats(workouts) {
+            const totalSessions = workouts.length;
+            let totalVolume = 0;
+            let totalDuration = 0;
+            
+            workouts.forEach(w => {
+                totalVolume += w.volume || 0;
+                totalDuration += w.duration || 0;
+            });
+            
+            const avgDuration = totalSessions > 0 ? Math.round(totalDuration / totalSessions) : 0;
+            
+            document.getElementById('streak-sessions').textContent = `${totalSessions} sessions`;
+            document.getElementById('stat-total-volume-hero').textContent = `Total Volume Lifted: ${totalVolume.toLocaleString()} lbs`;
+            document.getElementById('stat-total-sessions').textContent = totalSessions;
+            document.getElementById('stat-avg-duration').textContent = `${avgDuration}m`;
+            document.getElementById('stat-total-volume').textContent = totalVolume.toLocaleString();
+        }
+
+        async function promptDeleteWorkout(id) {
+            if (confirm('Are you sure you want to delete this workout session?')) {
+                const { error } = await _supabase.from('workouts').delete().eq('id', id);
+                if (error) alert('Error deleting workout: ' + error.message);
+                else loadWorkoutsFromCloud();
+            }
+        }
+
+        // Calendar View Logic
+        function toggleCalendarDropdown() {
+            const body = document.getElementById('calendar-dropdown-body');
+            const chevron = document.getElementById('calendar-chevron');
+            body.classList.toggle('hidden');
+            chevron.style.transform = body.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        function changeCalendarMonth(direction) {
+            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + direction);
+            loadWorkoutsFromCloud();
+        }
+
+        function renderCalendar(workouts) {
+            const year = calendarCurrentDate.getFullYear();
+            const month = calendarCurrentDate.getMonth();
+            
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calendar-month-year').textContent = `${monthNames[month]} ${year}`;
+            
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            
+            const workoutDates = new Set(workouts.map(w => new Date(w.date).toDateString()));
+            
+            let daysHtml = '';
+            for (let i = 0; i < firstDayIndex; i++) {
+                daysHtml += `<div></div>`;
+            }
+            
+            let activeDaysCount = 0;
+            for (let day = 1; day <= totalDays; day++) {
+                const dateObj = new Date(year, month, day);
+                const dateString = dateObj.toDateString();
+                const hasWorkout = workoutDates.has(dateString);
+                if (hasWorkout) activeDaysCount++;
+                
+                daysHtml += `
+                    <div class="h-7 flex items-center justify-center rounded-lg text-xs font-medium ${hasWorkout ? 'theme-bg text-white font-bold shadow-sm' : 'app-card-sub app-text'}">
+                        ${day}
+                    </div>
+                `;
+            }
+            
+            document.getElementById('calendar-days-grid').innerHTML = daysHtml;
+            document.getElementById('calendar-active-count').textContent = `${activeDaysCount} days active`;
+        }
+
+        // Routines & Custom Routine Builder
+        async function loadRoutinesFromCloud() {
+            if (!currentUser) return;
+            const { data, error } = await _supabase
+                .from('routines')
+                .select('*')
+                .eq('user_id', currentUser.id);
+                
+            if (!error) {
+                customRoutines = data || [];
+                renderRoutines(customRoutines);
+            }
+        }
+
+        function renderRoutines(routines) {
             const container = document.getElementById('routines-list-container');
-            container.innerHTML = '';
-
-            const defaultRoutines = [
-                { title: 'Push Day (Chest, Shoulders, Triceps)', desc: 'Focus on heavy presses and accessory isolation.', exercises: ['Barbell Bench Press', 'Incline Dumbbell Press', 'Dumbbell Shoulder Press'] },
-                { title: 'Pull Day (Back, Biceps)', desc: 'Build width and thickness in your upper body.', exercises: ['Deadlift', 'Barbell Row', 'Lat Pulldown'] },
-                { title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Comprehensive lower body strength routine.', exercises: ['Barbell Squat', 'Romanian Deadlift (RDL)', 'Seated Leg Press'] }
-            ];
-
-            const allRoutines = [...defaultRoutines, ...customRoutines];
-
-            allRoutines.forEach(r => {
-                const div = document.createElement('div');
-                div.className = 'app-card border app-border p-4 rounded-2xl space-y-2 shadow-sm';
-                div.innerHTML = `
+            if (!container) return;
+            
+            if (routines.length === 0) {
+                container.innerHTML = `
+                    <div class="app-card border app-border rounded-2xl p-6 text-center space-y-2 shadow-sm">
+                        <span class="text-2xl">📋</span>
+                        <h4 class="text-xs font-bold app-text">No custom routines</h4>
+                        <p class="text-[11px] app-text-muted">Create routines for quick workout setups.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = routines.map(r => `
+                <div class="app-card border app-border rounded-2xl p-4 space-y-3 shadow-sm">
                     <div class="flex justify-between items-start">
                         <div>
                             <h3 class="text-xs font-bold app-text">${r.title}</h3>
-                            <p class="text-[10px] app-text-muted">${r.desc || ''}</p>
+                            <p class="text-[10px] app-text-muted">${r.description || 'No description'}</p>
                         </div>
-                        <button onclick='startLiveWorkout("${r.title}", ${JSON.stringify(r.exercises || [])}); switchTab("workouts");' class="theme-bg text-white text-[10px] font-semibold px-3 py-1.5 rounded-xl transition">Start Routine</button>
+                        <button onclick="startRoutine(${r.id})" class="theme-bg text-white px-3 py-1.5 rounded-xl text-[10px] font-semibold transition">Start Routine</button>
                     </div>
-                    <div class="flex flex-wrap gap-1 pt-1">
-                        ${(r.exercises || []).map(ex => `<span class="text-[9px] app-card-sub border app-border px-2 py-0.5 rounded-md app-text-muted">${ex}</span>`).join('')}
+                    <div class="text-[10px] app-text-muted border-t app-border pt-2">
+                        Exercises: ${r.exercises.join(', ')}
                     </div>
-                `;
-                container.appendChild(div);
-            });
+                </div>
+            `).join('');
         }
 
-        function openCustomRoutineModal() { document.getElementById('custom-routine-modal').classList.remove('hidden'); }
-        function closeCustomRoutineModal() { document.getElementById('custom-routine-modal').classList.add('hidden'); }
-
-        async function saveCustomRoutine() {
+        function openCustomRoutineModal() {
             if (!currentUser) {
-                alert("Please sign in to save routines.");
+                alert('Please sign in to create routines.');
                 openAuthModal();
                 return;
             }
+            document.getElementById('custom-routine-modal').classList.remove('hidden');
+        }
+
+        function closeCustomRoutineModal() {
+            document.getElementById('custom-routine-modal').classList.add('hidden');
+        }
+
+        async function saveCustomRoutine() {
             const title = document.getElementById('custom-routine-title').value;
-            const desc = document.getElementById('custom-routine-desc').value;
-            const exInput = document.getElementById('custom-routine-exercises').value;
-            const exercises = exInput.split(',').map(s => s.trim()).filter(Boolean);
-
-            if (!title) { alert("Please provide a routine name."); return; }
-
-            const { error } = await _supabase.from('routines').insert([{
-                user_id: currentUser.id, title: title, desc: desc, exercises: exercises
-            }]);
-
-            if (error) {
-                alert("Error saving routine: " + error.message);
-            } else {
-                alert("Custom routine saved!");
+            const description = document.getElementById('custom-routine-desc').value;
+            const exercisesRaw = document.getElementById('custom-routine-exercises').value;
+            
+            if (!title || !exercisesRaw) {
+                alert('Please fill in routine title and exercises.');
+                return;
+            }
+            
+            const exercises = exercisesRaw.split(',').map(e => e.trim()).filter(Boolean);
+            
+            const payload = {
+                user_id: currentUser.id,
+                title,
+                description,
+                exercises
+            };
+            
+            const { error } = await _supabase.from('routines').insert([payload]);
+            if (error) alert('Error saving routine: ' + error.message);
+            else {
                 closeCustomRoutineModal();
-                fetchUserData();
+                loadRoutinesFromCloud();
+                alert('Routine saved successfully!');
             }
         }
 
-        function openVideoModal(title, videoId, desc) {
-            document.getElementById('modal-exercise-title').innerText = title;
-            document.getElementById('modal-video-iframe').src = `https://www.youtube.com/embed/${videoId}`;
-            document.getElementById('modal-exercise-desc').innerText = desc;
+        function startRoutine(routineId) {
+            const routine = customRoutines.find(r => r.id === routineId);
+            if (!routine) return;
+            
+            selectedExercises = routine.exercises.map(name => ({
+                name,
+                sets: [{ weight: '', reps: '' }]
+            }));
+            
+            document.getElementById('session-name').value = routine.title;
+            document.getElementById('selected-count').textContent = `${selectedExercises.length} selected`;
+            
+            switchTab('workouts');
+            startLiveWorkout();
+        }
+
+        // Video Demonstration Modal
+        function openVideoModal(exerciseName) {
+            const ex = EXERCISE_LIBRARY.find(e => e.name === exerciseName);
+            if (!ex) return;
+            
+            document.getElementById('modal-exercise-title').textContent = ex.name;
+            document.getElementById('modal-video-iframe').src = `https://www.youtube.com/embed/${ex.videoId}`;
+            document.getElementById('modal-exercise-desc').textContent = ex.desc;
             document.getElementById('video-modal').classList.remove('hidden');
         }
 
         function closeVideoModal() {
-            document.getElementById('modal-video-iframe').src = '';
             document.getElementById('video-modal').classList.add('hidden');
+            document.getElementById('modal-video-iframe').src = '';
         }
 
-        // Auth Modal Handlers
-        const authModal = document.getElementById('auth-modal');
-        const authModalBtn = document.getElementById('auth-modal-btn');
-        const closeAuthModal = document.getElementById('close-auth-modal');
-        const authForm = document.getElementById('auth-form');
-        const authSwitchMode = document.getElementById('auth-switch-mode');
-        const authModalTitle = document.getElementById('auth-modal-title');
-        const authSubmitBtn = document.getElementById('auth-submit-btn');
-
-        function openAuthModal() { authModal.classList.remove('hidden'); }
-        function closeAuthModalFn() { authModal.classList.add('hidden'); }
-
-        authModalBtn.addEventListener('click', () => {
-            if (currentUser) {
-                _supabase.auth.signOut().then(() => {
-                    currentUser = null;
-                    authModalBtn.innerText = "Sign In";
-                    document.getElementById('user-pill').innerText = "Not logged in";
-                    globalWorkoutsData = [];
-                    updateDashboardStats([]);
-                    renderRecentSessions([]);
-                    renderCalendar();
-                    alert("Signed out successfully.");
-                });
-            } else {
-                openAuthModal();
-            }
-        });
-
-        closeAuthModal.addEventListener('click', closeAuthModalFn);
-
-        authSwitchMode.addEventListener('click', () => {
-            isSignUpMode = !isSignUpMode;
-            if (isSignUpMode) {
-                authModalTitle.innerText = "Create Cloud Account";
-                authSubmitBtn.innerText = "Sign Up";
-                authSwitchMode.innerText = "Already have an account? Login";
-            } else {
-                authModalTitle.innerText = "Sign In to Cloud Sync";
-                authSubmitBtn.innerText = "Login";
-                authSwitchMode.innerText = "Need an account? Sign up";
-            }
-        });
-
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-
-            if (isSignUpMode) {
-                const { data, error } = await _supabase.auth.signUp({ email, password });
-                if (error) alert("Sign up error: " + error.message);
-                else {
-                    alert("Check your email for confirmation or account is created!");
-                    closeAuthModalFn();
-                }
-            } else {
-                const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-                if (error) alert("Login error: " + error.message);
-                else {
-                    currentUser = data.user;
-                    authModalBtn.innerText = "Sign Out";
-                    document.getElementById('user-pill').innerText = currentUser.email.split('@')[0];
-                    closeAuthModalFn();
-                    fetchUserData();
-                }
-            }
-        });
-
-        _supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                currentUser = session.user;
-                authModalBtn.innerText = "Sign Out";
-                document.getElementById('user-pill').innerText = currentUser.email.split('@')[0];
-                fetchUserData();
-            }
-        });
-
-        _supabase.auth.onAuthStateChange((event, session) => {
-            if (session) {
-                currentUser = session.user;
-                authModalBtn.innerText = "Sign Out";
-                document.getElementById('user-pill').innerText = currentUser.email.split('@')[0];
-                fetchUserData();
-            }
-        });
-
-        async function setCustomThemeColor(color, save = true) {
-            currentThemeColor = color;
-            document.documentElement.style.setProperty('--theme-color', color);
-            document.documentElement.style.setProperty('--theme-gradient', `linear-gradient(to bottom right, ${color}, #d97706)`);
-            const colorWheel = document.getElementById('color-wheel');
-            if (colorWheel) colorWheel.value = color;
-
-            localStorage.setItem('liftpulse_custom_color', color);
-
-            if (save && currentUser) {
-                await _supabase.from('user_settings').upsert({
-                    user_id: currentUser.id,
-                    accent_color: color,
-                    updated_at: new Date().toISOString()
-                });
-            }
-        }
-
-        function setMode(mode, save = true) {
-            currentMode = mode;
-            const htmlRoot = document.getElementById('html-root');
-            const modeIcon = document.getElementById('mode-icon');
-            if (mode === 'dark') {
-                htmlRoot.classList.add('dark');
-                if (modeIcon) modeIcon.innerText = '🌙';
-            } else {
-                htmlRoot.classList.remove('dark');
-                if (modeIcon) modeIcon.innerText = '☀️';
-            }
-            if (save) localStorage.setItem('liftpulse_mode', mode);
-        }
-
-        function toggleDarkMode() {
-            const newMode = currentMode === 'dark' ? 'light' : 'dark';
-            setMode(newMode);
-        }
-
+        // Account Settings & Security
         async function changeEmailDirectly() {
-            if (!currentUser) { alert("Please sign in first."); return; }
+            if (!currentUser) { alert('Please sign in first.'); return; }
             const newEmail = document.getElementById('settings-new-email').value;
-            if (!newEmail) { alert("Enter a valid new email."); return; }
+            if (!newEmail) { alert('Please enter a new email address.'); return; }
+            
             const { error } = await _supabase.auth.updateUser({ email: newEmail });
-            if (error) alert("Error: " + error.message);
-            else alert("Email update verification sent. Check your inbox.");
+            if (error) alert('Error updating email: ' + error.message);
+            else alert('Email update initiated. Check your new email for confirmation.');
         }
 
         async function changePasswordDirectly() {
-            if (!currentUser) { alert("Please sign in first."); return; }
+            if (!currentUser) { alert('Please sign in first.'); return; }
             const newPassword = document.getElementById('settings-new-password').value;
-            if (!newPassword || newPassword.length < 6) { alert("Password must be at least 6 characters."); return; }
+            if (!newPassword || newPassword.length < 6) { alert('Password must be at least 6 characters.'); return; }
             
-            openConfirmModal(
-                "Update Password?",
-                "Are you sure you want to change your account password?",
-                async () => {
-                    closeConfirmModal();
-                    const { error } = await _supabase.auth.updateUser({ password: newPassword });
-                    if (error) alert("Error: " + error.message);
-                    else alert("Password successfully updated.");
-                }
-            );
+            const { error } = await _supabase.auth.updateUser({ password: newPassword });
+            if (error) alert('Error updating password: ' + error.message);
+            else alert('Password updated successfully!');
         }
 
-        renderRoutinesList();
+        async function openEditWorkoutModal(id) {
+            if (!currentUser) return;
+            const { data, error } = await _supabase.from('workouts').select('*').eq('id', id).single();
+            if (error || !data) { alert('Could not load workout.'); return; }
+            
+            currentEditingWorkoutId = id;
+            document.getElementById('edit-session-name').value = data.name;
+            document.getElementById('edit-session-duration').value = data.duration;
+            document.getElementById('edit-session-volume').value = data.volume;
+            
+            const container = document.getElementById('edit-exercises-container');
+            container.innerHTML = (data.exercises || []).map((ex, i) => `
+                <div class="text-xs app-card-sub p-2 rounded-xl">
+                    <span class="font-bold app-text">${ex.name}</span>
+                    <div class="text-[10px] app-text-muted">${ex.sets.length} sets logged</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('edit-workout-modal').classList.remove('hidden');
+        }
+
+        function closeEditWorkoutModal() {
+            document.getElementById('edit-workout-modal').classList.add('hidden');
+            currentEditingWorkoutId = null;
+        }
+
+        async function promptSaveEditedWorkout() {
+            if (!currentEditingWorkoutId) return;
+            const name = document.getElementById('edit-session-name').value;
+            const duration = parseInt(document.getElementById('edit-session-duration').value) || 0;
+            const volume = parseFloat(document.getElementById('edit-session-volume').value) || 0;
+            
+            const { error } = await _supabase.from('workouts').update({ name, duration, volume }).eq('id', currentEditingWorkoutId);
+            if (error) alert('Error updating workout: ' + error.message);
+            else {
+                closeEditWorkoutModal();
+                loadWorkoutsFromCloud();
+                alert('Workout updated successfully!');
+            }
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
     </script>
 </body>
 </html>
