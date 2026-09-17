@@ -211,12 +211,26 @@
                         <span id="selected-count" class="text-[10px] theme-text font-medium">0 selected</span>
                     </div>
 
+                    <!-- SEARCH BAR -->
+                    <div class="relative">
+                        <input type="text" id="exercise-search-input" oninput="renderExerciseLibrary()" placeholder="Search all exercises (e.g., bench, squat, curl)..." 
+                            class="w-full app-input border app-border rounded-xl px-3 py-2 text-xs app-text focus:outline-none focus:border-current pr-8">
+                        <span class="absolute right-3 top-2.5 text-xs app-text-muted">🔍</span>
+                    </div>
+
+                    <!-- FILTERS -->
                     <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px]">
                         <button onclick="filterExercises('All')" class="filter-pill theme-bg text-white font-semibold px-3 py-1 rounded-full whitespace-nowrap transition">All</button>
                         <button onclick="filterExercises('Free weight')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Free weight</button>
                         <button onclick="filterExercises('Machine')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Machine</button>
                         <button onclick="filterExercises('Cables')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Cables</button>
                         <button onclick="filterExercises('Calisthenics')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Calisthenics</button>
+                        <button onclick="filterExercises('Chest')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Chest</button>
+                        <button onclick="filterExercises('Back')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Back</button>
+                        <button onclick="filterExercises('Shoulders')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Shoulders</button>
+                        <button onclick="filterExercises('Arms')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Arms</button>
+                        <button onclick="filterExercises('Legs')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Legs</button>
+                        <button onclick="filterExercises('Core')" class="filter-pill app-card-sub app-text-muted px-3 py-1 rounded-full whitespace-nowrap transition">Core</button>
                     </div>
 
                     <div id="exercise-library-list" class="space-y-2 max-h-52 overflow-y-auto pr-1"></div>
@@ -421,31 +435,86 @@
         }
 
         const EXERCISE_LIBRARY = [
+            // Chest
             { name: 'Barbell Bench Press', category: 'Free weight', muscle: 'Chest', videoId: 'gRVjAtPip0Y', desc: 'Retract shoulder blades, plant feet firmly, and press the barbell in a slight arc over your chest.' },
-            { name: 'Incline Dumbbell Press', category: 'Free weight', muscle: 'Chest', videoId: '8iPEnkdISio', desc: 'Set bench to 30-45 degrees, press dumbbells up while keeping elbows tucked at 45 degrees.' },
-            { name: 'Chest Fly Machine', category: 'Machine', muscle: 'Chest', videoId: 'Iiph0bt9-cg', desc: 'Maintain a slight bend in your elbows and squeeze your inner chest together at peak contraction.' },
-            { name: 'Cable Crossover', category: 'Cables', muscle: 'Chest', videoId: 'taI4XduLpTk', desc: 'Bring handles together in a hugging motion across your chest for maximum tension.' },
+            { name: 'Incline Bench Press', category: 'Free weight', muscle: 'Chest', videoId: '8iPEnkdISio', desc: 'Press barbell on an inclined bench to target upper pectoral fibers.' },
+            { name: 'Dumbbell Bench Press', category: 'Free weight', muscle: 'Chest', videoId: 'VmB1G1K7v94', desc: 'Press dumbbells up with a neutral or slightly pronated grip over your chest.' },
+            { name: 'Incline Dumbbell Bench Press', category: 'Free weight', muscle: 'Chest', videoId: '8iPEnkdISio', desc: 'Set bench to 30-45 degrees, press dumbbells up while keeping elbows tucked at 45 degrees.' },
             { name: 'Push Ups', category: 'Calisthenics', muscle: 'Chest', videoId: 'IODxDxX7oi4', desc: 'Keep body in a rigid plank position, lowering chest to the floor before pressing back up.' },
-            { name: 'Deadlift', category: 'Free weight', muscle: 'Back', videoId: 'op9kVnSso6Q', desc: 'Keep a neutral spine, engage lats, and drive the floor away with your legs locked in.' },
-            { name: 'Barbell Row', category: 'Free weight', muscle: 'Back', videoId: 'G8l_8chR5BE', desc: 'Hinge forward to torso parallel, pull the bar into your lower ribcage, and squeeze your back.' },
+            { name: 'Dips', category: 'Calisthenics', muscle: 'Chest', videoId: '2z8JmcrW-As', desc: 'Lean forward slightly to engage lower chest during parallel bar dips.' },
+            { name: 'Cable Fly', category: 'Cables', muscle: 'Chest', videoId: 'taI4XduLpTk', desc: 'Bring handles together in a hugging motion across your chest for maximum tension.' },
+            { name: 'Incline Machine Bench Press', category: 'Machine', muscle: 'Chest', videoId: 'Iiph0bt9-cg', desc: 'Machine press variant targeting upper chest.' },
+            { name: 'Assisted Dips', category: 'Machine', muscle: 'Chest', videoId: '2z8JmcrW-As', desc: 'Dips with machine counter-weight assistance.' },
+            { name: 'Chest Press', category: 'Machine', muscle: 'Chest', videoId: 'Iiph0bt9-cg', desc: 'Seated plate-loaded or selectorized chest press machine.' },
+            { name: 'Cable Chest Press', category: 'Cables', muscle: 'Chest', videoId: 'taI4XduLpTk', desc: 'Pressing cables forward from a pulley station.' },
+            { name: 'Decline Bench Press', category: 'Free weight', muscle: 'Chest', videoId: 'gRVjAtPip0Y', desc: 'Barbell press on a decline bench focusing on lower pectorals.' },
+            { name: 'Dumbbell Fly', category: 'Free weight', muscle: 'Chest', videoId: 'eozdVDA78K0', desc: 'Open arms wide with a slight elbow bend and hug weights at the top.' },
+            { name: 'Machine Chest Fly', category: 'Machine', muscle: 'Chest', videoId: 'Iiph0bt9-cg', desc: 'Pec deck fly machine for isolated chest squeezes.' },
+            { name: 'Smith Machine Bench Press', category: 'Machine', muscle: 'Chest', videoId: 'gRVjAtPip0Y', desc: 'Fixed-path barbell bench press on a Smith machine.' },
+            { name: 'Low to High Cable Fly', category: 'Cables', muscle: 'Chest', videoId: 'taI4XduLpTk', desc: 'Fly starting from low pulleys pulling upward for upper chest.' },
+            { name: 'High to Low Cable Fly', category: 'Cables', muscle: 'Chest', videoId: 'taI4XduLpTk', desc: 'Fly starting from high pulleys pulling downward for lower chest.' },
+            { name: 'Floor Press', category: 'Free weight', muscle: 'Chest', videoId: 'VmB1G1K7v94', desc: 'Bench press performed lying on the floor, limiting range of motion.' },
+
+            // Back
+            { name: 'Pull Ups', category: 'Calisthenics', muscle: 'Back', videoId: 'eGo4IYlbE5g', desc: 'Initiate pull by depressing shoulder blades and pulling your chin entirely over the bar.' },
+            { name: 'Chin Ups', category: 'Calisthenics', muscle: 'Back', videoId: 'eGo4IYlbE5g', desc: 'Underhand grip pull-up emphasizing biceps and lower lats.' },
+            { name: 'Bent Over Row', category: 'Free weight', muscle: 'Back', videoId: 'G8l_8chR5BE', desc: 'Hinge forward to torso parallel, pull the bar into your lower ribcage, and squeeze your back.' },
             { name: 'Lat Pulldown', category: 'Machine', muscle: 'Back', videoId: 'CAwf7n6Luuc', desc: 'Drive elbows down and back toward your hips while keeping your chest lifted high.' },
             { name: 'Seated Cable Row', category: 'Cables', muscle: 'Back', videoId: 'GZbfZ033f74', desc: 'Keep a straight torso, pull handle to your belly button, and squeeze shoulder blades together.' },
-            { name: 'Pull Ups', category: 'Calisthenics', muscle: 'Back', videoId: 'eGo4IYlbE5g', desc: 'Initiate pull by depressing shoulder blades and pulling your chin entirely over the bar.' },
-            { name: 'Dumbbell Shoulder Press', category: 'Free weight', muscle: 'Shoulders', videoId: 'qEswVCRioUs', desc: 'Press dumbbells overhead in a controlled path without excessive lower back arching.' },
-            { name: 'Dumbbell Lateral Raise', category: 'Free weight', muscle: 'Shoulders', videoId: '3VcKaXpzqRo', desc: 'Lead slightly with your elbows out to the sides to isolate side delts without swinging.' },
-            { name: 'Face Pull', category: 'Cables', muscle: 'Shoulders', videoId: 'rep-qVOkqgk', desc: 'Pull rope attachment toward your forehead, separating hands and flaring elbows high for rear delts.' },
-            { name: 'Barbell Squat', category: 'Free weight', muscle: 'Legs', videoId: 'bEv6CCg2BC8', desc: 'Keep chest up, core braced, and break parallel by sitting back into your hips.' },
-            { name: 'Romanian Deadlift (RDL)', category: 'Free weight', muscle: 'Hamstrings', videoId: 'JCXUYuzwNrM', desc: 'Hinge at the hips with a slight knee bend, lowering the bar along your shins until a deep hamstring stretch is felt.' },
-            { name: 'Leg Press Machine', category: 'Machine', muscle: 'Legs', videoId: 'IZxyjW7MPJQ', desc: 'Place feet shoulder-width on the platform, lower sled until knees are at 90 degrees, and press up.' },
-            { name: 'Leg Extension Machine', category: 'Machine', muscle: 'Legs', videoId: 'YyvSfVjQeL0', desc: 'Adjust pad against lower shins and extend legs fully, squeezing quads at the top.' },
-            { name: 'Seated Leg Curl Machine', category: 'Machine', muscle: 'Hamstrings', videoId: 'ELOCsoDSmrg', desc: 'Secure thigh pad snugly and curl weight downward/backward, contracting hamstrings.' },
-            { name: 'Standing Calf Raise', category: 'Machine', muscle: 'Calves', videoId: 'gwLzBJYoWlI', desc: 'Lower heels below platform level for a full stretch, then rise onto your toes as high as possible.' },
-            { name: 'Barbell Bicep Curl', category: 'Free weight', muscle: 'Biceps', videoId: 'ykJmrZ5v0Oo', desc: 'Keep elbows locked at your sides and curl the bar upward, squeezing biceps at the top.' },
-            { name: 'Dumbbell Hammer Curl', category: 'Free weight', muscle: 'Biceps', videoId: 'zWbVzchCYqI', desc: 'Hold dumbbells with a neutral grip (palms facing each other) and curl up to target brachialis and biceps.' },
-            { name: 'Tricep Pushdown', category: 'Cables', muscle: 'Triceps', videoId: '2-LAMcpzODU', desc: 'Keep elbows pinned to your ribs and press the cable attachment straight down, locking out triceps.' },
-            { name: 'Overhead Tricep Extension', category: 'Cables', muscle: 'Triceps', videoId: 'nRiJVZDpdj0', desc: 'Extend arms overhead with cable or dumbbell, keeping elbows pointed forward to stretch long head.' },
-            { name: 'Plank', category: 'Calisthenics', muscle: 'Abs', videoId: 'ASdvN_XEl_c', desc: 'Maintain a straight line from head to heels, engaging core and glutes continuously.' },
-            { name: 'Hanging Leg Raise', category: 'Calisthenics', muscle: 'Abs', videoId: 'Pr1OBvMUsUs', desc: 'Hang from a pull-up bar and raise legs or knees toward your chest without swinging.' }
+            { name: 'Dumbbell Row', category: 'Free weight', muscle: 'Back', videoId: 'pShLIZu_IQ0', desc: 'Single arm row braced against a bench, pulling dumbbell to hip.' },
+            { name: 'T Bar Row', category: 'Free weight', muscle: 'Back', videoId: 'G8l_8chR5BE', desc: 'Rowing loaded landmine bar with a V-grip handle.' },
+            { name: 'Assisted Pull Ups', category: 'Machine', muscle: 'Back', videoId: 'eGo4IYlbE5g', desc: 'Pull-ups with machine knee-pad counter-weight support.' },
+            { name: 'Machine High Row', category: 'Machine', muscle: 'Back', videoId: 'CAwf7n6Luuc', desc: 'Plate-loaded high row targeting upper back and lats.' },
+            { name: 'Barbell Shrug', category: 'Free weight', muscle: 'Back', videoId: 'cJx9icqY8ng', desc: 'Elevate shoulders straight up towards ears holding a barbell.' },
+            { name: 'Dumbbell Shrug', category: 'Free weight', muscle: 'Back', videoId: 'cJx9icqY8ng', desc: 'Elevate shoulders holding dumbbells by your sides.' },
+            { name: 'Pendlay Row', category: 'Free weight', muscle: 'Back', videoId: 'G8l_8chR5BE', desc: 'Explosive barbell row starting from dead stop on the floor each rep.' },
+            { name: 'Machine Row', category: 'Machine', muscle: 'Back', videoId: 'GZbfZ033f74', desc: 'Seated chest-supported row machine.' },
+            { name: 'Straight Arm Pulldown', category: 'Cables', muscle: 'Back', videoId: 'CAwf7n6Luuc', desc: 'Push straight bar down keeping arms extended to isolate lats.' },
+            { name: 'Dumbbell Pullover', category: 'Free weight', muscle: 'Back', videoId: '2Wq5k0_N_hA', desc: 'Lie across bench and sweep dumbbell behind head to stretch lats and chest.' },
+
+            // Shoulders
+            { name: 'Military Press', category: 'Free weight', muscle: 'Shoulders', videoId: 'qEswVCRioUs', desc: 'Strict standing overhead barbell press.' },
+            { name: 'Dumbbell Shoulder Press', category: 'Free weight', muscle: 'Shoulders', videoId: 'qEswVCRioUs', desc: 'Seated or standing overhead dumbbell press.' },
+            { name: 'Arnold Press', category: 'Free weight', muscle: 'Shoulders', videoId: '3VcKaXpzqRo', desc: 'Dumbbell press starting with palms facing you and rotating outward as you press.' },
+            { name: 'Dumbbell Lateral Raise', category: 'Free weight', muscle: 'Shoulders', videoId: '3VcKaXpzqRo', desc: 'Raise dumbbells out to sides to isolate lateral delts.' },
+            { name: 'Face Pull', category: 'Cables', muscle: 'Shoulders', videoId: 'rep-qVOkqgk', desc: 'Pull rope toward face for rear delts and external rotators.' },
+            { name: 'Upright Row', category: 'Free weight', muscle: 'Shoulders', videoId: 'amxquDIzvMY', desc: 'Pull barbell or EZ bar straight up close to your torso.' },
+            { name: 'Shoulder Press', category: 'Machine', muscle: 'Shoulders', videoId: 'qEswVCRioUs', desc: 'Seated machine overhead press.' },
+            { name: 'Push Press', category: 'Free weight', muscle: 'Shoulders', videoId: 'qEswVCRioUs', desc: 'Overhead press utilizing slight leg drive.' },
+            { name: 'Dumbbell Front Raise', category: 'Free weight', muscle: 'Shoulders', videoId: '3VcKaXpzqRo', desc: 'Raise dumbbells forward to eye level for anterior delts.' },
+            { name: 'Cable Lateral Raise', category: 'Cables', muscle: 'Shoulders', videoId: '3VcKaXpzqRo', desc: 'Lateral raise using low pulley cable for constant tension.' },
+
+            // Arms (Biceps & Triceps)
+            { name: 'Barbell Curl', category: 'Free weight', muscle: 'Arms', videoId: 'ykJmrZ5v0Oo', desc: 'Standard barbell curl keeping elbows fixed at sides.' },
+            { name: 'Dumbbell Curl', category: 'Free weight', muscle: 'Arms', videoId: 'ykJmrZ5v0Oo', desc: 'Alternating or simultaneous dumbbell bicep curls with supination.' },
+            { name: 'Hammer Curl', category: 'Free weight', muscle: 'Arms', videoId: 'zWbVzchCYqI', desc: 'Neutral grip curl targeting brachialis and forearms.' },
+            { name: 'Preacher Curl', category: 'Free weight', muscle: 'Arms', videoId: 'ykJmrZ5v0Oo', desc: 'Curl resting upper arms against a preacher bench pad.' },
+            { name: 'EZ Bar Curl', category: 'Free weight', muscle: 'Arms', videoId: 'ykJmrZ5v0Oo', desc: 'Bicep curl using an angled EZ curl bar for wrist comfort.' },
+            { name: 'Close Grip Bench Press', category: 'Free weight', muscle: 'Arms', videoId: 'gRVjAtPip0Y', desc: 'Bench press with hands shoulder-width apart to emphasize triceps.' },
+            { name: 'Tricep Pushdown', category: 'Cables', muscle: 'Arms', videoId: '2-LAMcpzODU', desc: 'Push cable attachment downward locking out triceps.' },
+            { name: 'Lying Tricep Extension', category: 'Free weight', muscle: 'Arms', videoId: 'd_KZxkY_0cM', desc: 'Skull crushers with barbell or dumbbells on a bench.' },
+            { name: 'Single Arm Cable Pushdown', category: 'Cables', muscle: 'Arms', videoId: '2-LAMcpzODU', desc: 'Unilateral tricep pushdown with D-handle.' },
+            { name: 'Cable Concentration Curl', category: 'Cables', muscle: 'Arms', videoId: 'ykJmrZ5v0Oo', desc: 'Single arm isolation curl using low cable pulley.' },
+
+            // Legs
+            { name: 'Deadlift', category: 'Free weight', muscle: 'Legs', videoId: 'op9kVnSso6Q', desc: 'Traditional heavy barbell deadlift from floor.' },
+            { name: 'Squat', category: 'Free weight', muscle: 'Legs', videoId: 'bEv6CCg2BC8', desc: 'Back squat with barbell across traps.' },
+            { name: 'Front Squat', category: 'Free weight', muscle: 'Legs', videoId: 'bEv6CCg2BC8', desc: 'Barbell squat resting on front delts for upright torso.' },
+            { name: 'Romanian Deadlift', category: 'Free weight', muscle: 'Legs', videoId: 'JCXUYuzwNrM', desc: 'Hip hinge focusing on hamstring and glute stretch.' },
+            { name: 'Sumo Deadlift', category: 'Free weight', muscle: 'Legs', videoId: 'op9kVnSso6Q', desc: 'Wide stance deadlift emphasizing inner thighs and quads.' },
+            { name: 'Hip Thrust', category: 'Free weight', muscle: 'Legs', videoId: 'SEbmDtHCNYU', desc: 'Barbell hip thrust against bench for maximum glute activation.' },
+            { name: 'Bulgarian Split Squat', category: 'Free weight', muscle: 'Legs', videoId: '2C-uNgKwPLE', desc: 'Single leg split squat with rear foot elevated on bench.' },
+            { name: 'Sled Leg Press', category: 'Machine', muscle: 'Legs', videoId: 'IZxyjW7MPJQ', desc: 'Heavy leg press machine.' },
+            { name: 'Leg Extension', category: 'Machine', muscle: 'Legs', videoId: 'YyvSfVjQeL0', desc: 'Seated knee extension machine for quads.' },
+            { name: 'Lying Leg Curl', category: 'Machine', muscle: 'Legs', videoId: 'ELOCsoDSmrg', desc: 'Prone machine leg curl for hamstrings.' },
+            { name: 'Goblet Squat', category: 'Free weight', muscle: 'Legs', videoId: 'bEv6CCg2BC8', desc: 'Squat holding a dumbbell or kettlebell vertically at chest.' },
+
+            // Core
+            { name: 'Crunches', category: 'Calisthenics', muscle: 'Core', videoId: 'Xyd_fa5zoEU', desc: 'Standard floor crunches for upper abdominals.' },
+            { name: 'Hanging Leg Raise', category: 'Calisthenics', muscle: 'Core', videoId: 'Pr1OBvMUsUs', desc: 'Raise legs while hanging from pull-up bar.' },
+            { name: 'Cable Crunch', category: 'Cables', muscle: 'Core', videoId: '29k4L_Q8o08', desc: 'Kneeling cable crunch pulling rope attachment down.' },
+            { name: 'Ab Wheel Rollout', category: 'Free weight', muscle: 'Core', videoId: 'kp2c9dD7f7Q', desc: 'Roll ab wheel forward on knees keeping core braced tightly.' },
+            { name: 'Russian Twist', category: 'Calisthenics', muscle: 'Core', videoId: 'wkD8rjkodUI', desc: 'Seated torso rotation with optional weight plate.' }
         ];
 
         let selectedExercises = [];
@@ -593,21 +662,36 @@
             if (colorWheel) colorWheel.value = color;
         }
 
-        // Exercise Filtering & Library Rendering
+        // Exercise Filtering & Library Rendering with Search
         function renderExerciseLibrary() {
             const container = document.getElementById('exercise-library-list');
+            const searchInput = document.getElementById('exercise-search-input');
             if (!container) return;
             
-            const filtered = currentFilter === 'All' 
-                ? EXERCISE_LIBRARY 
-                : EXERCISE_LIBRARY.filter(ex => ex.category === currentFilter);
+            const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+            let filtered = EXERCISE_LIBRARY;
+
+            // Filter by category or muscle group
+            if (currentFilter !== 'All') {
+                filtered = filtered.filter(ex => ex.category === currentFilter || ex.muscle === currentFilter);
+            }
+
+            // Filter by search query
+            if (searchQuery) {
+                filtered = filtered.filter(ex => 
+                    ex.name.toLowerCase().includes(searchQuery) || 
+                    ex.category.toLowerCase().includes(searchQuery) || 
+                    ex.muscle.toLowerCase().includes(searchQuery)
+                );
+            }
                 
             container.innerHTML = filtered.map(ex => {
                 const isSelected = selectedExercises.some(s => s.name === ex.name);
                 return `
                     <div class="app-card-sub border app-border rounded-xl p-2.5 flex items-center justify-between text-xs">
                         <div class="flex items-center gap-2">
-                            <button onclick="openVideoModal('${ex.name}')" class="text-sm">🎥</button>
+                            <button onclick="openVideoModal('${ex.name}')" class="text-sm" title="View Demo">🎥</button>
                             <div>
                                 <h4 class="font-bold app-text">${ex.name}</h4>
                                 <span class="text-[10px] app-text-muted">${ex.category} • ${ex.muscle}</span>
@@ -618,7 +702,7 @@
                         </button>
                     </div>
                 `;
-            }).join('');
+            }).join('') || `<div class="text-center py-4 text-xs app-text-muted">No matching exercises found.</div>`;
         }
 
         function filterExercises(category) {
