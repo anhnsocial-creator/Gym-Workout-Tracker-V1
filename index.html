@@ -265,8 +265,8 @@
                 <div class="app-card border app-border p-4 rounded-2xl space-y-3 shadow-sm">
                     <h3 class="text-xs font-bold uppercase tracking-wider theme-text">🎨 Custom Accent Color</h3>
                     <div class="flex items-center gap-3">
-                        <input type="color" id="color-wheel" onchange="setCustomThemeColor(this.value)" value="#f97316" class="w-12 h-10 rounded-xl cursor-pointer bg-transparent border app-border p-1">
-                        <div class="text-xs app-text-muted">Pick any color from the color wheel to dynamically update your theme.</div>
+                        <input type="color" id="color-wheel" onchange="promptChangeThemeColor(this.value)" value="#f97316" class="w-12 h-10 rounded-xl cursor-pointer bg-transparent border app-border p-1">
+                        <div class="text-xs app-text-muted">Pick any color from the color wheel to dynamically update and sync your theme.</div>
                     </div>
                 </div>
 
@@ -581,19 +581,42 @@
             }
         }
 
+        // --- ACCENT COLOR CHANGE WITH CONFIRMATION & CLOUD SYNC ---
+        function promptChangeThemeColor(newColor) {
+            openConfirmModal(
+                "Change Accent Color?",
+                `Are you sure you want to update your theme accent color to ${newColor}?`,
+                async () => {
+                    closeConfirmModal();
+                    await setCustomThemeColor(newColor, true);
+                },
+                () => {
+                    // Revert color wheel input if canceled
+                    document.getElementById('color-wheel').value = currentThemeColor;
+                }
+            );
+        }
+
         // Generic Confirmation Modal Control
-        function openConfirmModal(title, desc, onConfirmCallback) {
+        function openConfirmModal(title, desc, onConfirmCallback, onCancelCallback = null) {
             document.getElementById('confirm-modal-title').innerText = title;
             document.getElementById('confirm-modal-desc').innerText = desc;
+            
             const acceptBtn = document.getElementById('confirm-modal-accept-btn');
-            // Remove old listeners to avoid stacking
             const newAcceptBtn = acceptBtn.cloneNode(true);
             acceptBtn.parentNode.replaceChild(newAcceptBtn, acceptBtn);
             newAcceptBtn.addEventListener('click', onConfirmCallback);
+
+            // Handle Cancel button behavior
+            window.activeCancelCallback = onCancelCallback;
             document.getElementById('confirm-modal').classList.remove('hidden');
         }
 
         function closeConfirmModal() {
+            if (window.activeCancelCallback) {
+                window.activeCancelCallback();
+                window.activeCancelCallback = null;
+            }
             document.getElementById('confirm-modal').classList.add('hidden');
         }
 
@@ -818,6 +841,17 @@
                 customRoutines = routinesData;
                 renderRoutinesList();
             }
+
+            // Fetch cloud user settings (like accent color)
+            const { data: settingsData } = await _supabase
+                .from('user_settings')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .single();
+
+            if (settingsData && settingsData.accent_color) {
+                setCustomThemeColor(settingsData.accent_color, true);
+            }
         }
 
         function updateDashboardStats(workouts) {
@@ -1028,11 +1062,22 @@
             }
         });
 
-        function setCustomThemeColor(color, save = true) {
+        async function setCustomThemeColor(color, save = true) {
             currentThemeColor = color;
             document.documentElement.style.setProperty('--theme-color', color);
             document.documentElement.style.setProperty('--theme-gradient', `linear-gradient(to bottom right, ${color}, #d97706)`);
-            if (save) localStorage.setItem('liftpulse_custom_color', color);
+            const colorWheel = document.getElementById('color-wheel');
+            if (colorWheel) colorWheel.value = color;
+
+            localStorage.setItem('liftpulse_custom_color', color);
+
+            if (save && currentUser) {
+                await _supabase.from('user_settings').upsert({
+                    user_id: currentUser.id,
+                    accent_color: color,
+                    updated_at: new Date().toISOString()
+                });
+            }
         }
 
         function setMode(mode, save = true) {
