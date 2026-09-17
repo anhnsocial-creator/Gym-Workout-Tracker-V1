@@ -124,7 +124,7 @@
 
             <!-- Quick Action Button -->
             <button onclick="switchTab('workouts')" class="md:hidden w-full app-card hover:opacity-90 border app-border app-text font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition text-xs shadow-md">
-                <span>+</span> Log a workout & view exercises
+                <span>+</span> Start Live Workout Session
             </button>
 
             <!-- Recent Sessions Feed -->
@@ -140,12 +140,28 @@
             </div>
         </section>
 
-        <!-- COLUMN 2: WORKOUTS & EXERCISE BUILDER -->
+        <!-- COLUMN 2: ACTIVE WORKOUT SESSION & BUILDER -->
         <section id="tab-workouts" class="space-y-4 md:block">
-            <div class="app-card border app-border p-4 rounded-2xl space-y-4 shadow-sm">
-                <div>
-                    <h2 class="text-sm font-bold app-text">Workouts & Exercise Library</h2>
-                    <p class="text-[11px] app-text-muted">Select exercises to build your session and check out video demonstrations.</p>
+            <!-- START WORKOUT BANNER / CONTROL -->
+            <div id="pre-workout-container" class="app-card border app-border p-5 rounded-2xl space-y-4 shadow-sm text-center">
+                <div class="space-y-1">
+                    <span class="text-3xl">⏱️</span>
+                    <h2 class="text-base font-bold app-text">Ready to train?</h2>
+                    <p class="text-xs app-text-muted">Press start to launch your live workout timer and pick exercises or routines.</p>
+                </div>
+                <button onclick="startLiveWorkout()" class="w-full theme-bg text-white font-bold py-3.5 rounded-xl text-xs transition shadow-lg">
+                    🚀 Start Workout
+                </button>
+            </div>
+
+            <!-- ACTIVE WORKOUT LIVE DASHBOARD (Hidden until started) -->
+            <div id="active-workout-container" class="hidden app-card border app-border p-4 rounded-2xl space-y-4 shadow-sm">
+                <div class="flex justify-between items-center border-b app-border pb-3">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold theme-text">Live Session Timer</span>
+                        <h2 id="live-timer-display" class="text-2xl font-black app-text">00:00</h2>
+                    </div>
+                    <button onclick="cancelLiveWorkout()" class="text-xs text-red-500 font-semibold hover:underline px-2 py-1">Cancel</button>
                 </div>
 
                 <div class="space-y-3">
@@ -172,7 +188,7 @@
                     </div>
 
                     <!-- Expanded Exercise List -->
-                    <div id="exercise-library-list" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+                    <div id="exercise-library-list" class="space-y-2 max-h-52 overflow-y-auto pr-1"></div>
                 </div>
 
                 <!-- Active Builder Set Container for Selected Exercises -->
@@ -182,7 +198,7 @@
                 </div>
 
                 <button id="save-workout-btn" onclick="saveWorkout()" class="w-full theme-bg text-white font-semibold py-3 rounded-xl text-xs transition disabled:opacity-40 disabled:pointer-events-none">
-                    Save Workout to Cloud
+                    Finish & Save Workout to Cloud
                 </button>
             </div>
         </section>
@@ -366,7 +382,6 @@
 
     <!-- App Script -->
     <script>
-        // UPDATED SUPABASE CREDENTIALS
         const SUPABASE_URL = 'https://iampcdalppcqgcuztrqb.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_jClQ2iDvEQfHVpZBHNNkSA_68g9w51G';
 
@@ -385,17 +400,10 @@
         function updateGreeting() {
             const hour = new Date().getHours();
             const greetingEl = document.getElementById('header-greeting');
-            
             let greeting = 'Good morning.';
-            if (hour >= 12 && hour < 17) {
-                greeting = 'Good afternoon.';
-            } else if (hour >= 17 || hour < 5) {
-                greeting = 'Good evening.';
-            }
-            
-            if (greetingEl) {
-                greetingEl.textContent = greeting;
-            }
+            if (hour >= 12 && hour < 17) greeting = 'Good afternoon.';
+            else if (hour >= 17 || hour < 5) greeting = 'Good evening.';
+            if (greetingEl) greetingEl.textContent = greeting;
         }
 
         const EXERCISE_LIBRARY = [
@@ -425,6 +433,41 @@
         let customRoutines = [];
         let globalWorkoutsData = [];
         let calendarCurrentDate = new Date();
+
+        // Live Timer state
+        let workoutTimerInterval = null;
+        let workoutSecondsElapsed = 0;
+
+        function startLiveWorkout(title = "Gym session", exercises = []) {
+            document.getElementById('pre-workout-container').classList.add('hidden');
+            document.getElementById('active-workout-container').classList.remove('hidden');
+
+            document.getElementById('session-name').value = title;
+            selectedExercises = [...exercises];
+            document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
+
+            renderExerciseLibrary();
+            renderBuilderRows();
+
+            // Start clock
+            workoutSecondsElapsed = 0;
+            if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+            workoutTimerInterval = setInterval(() => {
+                workoutSecondsElapsed++;
+                const mins = String(Math.floor(workoutSecondsElapsed / 60)).padStart(2, '0');
+                const secs = String(workoutSecondsElapsed % 60).padStart(2, '0');
+                document.getElementById('live-timer-display').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function cancelLiveWorkout() {
+            if (confirm("Are you sure you want to cancel this workout? Progress will be lost.")) {
+                if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+                document.getElementById('active-workout-container').classList.add('hidden');
+                document.getElementById('pre-workout-container').classList.remove('hidden');
+                selectedExercises = [];
+            }
+        }
 
         function toggleCalendarDropdown() {
             const body = document.getElementById('calendar-dropdown-body');
@@ -594,6 +637,8 @@
                 return;
             }
 
+            if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+
             const sessionName = document.getElementById('session-name').value || "Gym session";
             let totalVolume = 0;
             const exercisesData = selectedExercises.map((exName, idx) => {
@@ -603,12 +648,14 @@
                 return { name: exName, weight: wt, reps: reps };
             });
 
+            const durationMinutes = Math.max(1, Math.round(workoutSecondsElapsed / 60));
+
             const workoutPayload = {
                 user_id: currentUser.id,
                 title: sessionName,
                 exercises: exercisesData,
                 volume: totalVolume,
-                duration: 45,
+                duration: durationMinutes,
                 date: new Date().toISOString()
             };
 
@@ -617,10 +664,9 @@
                 alert("Error saving workout: " + error.message);
             } else {
                 alert("Workout successfully saved to cloud!");
+                document.getElementById('active-workout-container').classList.add('hidden');
+                document.getElementById('pre-workout-container').classList.remove('hidden');
                 selectedExercises = [];
-                document.getElementById('selected-count').innerText = "0 selected";
-                renderExerciseLibrary();
-                renderBuilderRows();
                 fetchUserData();
                 switchTab('home');
             }
@@ -655,13 +701,18 @@
         function updateDashboardStats(workouts) {
             const totalSessions = workouts.length;
             let totalVol = 0;
-            workouts.forEach(w => { totalVol += (w.volume || 0); });
+            let totalDur = 0;
+            workouts.forEach(w => { 
+                totalVol += (w.volume || 0); 
+                totalDur += (w.duration || 45);
+            });
+            const avgDur = totalSessions > 0 ? Math.round(totalDur / totalSessions) : 0;
 
             document.getElementById('streak-sessions').innerText = `${totalSessions} session${totalSessions === 1 ? '' : 's'}`;
             document.getElementById('stat-total-sessions').innerText = totalSessions;
             document.getElementById('stat-total-volume').innerText = totalVol.toLocaleString();
             document.getElementById('stat-total-volume-hero').innerText = `Total Volume Lifted: ${totalVol.toLocaleString()} lbs`;
-            document.getElementById('stat-avg-duration').innerText = totalSessions > 0 ? "45m" : "0m";
+            document.getElementById('stat-avg-duration').innerText = `${avgDur}m`;
         }
 
         function renderRecentSessions(workouts) {
@@ -685,7 +736,7 @@
                 div.innerHTML = `
                     <div>
                         <h4 class="text-xs font-bold app-text">${w.title}</h4>
-                        <p class="text-[10px] app-text-muted">${dateStr} • ${w.volume || 0} lbs lifted</p>
+                        <p class="text-[10px] app-text-muted">${dateStr} • ${w.duration || 45}m • ${w.volume || 0} lbs</p>
                     </div>
                     <span class="text-xs font-semibold theme-text">Completed ✓</span>
                 `;
@@ -714,7 +765,7 @@
                             <h3 class="text-xs font-bold app-text">${r.title}</h3>
                             <p class="text-[10px] app-text-muted">${r.desc || ''}</p>
                         </div>
-                        <button onclick='loadRoutineIntoBuilder(${JSON.stringify(r.exercises || [])}, "${r.title}")' class="theme-bg text-white text-[10px] font-semibold px-3 py-1.5 rounded-xl transition">Start Routine</button>
+                        <button onclick='startLiveWorkout("${r.title}", ${JSON.stringify(r.exercises || [])}); switchTab("workouts");' class="theme-bg text-white text-[10px] font-semibold px-3 py-1.5 rounded-xl transition">Start Routine</button>
                     </div>
                     <div class="flex flex-wrap gap-1 pt-1">
                         ${(r.exercises || []).map(ex => `<span class="text-[9px] app-card-sub border app-border px-2 py-0.5 rounded-md app-text-muted">${ex}</span>`).join('')}
@@ -722,15 +773,6 @@
                 `;
                 container.appendChild(div);
             });
-        }
-
-        function loadRoutineIntoBuilder(exercises, title) {
-            selectedExercises = exercises.filter(ex => EXERCISE_LIBRARY.some(lib => lib.name === ex));
-            document.getElementById('session-name').value = title;
-            document.getElementById('selected-count').innerText = `${selectedExercises.length} selected`;
-            renderExerciseLibrary();
-            renderBuilderRows();
-            switchTab('workouts');
         }
 
         function openCustomRoutineModal() { document.getElementById('custom-routine-modal').classList.remove('hidden'); }
@@ -911,7 +953,6 @@
             else alert("Password successfully updated.");
         }
 
-        renderExerciseLibrary();
         renderRoutinesList();
     </script>
 </body>
