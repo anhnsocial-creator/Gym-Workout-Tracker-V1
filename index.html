@@ -990,8 +990,11 @@
         let editRoutineExercises = [];
 
         function openEditRoutineModal(routineId) {
-            const routine = customRoutines.find(r => r.id === routineId);
-            if (!routine) return;
+            const routine = customRoutines.find(r => String(r.id) === String(routineId));
+            if (!routine) {
+                console.error('openEditRoutineModal: no routine found with id', routineId);
+                return;
+            }
 
             document.getElementById('edit-routine-id').value = routine.id;
             document.getElementById('edit-routine-title').value = routine.title || '';
@@ -1143,8 +1146,11 @@
 
         // --- EDIT & DELETE WORKOUT LOGIC ---
         function openEditWorkoutModal(workoutId) {
-            const workout = globalWorkoutsData.find(w => w.id === workoutId);
-            if (!workout) return;
+            const workout = globalWorkoutsData.find(w => String(w.id) === String(workoutId));
+            if (!workout) {
+                console.error('openEditWorkoutModal: no workout found with id', workoutId);
+                return;
+            }
 
             document.getElementById('edit-workout-id').value = workout.id;
             document.getElementById('edit-session-name').value = workout.title || 'Gym session';
@@ -1807,6 +1813,55 @@
             }
         }
 
+        async function seedDefaultRoutines(seededKey) {
+            const starterRoutines = [
+                {
+                    user_id: currentUser.id,
+                    title: 'Push Day (Chest, Shoulders, Triceps)',
+                    desc: 'Focus on heavy presses and accessory isolation.',
+                    exercises: [
+                        { name: 'Barbell Bench Press', sets: [{ weight: 135, reps: 10 }] },
+                        { name: 'Incline Dumbbell Press', sets: [{ weight: 50, reps: 10 }] },
+                        { name: 'Dumbbell Shoulder Press', sets: [{ weight: 35, reps: 10 }] }
+                    ]
+                },
+                {
+                    user_id: currentUser.id,
+                    title: 'Pull Day (Back, Biceps)',
+                    desc: 'Heavy deadlifts and vertical/horizontal pulls.',
+                    exercises: [
+                        { name: 'Deadlift', sets: [{ weight: 225, reps: 5 }] },
+                        { name: 'Barbell Row', sets: [{ weight: 135, reps: 8 }] },
+                        { name: 'Lat Pulldown', sets: [{ weight: 120, reps: 10 }] }
+                    ]
+                },
+                {
+                    user_id: currentUser.id,
+                    title: 'Leg Day (Quads, Hamstrings, Calves)',
+                    desc: 'Deep squats and hamstring isolation.',
+                    exercises: [
+                        { name: 'Barbell Squat', sets: [{ weight: 185, reps: 8 }] },
+                        { name: 'Romanian Deadlift (RDL)', sets: [{ weight: 135, reps: 8 }] },
+                        { name: 'Seated Leg Press', sets: [{ weight: 270, reps: 10 }] }
+                    ]
+                }
+            ];
+
+            const { data, error } = await _supabase.from('routines').insert(starterRoutines).select();
+
+            // Mark as seeded regardless of outcome so we never retry-loop on a
+            // permissions error, and so a deliberate "delete all routines" by
+            // the user doesn't cause them to reappear.
+            localStorage.setItem(seededKey, 'true');
+
+            if (!error && data) {
+                customRoutines = data;
+            } else if (error) {
+                console.error('Error seeding starter routines:', error.message);
+            }
+            renderRoutinesList();
+        }
+
         async function fetchUserData() {
             if (!currentUser) return;
             const { data, error } = await _supabase
@@ -1830,6 +1885,16 @@
 
             if (routinesData) {
                 customRoutines = routinesData;
+                const seededKey = `liftpulse_seeded_defaults_${currentUser.id}`;
+                if (customRoutines.length === 0 && !localStorage.getItem(seededKey)) {
+                    // First time this account has been seen: give them the 3 starter
+                    // routines as REAL rows in Supabase so they can edit/delete them
+                    // just like any custom routine, and so they sync across devices.
+                    await seedDefaultRoutines(seededKey);
+                } else {
+                    renderRoutinesList();
+                }
+            } else {
                 renderRoutinesList();
             }
 
@@ -1941,13 +2006,28 @@
             const container = document.getElementById('routines-list-container');
             container.innerHTML = '';
 
-            const defaultRoutines = [
+            // Signed-out visitors see these as a read-only preview (nothing to sync
+            // yet). Once signed in, real per-account rows from `customRoutines`
+            // (seeded automatically on first login) are used instead, so every
+            // routine — including Push/Pull/Legs — is fully editable and deletable.
+            const guestPreviewRoutines = [
                 { id: 'default-push', title: 'Push Day (Chest, Shoulders, Triceps)', desc: 'Focus on heavy presses and accessory isolation.', exercises: ['Barbell Bench Press', 'Incline Dumbbell Press', 'Dumbbell Shoulder Press'], isDefault: true },
                 { id: 'default-pull', title: 'Pull Day (Back, Biceps)', desc: 'Heavy deadlifts and vertical/horizontal pulls.', exercises: ['Deadlift', 'Barbell Row', 'Lat Pulldown'], isDefault: true },
                 { id: 'default-legs', title: 'Leg Day (Quads, Hamstrings, Calves)', desc: 'Deep squats and hamstring isolation.', exercises: ['Barbell Squat', 'Romanian Deadlift (RDL)', 'Seated Leg Press'], isDefault: true }
             ];
 
-            const allRoutines = [...defaultRoutines, ...customRoutines];
+            const allRoutines = currentUser ? customRoutines : guestPreviewRoutines;
+
+            if (allRoutines.length === 0) {
+                container.innerHTML = `
+                    <div class="app-card border app-border rounded-2xl p-6 text-center space-y-2 shadow-sm">
+                        <span class="text-2xl">🏋️</span>
+                        <h4 class="text-xs font-bold app-text">No routines yet</h4>
+                        <p class="text-[11px] app-text-muted">Save a workout as a routine to see it here.</p>
+                    </div>
+                `;
+                return;
+            }
 
             allRoutines.forEach(r => {
                 const exs = (r.exercises || []).map(e => typeof e === 'string' ? e : e.name).join(', ');
